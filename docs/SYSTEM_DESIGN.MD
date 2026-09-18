@@ -1,0 +1,207 @@
+# Dawg Treats — System Design Doc
+
+2026-09-17 · @Someone
+
+## Requirements
+
+- Orders close Thursday 11:59pm PT.
+- Pickup Sat or Sun only, 30-minute slots, max 5 orders per slot.
+- Quantity limits are per flavor, per week.
+- No refunds or cancellations, stated in the fine print.
+
+Customers browse active flavors, cart, pick a pickup slot, pay by card or Apple Pay, look up an order by code; optional Google sign-in for history. Admins run weeks, quantities, slots, orders, flavors and admin roles.
+
+Rules:
+
+Non-goals for v1: delivery, cash or Venmo, discounts, in-product refunds, drop announcement emails.
+
+## The week: core concept
+
+A **week** is one round of baking and selling: it owns that round's quantities, slots and orders.
+
+```mermaid
+flowchart LR
+  A[draft<br/>set up in admin] --> B[open<br/>customers order]
+  B --> C[closed<br/>past Thu cutoff]
+  C --> D[bake]
+  D --> E[pickup<br/>Sat / Sun]
+```
+
+A week is orderable when `status = open` and now is before `orders_close_at`; checkout re-checks both. With no open week the site shows active flavors and no order buttons. A week left in `draft` is skipped.
+
+## Data model
+
+Postgres. Money in integer cents, timestamps in UTC, displayed in PT.
+
+| Table | Holds | Key fields |
+| --- | --- | --- |
+| `users` | People with Google accounts | `id`, `supabase_uid`, `email`, `name`, `phone`, `role` (customer \| admin) |
+| `flavors` | The menu | `id`, `name`, `description`, `price_cents`, `image_url`, `active` |
+| `weeks` | One round of baking | `id`, `pickup_weekend_start`, `orders_close_at`, `status` (draft \| open \| closed) |
+| `batch_items` | Per-flavor stock for a week | `week_id`, `flavor_id`, `quantity_total`, `quantity_remaining` |
+| `pickup_slots` | 30-minute windows | `week_id`, `starts_at`, `ends_at`, `capacity`, `booked_count` |
+| `orders` | One checkout | `id`, `order_code`, `week_id`, `pickup_slot_id`, `user_id?`, `name`, `email`, `phone`, `status`, `total_cents`, `stripe_session_id`, `reserved_until`, `paid_at` |
+| `order_items` | Cookies in an order | `order_id`, `flavor_id`, `quantity`, `unit_price_cents` |
+| `payments` | Stripe charge record | `order_id`, `stripe_payment_intent_id`, `amount_cents`, `status` |
+| `stripe_events` | Webhook idempotency | `stripe_event_id`, `type`, `processed_at` |
+
+**Order status**: `pending` → `paid` → `ready` → `picked_up`, plus `expired`.
+
+Constraints:
+
+- Check: `quantity_remaining >= 0`, `booked_count <= capacity`.
+- Unique: `order_code`, `stripe_session_id`, `stripe_payment_intent_id`, `stripe_event_id`, `(week_id, flavor_id)`.
+- `unit_price_cents` freezes price at purchase; flavors are deactivated, never deleted.
+- `order_code` is random and non-sequential: it is the only thing guarding a guest's order page.
+
+## Checkout flow
+
+The cart is browser-only. Nothing is reserved until checkout starts; an order is paid only when Stripe says so.
+
+```mermaid
+flowchart TD
+  A[Customer clicks Pay] --> B[Hold cookies + slot<br/>order = pending]
+  B --> C[Send customer<br/>to Stripe]
+  C --> D[Customer pays]
+  D --> E[Stripe calls our webhook]
+  E --> F[order = paid]
+  C -.-> G[No payment in 30 min]
+  G -.-> H[Release cookies + slot<br/>order = expired]
+```
+
+**Reservation.** Checkout subtracts the cookies and books the slot in one all-or-nothing transaction, using conditional updates (`... WHERE quantity_remaining >= :qty`, `... WHERE booked_count < capacity`) so a row only moves if there is room. Any statement affecting zero rows rolls everything back; otherwise the `pending` order is inserted with prices read from the database, not the request.
+
+**Hold length is 30 minutes**, matching Stripe's minimum Checkout session expiry. This is deliberate: stock is released only after Stripe confirms the session is dead, so a payment can never land for cookies already given away. A shorter hold would mean expiring the session by API and handling a race where a payment completes in the gap, which needs an automatic-refund fallback.
+
+**Webhooks are the source of truth.** Stripe calls us directly: `session.completed` marks the order paid, `session.expired` releases the stock and slot. Both verify the signature, skip event ids already seen, and apply only to `pending` orders, so the browser redirect never marks anything paid.
+
+**Backup sweep.** An hourly job asks Stripe what happened to any order stuck `pending` over 35 minutes. Without it a single missed webhook holds stock forever.
+
+## Architecture and services
+
+One Next.js app is the only thing that touches the database. The browser never queries Postgres directly.
+
+```mermaid
+flowchart TD
+  B[Browser] --> A[Next.js on Vercel]
+  B --> G[Supabase Auth<br/>Google sign-in]
+  A --> P[(Supabase Postgres)]
+  A --> S[Stripe]
+  S --> A
+  A --> R[Resend]
+  C[GitHub Actions<br/>hourly sweep] --> A
+```
+
+| Service | Role | Notes |
+| --- | --- | --- |
+| Vercel | Hosts the Next.js app | Free tier; cron is daily-only there, hence GitHub Actions |
+| Supabase | Postgres, Google auth, flavor images | Free projects pause after inactivity; watch before a break |
+| Drizzle | Database access from the server | Typed schema and migrations, with raw SQL for the reservation |
+| Stripe Checkout | Card and Apple Pay, hosted page | Apple Pay is a dashboard toggle; no card data touches the app |
+| Resend | Order confirmation email | Needs an owned domain, so it lands once the domain is bought |
+| GitHub Actions | Hourly backup sweep | Calls a secret-protected route |
+| Sentry | Error tracking | Chosen over Datadog, which targets infrastructure at a much larger scale |
+
+**Secrets.** Service-role key, database URL, Stripe secret and webhook signing secrets, and the cron secret stay in Vercel env vars. The browser gets only the Supabase anon key, for sign-in. RLS on everywhere as a backstop.
+
+**Domain.** Development runs on `dawgtreats.vercel.app`; a domain is bought at the email step, since Resend needs a verified one. The site URL is a single env var.
+
+## Pages and endpoints
+
+**Customer pages**
+
+| Path | Purpose |
+| --- | --- |
+| `/` | Menu of active flavors; ordering enabled only when a week is open |
+| `/cart` | Quantities and total |
+| `/checkout` | Pickup slot, contact details, fine print, pay button |
+| `/order/success` | Polls until paid, then shows the order code |
+| `/order/lookup` | Enter an order code to see status |
+| `/account` | Order history and saved contact info |
+
+Admin pages, all gated on `role = admin`: `/admin`, `/admin/weeks`, `/admin/weeks/[id]`, `/admin/weeks/[id]/orders`, `/admin/flavors`, `/admin/users`.
+
+**Endpoints**
+
+| Method and path | Purpose |
+| --- | --- |
+| `GET /api/menu` | Active flavors plus availability for the open week |
+| `GET /api/weeks/current/slots` | Slots and remaining capacity |
+| `POST /api/checkout` | Reserve, create the order, return the Stripe URL |
+| `GET /api/orders/[code]` | Order status; rate-limited, no contact details returned |
+| `POST /api/webhooks/stripe` | Handles `session.completed` and `session.expired` |
+| `GET /api/cron/sweep` | Hourly backup sweep; requires the cron secret |
+| `GET /api/me/orders` | Order history for the signed-in user |
+| `POST /api/admin/weeks`, `PATCH /api/admin/weeks/[id]` | Create a week, edit it, open it |
+| `PUT /api/admin/weeks/[id]/batch-items` | Set per-flavor quantities |
+| `POST /api/admin/weeks/[id]/slots`, `DELETE /api/admin/slots/[id]` | Manage slots; deletion blocked if the slot has orders |
+| `PATCH /api/admin/orders/[id]` | Mark ready or picked up |
+| `POST /api/admin/flavors`, `PATCH /api/admin/flavors/[id]` | Manage the menu |
+| `PATCH /api/admin/users/[id]` | Grant or revoke admin; an admin cannot revoke their own |
+
+Every admin endpoint re-checks the role server-side. Quantity edits cannot drop below what is already sold, and a slot with orders cannot be deleted.
+
+## Failure cases
+
+| Failure | Handling |
+| --- | --- |
+| Two checkouts race for the last cookies | Conditional `UPDATE` means one wins; the loser gets a named sold-out error and a refreshed cart |
+| Customer abandons checkout | Stock held 30 minutes, released on the `session.expired` webhook |
+| Webhook never arrives | Hourly sweep reconciles against Stripe; Stripe also retries |
+| Webhook arrives twice | `stripe_events` dedupe, plus status-guarded updates |
+| Confirmation email fails | Logged and retried out of band; never fails the webhook, since the order is already paid |
+| Stripe unavailable at checkout | Reservation rolled back immediately so stock is not held for an order that never started |
+| Supabase paused or down | Site shows a clear error instead of a broken page; watch for pause warnings before breaks |
+| Server crashes mid-checkout | Transaction rolls back; an orphan `pending` order is swept within the hour |
+| Payment lands after expiry | Cannot happen with a 30-minute hold, since release waits for Stripe's own expiry |
+| Fewer cookies baked than sold | Admin can lower quantity but never below sold; affected customers contacted and refunded by hand |
+| Customer pays and never collects | No refund per policy; order left marked and cookies resold or eaten |
+| Order-code guessing | Long random codes, rate-limited lookups, no contact details on the status page |
+| Checkout spam holding stock | Rate limit by IP, cap cookies per order, watch for a pile of `pending` orders |
+| Locked out of admin | Self-revocation blocked; roles can be fixed directly in Supabase |
+
+## Instrumentation
+
+Most metrics come from `orders.status`. v1 adds structured logs (`checkout_started`, `order_paid`, `order_expired`) and Sentry.
+
+- Checkouts started vs paid vs expired, and time from start to payment: says whether the 30-minute hold costs sales.
+- Failed checkouts from sold-out flavors or full slots.
+- Cookies sold per flavor per week, and which slots fill first.
+- Stuck orders found by the sweep: a rising count means webhooks are being missed.
+
+## Alternatives considered
+
+| Decision | Alternative | Why not |
+| --- | --- | --- |
+| Postgres | Firestore | No joins, transactions need more hand-written logic, and reporting is awkward; the overselling rule is the whole problem, and SQL solves it in one statement |
+| Stripe Checkout, 30-minute hold | Stripe Elements, 10-minute hold | Elements lets the server check the timer before charging, which is how ticketing sites hold seats for 10 minutes, but it means building the payment page, handling 3D Secure, and verifying the domain for Apple Pay |
+| Supabase Auth, Google only | Firebase phone auth | SMS needs a billing-enabled plan at roughly $0.01 per message and opens a bot-driven cost risk; Google sign-in is free and already verifies the email |
+| Link guest orders by email | Link by phone | Phone numbers at checkout are unverified, so anyone could claim another person's history |
+| GitHub Actions for the sweep | Vercel Cron | Vercel's free tier only allows daily schedules |
+| Sentry | Datadog | Datadog targets infrastructure monitoring at a scale this project will not reach |
+
+## If this grew 100x
+
+- Drops that sell out in seconds: queue checkout, cache the menu, read availability from Redis.
+- Contention on one hot `batch_items` row: split stock across several rows per flavor.
+- Read load: a read replica plus short-TTL caching.
+- Splitting the monolith: only when separate teams own ordering and fulfilment.
+
+These are triggers, not plans. None are justified today.
+
+## Build plan
+
+Each slice ends with something that works. Slice 5 stays as a permanent test.
+
+- [ ] 1\. Project setup: Next.js, Supabase, Drizzle schema, first migration, deployed to Vercel
+- [ ] 2\. Menu page plus admin flavor management
+- [ ] 3\. Admin weeks: quantities, slots, open and close behaviour
+- [ ] 4\. Cart and the checkout reservation transaction, no payment yet
+- [ ] 5\. Concurrency test: fire 20 simultaneous checkouts at the last 5 cookies and assert no overselling
+- [ ] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
+- [ ] 7\. Order lookup by code, plus the success page polling
+- [ ] 8\. Google sign-in, account page, and linking past guest orders by verified email
+- [ ] 9\. Buy the domain, verify it with Resend, send confirmation emails
+- [ ] 10\. Admin order view by slot, ready and picked-up states
+- [ ] 11\. Sentry, rate limits, event logging
+- [ ] 12\. Switch Stripe to live mode, place a real test order, open the first week
