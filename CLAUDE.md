@@ -14,7 +14,7 @@ npm run dev
 npm run admin -- help  # admin CLI: weeks, quantities, slots, flavors
 npm run db:generate    # generate migration from schema
 npm run db:migrate
-npm test
+npm test               # needs the test database; see docs/TESTING.md
 npm run lint
 ```
 
@@ -55,8 +55,9 @@ npm run lint
 
 ## Testing
 
-- Tests cover `lib/` logic, especially the reservation.
+- Tests cover `lib/` logic, especially the reservation. Vitest, against a throwaway Postgres in Docker: `docs/TESTING.md`.
 - The concurrency test (20 simultaneous checkouts against the last 5 cookies, asserting no overselling) is required and must not be deleted.
+- Assert the database state after a refusal, not just the error: a rollback that silently ate stock still throws.
 
 ## Don't
 
