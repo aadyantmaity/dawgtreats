@@ -9,7 +9,7 @@
 - Quantity limits are per flavor, per week.
 - No refunds or cancellations, stated in the fine print.
 
-Customers browse active flavors, cart, pick a pickup slot, pay by card or Apple Pay, look up an order by code; optional Google sign-in for history. Admins run weeks, quantities, slots, orders, flavors and admin roles.
+Customers browse active flavors, cart, pick a pickup slot, pay by card or Apple Pay, look up an order by code; optional Google sign-in for history. The admin runs weeks, quantities, slots and flavors from a command-line tool (`npm run admin`), not from admin pages.
 
 Rules:
 
@@ -28,6 +28,10 @@ flowchart LR
 ```
 
 A week is orderable when `status = open` and now is before `orders_close_at`; checkout re-checks both. With no open week the site shows active flavors and no order buttons. A week left in `draft` is skipped.
+
+**Creating a week.** The admin doesn't pick dates. The server creates the upcoming week: the next Saturday whose Thursday 11:59pm PT cutoff is still ahead (from Friday on, that is the following weekend), with `orders_close_at` set from it. There is one week per weekend.
+
+**Opening and closing.** A week opens only with at least one flavor quantity and one pickup slot, and only one week is open at a time. Ordering stops at the cutoff on its own; the admin closes the week afterwards so the next one can open.
 
 ## Data model
 
@@ -50,7 +54,7 @@ Postgres. Money in integer cents, timestamps in UTC, displayed in PT.
 Constraints:
 
 - Check: `quantity_remaining >= 0`, `booked_count <= capacity`.
-- Unique: `order_code`, `stripe_session_id`, `stripe_payment_intent_id`, `stripe_event_id`, `(week_id, flavor_id)`.
+- Unique: `order_code`, `stripe_session_id`, `stripe_payment_intent_id`, `stripe_event_id`, `(week_id, flavor_id)`, `pickup_weekend_start`.
 - `unit_price_cents` freezes price at purchase; flavors are deactivated, never deleted.
 - `order_code` is random and non-sequential: it is the only thing guarding a guest's order page.
 
@@ -94,8 +98,8 @@ flowchart TD
 
 | Service | Role | Notes |
 | --- | --- | --- |
-| Vercel | Hosts the Next.js app | Free tier; cron is daily-only there, hence GitHub Actions |
-| Supabase | Postgres, Google auth, flavor images | Free projects pause after inactivity; watch before a break |
+| Vercel | Hosts the Next.js app | Free tier; cron is daily-only there, hence GitHub Actions. Functions run in `pdx1`, next to the database |
+| Supabase | Postgres, Google auth, flavor images | Free projects pause after inactivity; watch before a break. `us-west-2`. The app uses the transaction pooler (`DATABASE_URL`, `prepare: false`); migrations use the session pooler (`DIRECT_URL`), since the direct host is IPv6-only |
 | Drizzle | Database access from the server | Typed schema and migrations, with raw SQL for the reservation |
 | Stripe Checkout | Card and Apple Pay, hosted page | Apple Pay is a dashboard toggle; no card data touches the app |
 | Resend | Order confirmation email | Needs an owned domain, so it lands once the domain is bought |
@@ -119,7 +123,9 @@ flowchart TD
 | `/order/lookup` | Enter an order code to see status |
 | `/account` | Order history and saved contact info |
 
-Admin pages, all gated on `role = admin`: `/admin`, `/admin/weeks`, `/admin/weeks/[id]`, `/admin/weeks/[id]/orders`, `/admin/flavors`, `/admin/users`.
+**Admin is a CLI, not pages.** `scripts/admin.ts` (`npm run admin -- <command>`) creates and opens weeks, sets quantities, adds and removes slots, and manages flavors. It calls the same `lib/` modules the site uses, so quantities still can't drop below what is sold, slots with orders still can't be removed, and only one week is open at a time. It runs on the owner's machine with the database URL from `.env.local`, so there is no admin role to protect and no admin surface on the public site.
+
+The one admin screen still planned is the pickup-day view (slice 10): a phone-friendly page listing a slot's orders with ready and picked-up buttons, since that job happens at the door, not at a terminal.
 
 **Endpoints**
 
@@ -132,14 +138,9 @@ Admin pages, all gated on `role = admin`: `/admin`, `/admin/weeks`, `/admin/week
 | `POST /api/webhooks/stripe` | Handles `session.completed` and `session.expired` |
 | `GET /api/cron/sweep` | Hourly backup sweep; requires the cron secret |
 | `GET /api/me/orders` | Order history for the signed-in user |
-| `POST /api/admin/weeks`, `PATCH /api/admin/weeks/[id]` | Create a week, edit it, open it |
-| `PUT /api/admin/weeks/[id]/batch-items` | Set per-flavor quantities |
-| `POST /api/admin/weeks/[id]/slots`, `DELETE /api/admin/slots/[id]` | Manage slots; deletion blocked if the slot has orders |
-| `PATCH /api/admin/orders/[id]` | Mark ready or picked up |
-| `POST /api/admin/flavors`, `PATCH /api/admin/flavors/[id]` | Manage the menu |
-| `PATCH /api/admin/users/[id]` | Grant or revoke admin; an admin cannot revoke their own |
+| `PATCH /api/admin/orders/[id]` | Mark ready or picked up; the only admin endpoint, for the slice 10 pickup page |
 
-Every admin endpoint re-checks the role server-side. Quantity edits cannot drop below what is already sold, and a slot with orders cannot be deleted.
+Week setup has no endpoints: it runs through the CLI. Quantity edits cannot drop below what is already sold or held by a pending checkout, and a slot with orders cannot be deleted; `lib/` enforces both wherever the call comes from.
 
 ## Failure cases
 
@@ -193,15 +194,15 @@ These are triggers, not plans. None are justified today.
 
 Each slice ends with something that works. Slice 5 stays as a permanent test.
 
-- [ ] 1\. Project setup: Next.js, Supabase, Drizzle schema, first migration, deployed to Vercel
-- [ ] 2\. Menu page plus admin flavor management
-- [ ] 3\. Admin weeks: quantities, slots, open and close behaviour
+- [x] 1\. Project setup: Next.js, Supabase, Drizzle schema, first migration, deployed to Vercel
+- [ ] 2\. Menu page; flavors managed from the CLI
+- [x] 3\. Weeks from the CLI: quantities, slots, open and close behaviour
 - [ ] 4\. Cart and the checkout reservation transaction, no payment yet
 - [ ] 5\. Concurrency test: fire 20 simultaneous checkouts at the last 5 cookies and assert no overselling
 - [ ] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
 - [ ] 7\. Order lookup by code, plus the success page polling
 - [ ] 8\. Google sign-in, account page, and linking past guest orders by verified email
 - [ ] 9\. Buy the domain, verify it with Resend, send confirmation emails
-- [ ] 10\. Admin order view by slot, ready and picked-up states
+- [ ] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
 - [ ] 11\. Sentry, rate limits, event logging
 - [ ] 12\. Switch Stripe to live mode, place a real test order, open the first week

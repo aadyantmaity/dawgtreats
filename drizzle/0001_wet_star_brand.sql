@@ -1,0 +1,1 @@
+ALTER TABLE "weeks" ADD CONSTRAINT "weeks_pickup_weekend_start_unique" UNIQUE("pickup_weekend_start");

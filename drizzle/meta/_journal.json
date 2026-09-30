@@ -8,6 +8,13 @@
       "when": 1789760059213,
       "tag": "0000_curved_squadron_supreme",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789768497966,
+      "tag": "0001_wet_star_brand",
+      "breakpoints": true
     }
   ]
 }

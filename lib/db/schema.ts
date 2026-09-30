@@ -44,7 +44,7 @@ export const flavors = pgTable('flavors', {
 
 export const weeks = pgTable('weeks', {
   id: uuid('id').primaryKey().defaultRandom(),
-  pickupWeekendStart: date('pickup_weekend_start').notNull(),
+  pickupWeekendStart: date('pickup_weekend_start').notNull().unique(),
   ordersCloseAt: timestamp('orders_close_at', { withTimezone: true }).notNull(),
   status: weekStatus('status').notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
