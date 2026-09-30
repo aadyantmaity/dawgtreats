@@ -49,11 +49,14 @@ export default async function MenuPage() {
       <h1 className="text-4xl font-semibold sm:text-5xl">
         {week ? "This week's bake" : "The menu"}
       </h1>
-      <p className="mt-3 text-secondary">
-        {week
-          ? `Orders close ${formatClosesAt(week.ordersCloseAt)} · Pickup ${formatPickupWeekend(week.pickupWeekendStart)}`
-          : "Orders are closed right now. A new batch goes up most weeks."}
-      </p>
+      {week ? (
+        <div className="mt-3 flex flex-col gap-1 text-secondary">
+          <p>Orders close {formatClosesAt(week.ordersCloseAt)}</p>
+          <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>
+        </div>
+      ) : (
+        <p className="mt-3 text-secondary">Orders are closed right now. A new batch goes up most weeks.</p>
+      )}
 
       {menu.length === 0 ? (
         <p className="mt-10 text-secondary">Nothing on the menu yet. Check back soon.</p>

@@ -82,14 +82,17 @@
   --font-serif: var(--font-fraunces);
 }
 
-body {
-  background: var(--background-color-page);
-  color: var(--text-color-primary);
-  font-family: var(--font-sans);
-}
+/* In @layer base so a font-sans utility can still override it. */
+@layer base {
+  body {
+    background: var(--background-color-page);
+    color: var(--text-color-primary);
+    font-family: var(--font-sans);
+  }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-serif);
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+  }
 }

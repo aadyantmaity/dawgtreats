@@ -55,7 +55,7 @@ export function formatPickupWeekend(pickupWeekendStart: string): string {
   const sun = new Date(`${addDays(pickupWeekendStart, 1)}T12:00:00Z`)
   const day = (at: Date) =>
     new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(at)
-  return `Sat ${day(sat)} – Sun ${day(sun)}`
+  return `Sat ${day(sat)} or Sun ${day(sun)}`
 }
 
 export function formatClosesAt(ordersCloseAt: Date): string {
