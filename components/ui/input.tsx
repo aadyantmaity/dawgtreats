@@ -22,7 +22,7 @@ export function Input({ label, error, hint, prefix, id, className = "", ...props
       )}
       <div className="relative">
         {prefix && (
-          <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-secondary">
+          <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-secondary">
             {prefix}
           </span>
         )}
@@ -30,7 +30,7 @@ export function Input({ label, error, hint, prefix, id, className = "", ...props
           id={inputId}
           aria-invalid={error ? true : undefined}
           aria-describedby={message ? messageId : undefined}
-          className={`h-11 w-full rounded-xl border border-default bg-surface text-base text-primary placeholder:text-tertiary focus:border-focus focus:outline-none disabled:bg-disabled disabled:text-disabled aria-invalid:border-error ${prefix ? "pr-3.5 pl-7" : "px-3.5"} ${className}`}
+          className={`h-control w-full rounded-control border border-default bg-surface text-base text-primary placeholder:text-tertiary focus:border-focus focus:outline-none disabled:bg-disabled disabled:text-disabled aria-invalid:border-error ${prefix ? "pr-4 pl-8" : "px-4"} ${className}`}
           {...props}
         />
       </div>

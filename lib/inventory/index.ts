@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, asc, count, eq, isNotNull, or, sql } from 'drizzle-orm'
+import { and, asc, count, eq, gt, isNotNull, or, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { batchItems, flavors, orders, pickupSlots, weeks } from '@/lib/db/schema'
@@ -170,4 +170,44 @@ export async function findSlotAt(weekId: string, day: 'sat' | 'sun', time: strin
     .where(and(eq(pickupSlots.weekId, weekId), eq(pickupSlots.startsAt, ptToUtc(date, time))))
   if (!slot) throw new DomainError('There is no slot at that time', 404)
   return slot.id
+}
+
+export type MenuItem = {
+  id: string
+  name: string
+  description: string | null
+  priceCents: number
+  remaining: number | null
+}
+
+// Without an orderable week there is no stock to speak of, so `remaining` stays null.
+export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
+  if (!weekId) {
+    const rows = await db
+      .select({
+        id: flavors.id,
+        name: flavors.name,
+        description: flavors.description,
+        priceCents: flavors.priceCents,
+      })
+      .from(flavors)
+      .where(eq(flavors.active, true))
+      .orderBy(asc(flavors.name))
+    return rows.map((row) => ({ ...row, remaining: null }))
+  }
+
+  const rows = await db
+    .select({
+      id: flavors.id,
+      name: flavors.name,
+      description: flavors.description,
+      priceCents: flavors.priceCents,
+      quantityRemaining: batchItems.quantityRemaining,
+    })
+    .from(flavors)
+    .innerJoin(batchItems, and(eq(batchItems.flavorId, flavors.id), eq(batchItems.weekId, weekId)))
+    .where(and(eq(flavors.active, true), gt(batchItems.quantityTotal, 0)))
+    .orderBy(asc(flavors.name))
+
+  return rows.map(({ quantityRemaining, ...row }) => ({ ...row, remaining: Math.max(0, quantityRemaining) }))
 }

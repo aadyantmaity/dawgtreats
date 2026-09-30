@@ -1,4 +1,4 @@
-# Colour tokens
+# Design tokens
 
 Colours are named by the job they do, never by how they look. Components use role tokens only; hex values live once, in the palette at the top of `app/globals.css`.
 
@@ -47,3 +47,43 @@ Opacity modifiers work on any token (`hover:bg-action/90`, `text-primary/80`).
 1. **Changing how a role looks:** repoint the role token to another palette colour, or add a palette colour. No component changes.
 2. **A new role:** add a token under the right property (`--text-color-*`, `--background-color-*`, `--border-color-*`, `--outline-color-*`), named for the job, then add a row above.
 3. **Never** put a hex value, `rgb()`, an arbitrary value like `bg-[#fff]`, or a palette variable in a component.
+
+# Spacing, sizes and radii
+
+Same idea as colours: a fixed set, defined once in `app/globals.css`. Tailwind's open-ended scale is removed (`--spacing: initial`), so a value off the scale does not compile.
+
+## The scale
+
+4px steps, with two half steps for fine work: `0`, `0.5`, `1`, `1.5`, `2`, `3`, `4`, `5`, `6`, `8`, `10`, `12`, `16`, `20`, `24`.
+
+That is 2px, 4px, 6px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px, 64px, 80px, 96px. `p-7`, `px-3.5` and `gap-9` are deliberately absent: round to a neighbour rather than adding a step.
+
+Use them anywhere Tailwind takes a length: `p-4`, `gap-2`, `mt-6`, `size-4`, `top-0`.
+
+## Named sizes
+
+For values that repeat with a meaning, so they can change in one place.
+
+| Token | Value | Used by |
+| --- | --- | --- |
+| `h-control`, `size-control` | 44px | Inputs, selects, steppers, medium buttons |
+| `h-control-sm` | 36px | Small buttons |
+| `max-h-menu` | 256px | Dropdown list before it scrolls |
+| `aspect-photo` | 4:3 | Flavor photos |
+
+## Radii
+
+| Token | Value | Used by |
+| --- | --- | --- |
+| `rounded-control-sm` | 8px | Small buttons, chips |
+| `rounded-control` | 12px | Inputs, selects, steppers, medium buttons, popups |
+| `rounded-card` | 16px | Cards |
+| `rounded-pill` | 9999px | Badges |
+
+Tailwind's own `rounded-lg`, `rounded-xl` and friends are removed.
+
+## Adding to the scale
+
+1. Round to an existing step first; that is almost always right.
+2. If a value repeats with a meaning (a second control height, say), add a **named** token, not a number.
+3. Only widen the numeric scale when a real gap shows up, and add the row here.

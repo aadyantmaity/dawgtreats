@@ -6,8 +6,8 @@ const variants = {
 };
 
 const sizes = {
-  sm: "h-9 px-3.5 text-sm rounded-lg",
-  md: "h-11 px-5 text-base rounded-xl",
+  sm: "h-control-sm px-4 text-sm rounded-control-sm",
+  md: "h-control px-5 text-base rounded-control",
 };
 
 type ButtonProps = ComponentProps<"button"> & {

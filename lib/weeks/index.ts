@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { batchItems, pickupSlots, weeks } from '@/lib/db/schema'
@@ -83,6 +83,15 @@ export async function listWeeks(): Promise<WeekSummary[]> {
     })
     .from(weeks)
     .orderBy(desc(weeks.pickupWeekendStart))
+}
+
+// The week customers can order from: open, and before its Thursday cutoff.
+export async function getOrderableWeek(): Promise<Week | null> {
+  const [week] = await db
+    .select()
+    .from(weeks)
+    .where(and(eq(weeks.status, 'open'), gt(weeks.ordersCloseAt, new Date())))
+  return week ?? null
 }
 
 export async function getWeek(id: string): Promise<Week> {

@@ -42,7 +42,7 @@ npm run lint
 - TypeScript strict. No `any`.
 - Named exports. No default exports except pages.
 - Validate request bodies with Zod at the route boundary, and CLI arguments the same way. Input rules follow `docs/INPUTS.md`; rules and messages live in `lib/validation.ts`, shared by the browser, the API and the CLI.
-- Colours use role tokens only (`text-secondary`, `bg-surface`, `border-error`), named by job, never by hue. No hex, `rgb()`, arbitrary values or palette variables in components. See `docs/TOKENS.md`.
+- Colours use role tokens only (`text-secondary`, `bg-surface`, `border-error`), named by job, never by hue. Spacing, sizes and radii come from the fixed scale (`p-4`, `h-control`, `rounded-card`); values off it don't compile. No hex, `rgb()` or arbitrary values in components. See `docs/TOKENS.md`.
 - Return specific, actionable errors ("snickerdoodle sold out"), not generic 500s.
 - Never swallow errors. Log with context.
 

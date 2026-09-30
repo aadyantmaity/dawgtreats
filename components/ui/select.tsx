@@ -145,7 +145,7 @@ export function Select<T extends string>({
           disabled={disabled}
           onClick={() => (open ? setOpen(false) : openList())}
           onKeyDown={onKeyDown}
-          className={`flex h-11 w-full items-center rounded-xl border bg-surface pr-10 pl-3.5 text-left text-base text-primary focus:outline-none disabled:bg-disabled disabled:text-disabled ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
+          className={`flex h-control w-full items-center rounded-control border bg-surface pr-10 pl-4 text-left text-base text-primary focus:outline-none disabled:bg-disabled disabled:text-disabled ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
         >
           <span className="truncate">{options[selectedIndex]?.label}</span>
         </button>
@@ -155,7 +155,7 @@ export function Select<T extends string>({
           stroke="currentColor"
           strokeWidth={1.5}
           aria-hidden
-          className={`pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-secondary transition-transform ${open ? "rotate-180" : ""}`}
+          className={`pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-secondary transition-transform ${open ? "rotate-180" : ""}`}
         >
           <path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -166,7 +166,7 @@ export function Select<T extends string>({
           role="listbox"
           aria-labelledby={labelId}
           hidden={!open}
-          className="absolute top-full left-0 z-20 mt-1.5 max-h-64 w-full min-w-max overflow-y-auto rounded-xl border border-default bg-surface py-1 shadow-lg"
+          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-control border border-default bg-surface py-1 shadow-lg"
         >
           {options.map((option, index) => {
             const selected = index === selectedIndex;
@@ -179,7 +179,7 @@ export function Select<T extends string>({
                 onPointerEnter={() => setActiveIndex(index)}
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={() => choose(index)}
-                className={`flex cursor-pointer items-center justify-between gap-6 px-3.5 py-2 text-base ${index === activeIndex ? "bg-hover" : ""} ${selected ? "font-medium text-primary" : "text-primary/80"}`}
+                className={`flex cursor-pointer items-center justify-between gap-6 px-4 py-2 text-base ${index === activeIndex ? "bg-hover" : ""} ${selected ? "font-medium text-primary" : "text-primary/80"}`}
               >
                 {option.label}
                 {selected && (

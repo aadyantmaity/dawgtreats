@@ -11,7 +11,7 @@ type StepperProps = {
 };
 
 const buttonClass =
-  "grid size-11 shrink-0 place-items-center rounded-xl border border-default bg-surface text-lg text-primary hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled";
+  "grid size-control shrink-0 place-items-center rounded-control border border-default bg-surface text-lg text-primary hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled";
 
 // Holds a string so the box can be briefly empty while typing; an empty box counts as `min`.
 export function Stepper({ label, value, onChange, min = 0, max, invalid = false, describedBy }: StepperProps) {
@@ -54,7 +54,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
           if (value === "") onChange(String(min));
         }}
         onKeyDown={onKeyDown}
-        className="h-11 w-16 rounded-xl border border-default bg-surface px-2 text-center text-base text-primary tabular-nums focus:border-focus focus:outline-none aria-invalid:border-error"
+        className="h-control w-16 rounded-control border border-default bg-surface px-2 text-center text-base text-primary tabular-nums focus:border-focus focus:outline-none aria-invalid:border-error"
       />
       <button
         type="button"
