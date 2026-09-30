@@ -197,7 +197,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 1\. Project setup: Next.js, Supabase, Drizzle schema, first migration, deployed to Vercel
 - [x] 2\. Menu page; flavors managed from the CLI
 - [x] 3\. Weeks from the CLI: quantities, slots, open and close behaviour
-- [ ] 4\. Cart and the checkout reservation transaction, no payment yet
+- [x] 4\. Cart and the checkout reservation transaction, no payment yet
 - [ ] 5\. Concurrency test: fire 20 simultaneous checkouts at the last 5 cookies and assert no overselling
 - [ ] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
 - [ ] 7\. Order lookup by code, plus the success page polling

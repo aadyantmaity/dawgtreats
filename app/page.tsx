@@ -1,3 +1,4 @@
+import { AddToCart } from "@/components/cart";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
@@ -35,7 +36,10 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
         </div>
         {flavor.description && <p className="text-sm text-secondary">{flavor.description}</p>}
       </div>
-      <Stock remaining={flavor.remaining} />
+      <div className="flex items-center justify-between gap-3">
+        <Stock remaining={flavor.remaining} />
+        <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
+      </div>
     </article>
   );
 }

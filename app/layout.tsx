@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import Link from "next/link";
+import { CartLink } from "@/components/cart";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -26,10 +27,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <header className="border-b border-default">
-          <div className="mx-auto flex h-16 w-full max-w-4xl items-center px-6">
+          <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-4 px-6">
             <Link href="/" className="font-serif text-xl font-semibold">
               Dawg Treats
             </Link>
+            <CartLink />
           </div>
         </header>
         {children}

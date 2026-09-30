@@ -7,6 +7,8 @@ export const LIMITS = {
   descriptionMax: 200,
   priceMaxCents: 10000,
   quantityMax: 1000,
+  perFlavorMax: 24,
+  perOrderMax: 24,
 } as const
 
 const MESSAGES = {
@@ -65,3 +67,39 @@ export function quantityError(value: string, sold: number): string | null {
   if (quantity < sold) return `Can’t go below ${sold}: that many are already sold or held`
   return null
 }
+
+const contact = {
+  name: z.string().trim().min(1, 'Your name is required').max(LIMITS.nameMax, MESSAGES.nameTooLong),
+  email: z.email('That email address does not look right').max(120, 'That email address is too long'),
+  phone: z
+    .string()
+    .trim()
+    .min(7, 'A phone number helps us find you at pickup')
+    .max(20, 'That phone number is too long'),
+}
+
+export const checkoutSchema = z.object({
+  ...contact,
+  pickupSlotId: z.uuid('Choose a pickup time'),
+  items: z
+    .array(
+      z.object({
+        flavorId: z.uuid('That flavor is no longer on the menu'),
+        quantity: z
+          .int('Quantities must be whole numbers')
+          .min(1, 'Quantities must be at least 1')
+          .max(LIMITS.perFlavorMax, `${LIMITS.perFlavorMax} of one flavor per order`),
+      }),
+    )
+    .min(1, 'Your cart is empty')
+    .refine(
+      (items) => new Set(items.map((i) => i.flavorId)).size === items.length,
+      'Each flavor can appear only once',
+    )
+    .refine(
+      (items) => items.reduce((sum, i) => sum + i.quantity, 0) <= LIMITS.perOrderMax,
+      `${LIMITS.perOrderMax} cookies per order, so there is enough to go around`,
+    ),
+})
+
+export type CheckoutInput = z.infer<typeof checkoutSchema>
