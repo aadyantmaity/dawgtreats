@@ -83,6 +83,12 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
           the cookies go back on the menu when the hold runs out.
         </p>
       )}
+      {(status === "paid" || status === "ready") && (
+        <p className="mt-6 text-secondary">
+          A confirmation with this code is on its way to your email — check your spam folder if it
+          isn&apos;t there in a few minutes.
+        </p>
+      )}
       {status === "expired" && (
         <p className="mt-6 text-secondary">
           The hold ran out before payment arrived, so the cookies went back on the menu.
