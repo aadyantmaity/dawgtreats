@@ -205,7 +205,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 9\. Buy the domain, verify it with Resend, send confirmation emails
 - [x] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
 - [x] 11\. Sentry, rate limits, event logging
-- [ ] 12\. Security audit of every request path, before any real money moves
+- [x] 12\. Security audit of every request path, before any real money moves
 - [ ] 13\. Switch Stripe to live mode, place a real test order, open the first week
 - [ ] 14\. Reviews and flavour requests: what people thought, and what they want baked next
 
