@@ -202,7 +202,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
 - [x] 7\. Order lookup by code, plus the success page polling
 - [x] 8\. Google sign-in, account page, and linking past guest orders by verified email
-- [ ] 9\. Buy the domain, verify it with Resend, send confirmation emails
+- [x] 9\. Buy the domain, verify it with Resend, send confirmation emails
 - [ ] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
 - [ ] 11\. Sentry, rate limits, event logging
 - [ ] 12\. Security audit of every request path, before any real money moves
