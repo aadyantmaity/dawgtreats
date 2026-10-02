@@ -21,6 +21,14 @@ export default defineConfig({
       STRIPE_SECRET_KEY: 'sk_test_not_a_real_key',
       STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
       NEXT_PUBLIC_SITE_URL: 'http://localhost:3000',
+      // Passed through when set, so the rate-limit test runs for real; without them
+      // it skips rather than pretending a limiter that isn't there works.
+      ...(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+        ? {
+            UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+            UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+          }
+        : {}),
     },
     globalSetup: ['./tests/setup/migrate.ts'],
     // One database, so files must not race each other.
