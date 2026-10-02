@@ -2,7 +2,6 @@ import 'server-only'
 
 import { formatCents } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
-import { formatPhone } from '@/lib/validation'
 import { formatPt } from '@/lib/weeks'
 
 const FROM = 'Dawg Treats <orders@dawgtreats.shop>'
@@ -53,11 +52,9 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     '',
     `Track it: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/order/${o.orderCode}`,
     '',
-    o.phone ? `We'll text ${formatPhone(o.phone)} if anything changes.` : null,
+    'Reply to this email if something comes up.',
     'All sales are final. Pickup only.',
-  ]
-    .filter((line) => line !== null)
-    .join('\n')
+  ].join('\n')
 }
 
 // Never throws into the webhook: the order is already paid, so a failed email is
