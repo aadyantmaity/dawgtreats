@@ -74,7 +74,8 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
 
       {status === "pending" && waiting && (
         <p className="mt-6 text-secondary" role="status">
-          Confirming your payment with Stripe…
+          Waiting for Stripe to confirm. If you didn&apos;t finish paying, the cookies go back on the
+          menu shortly.
         </p>
       )}
       {status === "pending" && !waiting && (
