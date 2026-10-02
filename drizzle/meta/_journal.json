@@ -15,6 +15,13 @@
       "when": 1789768497966,
       "tag": "0001_wet_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790972765985,
+      "tag": "0002_open_master_chief",
+      "breakpoints": true
     }
   ]
 }

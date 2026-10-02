@@ -23,6 +23,7 @@ Colours are named by the job they do, never by how they look. Components use rol
 | `text-urgent` | Low stock ("7 left"); same colour as errors for now | rust `#b4561f` |
 | `text-success` | Success text, "Saved", Picked up badge | sage-700 `#2f6b3a` |
 | `text-warning` | Warning text, Ready badge | honey-700 `#7a5a1e` |
+| `text-rating` | A filled star in a review | honey-700 `#7a5a1e` |
 | **Backgrounds** | | |
 | `bg-page` | The page itself | ivory `#fbfaf7` |
 | `bg-surface` | Cards, inputs, popups | white `#ffffff` |

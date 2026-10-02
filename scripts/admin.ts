@@ -3,6 +3,7 @@ import { asc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { flavors, orders, weeks } from '@/lib/db/schema'
 import { setRole } from '@/lib/auth'
+import { listRequests, listReviews } from '@/lib/reviews'
 import { DomainError } from '@/lib/errors'
 import { createFlavor, listFlavors, updateFlavor, type Flavor } from '@/lib/flavors'
 import {
@@ -55,6 +56,10 @@ This week
 Pickup day
   admin:add <email>                        let this account open /pickup
   admin:rm <email>                         take that away
+
+Feedback
+  reviews                                  what customers said about their cookies
+  requests                                 flavours people have asked for
 
 Test data
   seed                                     flavors, quantities and slots for the upcoming week
@@ -242,6 +247,30 @@ const commands: Record<string, () => Promise<void>> = {
   async 'admin:rm'() {
     const account = await setRole(positional[0] ?? fail('Usage: admin:rm <email>'), 'customer')
     console.log(`${account.email} can no longer open /pickup.`)
+  },
+
+  async reviews() {
+    const all = await listReviews()
+    if (all.length === 0) return console.log('\nNo reviews yet.')
+
+    const average = all.reduce((sum, r) => sum + r.rating, 0) / all.length
+    console.log(`\n${all.length} review${all.length === 1 ? '' : 's'} · ${average.toFixed(1)} average\n`)
+    for (const review of all) {
+      const stars = '*'.repeat(review.rating).padEnd(5, '.')
+      console.log(`  ${stars}  ${review.name} (${review.orderCode})`)
+      if (review.comment) console.log(`         ${review.comment}`)
+    }
+  },
+
+  async requests() {
+    const all = await listRequests()
+    if (all.length === 0) return console.log('\nNo requests yet.')
+
+    console.log(`\n${all.length} request${all.length === 1 ? '' : 's'}\n`)
+    for (const request of all) {
+      console.log(`  ${request.text}`)
+      console.log(`         — ${request.name ?? 'anonymous'}`)
+    }
   },
 
   async qty() {

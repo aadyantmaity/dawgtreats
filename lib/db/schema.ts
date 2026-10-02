@@ -134,3 +134,27 @@ export const stripeEvents = pgTable('stripe_events', {
   type: text('type').notNull(),
   processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// One review per order, and only an order that was collected can have one: the
+// order code is the proof that a review came from a real customer.
+export const reviews = pgTable(
+  'reviews',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .unique()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    rating: integer('rating').notNull(),
+    comment: text('comment'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [check('rating_range', sql`${table.rating} between 1 and 5`)],
+)
+
+export const requests = pgTable('requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name'),
+  text: text('text').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})

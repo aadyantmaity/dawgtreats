@@ -30,6 +30,7 @@
   --text-color-urgent: var(--palette-rust);
   --text-color-success: var(--palette-sage-700);
   --text-color-warning: var(--palette-honey-700);
+  --text-color-rating: var(--palette-honey-700);
 
   --background-color-page: var(--palette-ivory);
   --background-color-surface: var(--palette-white);
@@ -68,6 +69,11 @@
   /* Named sizes for things that repeat with a meaning. */
   --spacing-control: 2.75rem;
   --spacing-control-sm: 2.25rem;
+  /* The feedback panel: wide enough for a sentence, short enough to never fill a phone. */
+  --spacing-panel: 22rem;
+  --spacing-panel-max-h: 70vh;
+  /* Clears the floating button so the last row of a page is never stuck under it. */
+  --spacing-fab-clearance: 5rem;
   --spacing-menu: 16rem;
 
   --radius-*: initial;

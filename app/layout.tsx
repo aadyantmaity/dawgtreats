@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
+import { FeedbackFab } from "@/components/feedback-fab";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -43,6 +44,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </header>
         {children}
+        <footer className="mt-16 border-t border-default">
+          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-4 px-6 py-6 pb-fab-clearance text-sm text-secondary sm:pb-6">
+            <Link href="/requests" className="hover:text-primary">
+              Request a flavour
+            </Link>
+            <Link href="/order/lookup" className="hover:text-primary">
+              Find my order
+            </Link>
+            <span className="text-tertiary">Pickup only · all sales final</span>
+          </div>
+        </footer>
+        <FeedbackFab />
       </body>
     </html>
   );

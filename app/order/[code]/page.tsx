@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { OrderStatus } from "@/app/order/[code]/order-status";
+import { ReviewForm } from "@/app/order/[code]/review-form";
 import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
+import { hasReview } from "@/lib/reviews";
 import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +17,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   if (!found) notFound();
 
   const { order, lines, slot } = found;
+  const reviewed = order.status === "picked_up" ? await hasReview(order.orderCode) : true;
   const pickup = `${formatPt(slot.startsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(slot.endsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
   return (
@@ -42,6 +45,8 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
           <span className="tabular-nums">{formatCents(order.totalCents)}</span>
         </div>
       </Card>
+
+      {order.status === "picked_up" && !reviewed && <ReviewForm orderCode={order.orderCode} />}
 
       <Link href="/" className="mt-8 inline-block underline">
         Back to the menu
