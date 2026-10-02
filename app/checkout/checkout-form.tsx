@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, type SelectOption } from "@/components/ui/select";
 import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
-import { LIMITS } from "@/lib/validation";
+import { LIMITS, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
 
 export type SlotChoice = { id: string; label: string; spotsLeft: number };
 
@@ -25,15 +25,36 @@ function isReserved(data: unknown): data is Reserved {
   );
 }
 
-export function CheckoutForm({ menu, slots }: { menu: MenuItem[]; slots: SlotChoice[] }) {
+export function CheckoutForm({
+  menu,
+  slots,
+  contact,
+}: {
+  menu: MenuItem[];
+  slots: SlotChoice[];
+  contact: { name: string; email: string; phone: string };
+}) {
   const { lines, count, clear } = useCart();
   const [slotId, setSlotId] = useState(slots[0]?.id ?? "");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(contact.name);
+  const [email, setEmail] = useState(contact.email);
+  const [phone, setPhone] = useState(formatPhoneInput(contact.phone));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [reserved, setReserved] = useState<Reserved | null>(null);
+  const [touched, setTouched] = useState({ name: false, email: false, phone: false });
+
+  const fieldErrors = {
+    name: nameError(name),
+    email: emailError(email),
+    phone: phoneError(phone),
+  };
+  const incomplete = Object.values(fieldErrors).some(Boolean);
+  // A field stays quiet until it is left or the form is submitted, then tracks every keystroke.
+  const shown = (field: keyof typeof fieldErrors) =>
+    touched[field] ? (fieldErrors[field] ?? undefined) : undefined;
+  const touch = (field: keyof typeof fieldErrors) => () =>
+    setTouched((was) => ({ ...was, [field]: true }));
 
   const onMenu = new Map(menu.map((item) => [item.id, item]));
   const rows = lines.flatMap((line) => {
@@ -49,6 +70,8 @@ export function CheckoutForm({ menu, slots }: { menu: MenuItem[]; slots: SlotCho
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setTouched({ name: true, email: true, phone: true });
+    if (incomplete) return;
     setError(null);
     setPending(true);
     try {
@@ -159,21 +182,36 @@ export function CheckoutForm({ menu, slots }: { menu: MenuItem[]; slots: SlotCho
 
       <Card title="Where to find you">
         <div className="flex flex-col gap-4">
-          <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+          <Input
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={touch("name")}
+            error={shown("name")}
+            autoComplete="name"
+            maxLength={LIMITS.nameMax}
+          />
           <Input
             label="Email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={touch("email")}
+            error={shown("email")}
             autoComplete="email"
+            maxLength={120}
             hint="Your order code goes here."
           />
           <Input
             label="Phone"
             type="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+            onBlur={touch("phone")}
+            error={shown("phone")}
             autoComplete="tel"
+            inputMode="tel"
+            placeholder="(425) 515-4457"
           />
         </div>
       </Card>

@@ -23,6 +23,9 @@ export type TestWeek = {
   flavorIds: Record<string, string>
 }
 
+// Each seeded week gets its own weekend: a weekend can only hold one week.
+let weekendsUsed = 0
+
 // A week that is open and orderable right now, with the stock and slots a test asks for.
 export async function seedWeek({
   stock,
@@ -30,10 +33,13 @@ export async function seedWeek({
   capacity = 5,
   status = 'open',
 }: WeekSpec): Promise<TestWeek> {
+  const weekend = new Date(Date.UTC(2099, 0, 3) + weekendsUsed++ * 7 * 86_400_000)
+    .toISOString()
+    .slice(0, 10)
   const [week] = await db
     .insert(weeks)
     .values({
-      pickupWeekendStart: '2099-01-03',
+      pickupWeekendStart: weekend,
       ordersCloseAt: new Date(Date.now() + 7 * 24 * 60 * 60_000),
       status,
     })
@@ -56,7 +62,7 @@ export async function seedWeek({
 
   const slotIds: string[] = []
   for (let i = 0; i < slots; i++) {
-    const startsAt = new Date(`2099-01-03T20:00:00Z`)
+    const startsAt = new Date(`${weekend}T20:00:00Z`)
     startsAt.setUTCMinutes(startsAt.getUTCMinutes() + i * 30)
     const [slot] = await db
       .insert(pickupSlots)

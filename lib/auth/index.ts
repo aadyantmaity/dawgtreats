@@ -1,0 +1,99 @@
+import 'server-only'
+
+import { createServerClient } from '@supabase/ssr'
+import { and, eq, isNull, sql } from 'drizzle-orm'
+import { cookies } from 'next/headers'
+
+import { db } from '@/lib/db'
+import { orders, users } from '@/lib/db/schema'
+
+export type Account = typeof users.$inferSelect
+
+function config() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) throw new Error('Supabase is not configured')
+  return { url, key }
+}
+
+export async function supabaseServer() {
+  const store = await cookies()
+  const { url, key } = config()
+
+  return createServerClient(url, key, {
+    cookies: {
+      getAll: () => store.getAll(),
+      setAll: (written) => {
+        try {
+          for (const { name, value, options } of written) store.set(name, value, options)
+        } catch {
+          // Server components cannot set cookies; the callback route and middleware do.
+        }
+      },
+    },
+  })
+}
+
+// Google has verified this email, which is the only reason it is safe to claim orders with it.
+export async function syncAccount(identity: {
+  supabaseUid: string
+  email: string
+  name: string | null
+}): Promise<Account> {
+  const [byUid] = await db.select().from(users).where(eq(users.supabaseUid, identity.supabaseUid))
+  if (byUid) {
+    if (byUid.email === identity.email) return byUid
+    const [updated] = await db
+      .update(users)
+      .set({ email: identity.email })
+      .where(eq(users.id, byUid.id))
+      .returning()
+    return updated
+  }
+
+  const [byEmail] = await db.select().from(users).where(eq(users.email, identity.email))
+  if (byEmail) {
+    const [linked] = await db
+      .update(users)
+      .set({ supabaseUid: identity.supabaseUid })
+      .where(eq(users.id, byEmail.id))
+      .returning()
+    return linked
+  }
+
+  const [created] = await db
+    .insert(users)
+    .values({ supabaseUid: identity.supabaseUid, email: identity.email, name: identity.name })
+    .returning()
+  return created
+}
+
+// Guest orders join an account only on an exact, verified email match. Phone numbers at
+// checkout are unverified, so they are never used to claim an order.
+export async function claimGuestOrders(account: Account): Promise<number> {
+  const claimed = await db
+    .update(orders)
+    .set({ userId: account.id })
+    .where(and(isNull(orders.userId), sql`lower(${orders.email}) = lower(${account.email})`))
+    .returning({ id: orders.id })
+  return claimed.length
+}
+
+export async function currentAccount(): Promise<Account | null> {
+  const supabase = await supabaseServer()
+  const { data } = await supabase.auth.getUser()
+  const user = data.user
+  if (!user?.email) return null
+
+  const name =
+    typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null
+  return syncAccount({ supabaseUid: user.id, email: user.email, name })
+}
+
+export async function updateAccount(
+  accountId: string,
+  patch: { name?: string | null; phone?: string | null },
+): Promise<Account> {
+  const [updated] = await db.update(users).set(patch).where(eq(users.id, accountId)).returning()
+  return updated
+}

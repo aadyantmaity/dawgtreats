@@ -21,6 +21,10 @@ const MESSAGES = {
   priceTooHigh: `Price must be ${formatCents(LIMITS.priceMaxCents)} or less`,
   quantityWhole: 'Quantities must be whole numbers',
   quantityTooHigh: `Quantities must be ${LIMITS.quantityMax} or fewer`,
+  emailRequired: 'Email is required',
+  emailFormat: 'That email address does not look right',
+  phoneRequired: 'Phone number is required',
+  phoneFormat: 'Enter a 10-digit phone number',
 } as const
 
 export const flavorSchema = z.object({
@@ -68,14 +72,44 @@ export function quantityError(value: string, sold: number): string | null {
   return null
 }
 
+// Stored as digits so every number looks the same; the form shows (425) 515-4457.
+export function phoneDigits(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  return digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits
+}
+
+export function formatPhoneInput(raw: string): string {
+  const digits = phoneDigits(raw).slice(0, 10)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+
+export function formatPhone(stored: string): string {
+  return formatPhoneInput(stored) || stored
+}
+
+export const phoneSchema = z
+  .string()
+  .transform(phoneDigits)
+  .refine((digits) => digits.length === 10, MESSAGES.phoneFormat)
+
+export function emailError(value: string): string | null {
+  if (!value.trim()) return MESSAGES.emailRequired
+  return z.email().safeParse(value.trim()).success ? null : MESSAGES.emailFormat
+}
+
+// Optional on the account page, required at checkout: it is how a missed pickup gets sorted out.
+export function phoneError(value: string, required = true): string | null {
+  const digits = phoneDigits(value)
+  if (!digits) return required ? MESSAGES.phoneRequired : null
+  return digits.length === 10 ? null : MESSAGES.phoneFormat
+}
+
 const contact = {
   name: z.string().trim().min(1, 'Your name is required').max(LIMITS.nameMax, MESSAGES.nameTooLong),
-  email: z.email('That email address does not look right').max(120, 'That email address is too long'),
-  phone: z
-    .string()
-    .trim()
-    .min(7, 'A phone number helps us find you at pickup')
-    .max(20, 'That phone number is too long'),
+  email: z.email(MESSAGES.emailFormat).max(120, 'That email address is too long'),
+  phone: phoneSchema,
 }
 
 export const checkoutSchema = z.object({

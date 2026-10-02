@@ -1,6 +1,6 @@
 # Inputs
 
-Every rule lives in `lib/validation.ts` and is shared by whatever takes the input: the admin CLI today, and the customer forms and API routes as they arrive. The layer that touches the database always re-checks, so a bad value never gets in by another door.
+Every rule lives in `lib/validation.ts` and is shared by whatever takes the input: the admin CLI, the customer forms and the API routes behind them. The layer that touches the database always re-checks, so a bad value never gets in by another door.
 
 ## Conventions
 
@@ -17,7 +17,7 @@ Every rule lives in `lib/validation.ts` and is shared by whatever takes the inpu
 - **A range adds each half hour** and skips the ones already there, naming each skip.
 - **Destructive commands need proof of intent:** `reset` refuses without `--yes`, and `week:delete` only touches a draft week with no orders.
 
-**In forms** (customer pages, as they're built)
+**In forms** (customer pages)
 
 - **Block what can never be valid, as it's typed:** letters in a quantity, a third decimal in a price.
 - **Show a field's error once it's left or the form is submitted,** then update live while typing.
@@ -37,6 +37,10 @@ Every rule lives in `lib/validation.ts` and is shared by whatever takes the inpu
 | Slot time | `slots:add`, `slots:rm` | On the hour or half hour, not already taken, not in the past, week not closed | "Slots start on the hour or half hour", "That slot already exists", "That time has already passed", "This week is closed" |
 | Opening a week | `week:open` | Needs at least one quantity and one slot; only one week open at a time; cutoff not passed | "Set at least one flavor quantity before opening", "Add at least one pickup slot before opening", "Another week is open. Close it first." |
 | Creating a week | `week:new` | The server picks the weekend; one week per weekend | "The week of … already exists" |
+| Your name | Checkout | Required after trimming, 60 characters or fewer | "Name is required" |
+| Email | Checkout | Required, has to look like an address, 120 characters or fewer | "Email is required", "That email address does not look right" |
+| Phone | Checkout | Required, exactly 10 digits however they are typed; formats to (425) 515-4457 as you type and stores digits only | "Phone number is required", "Enter a 10-digit phone number" |
+| Phone | Account details | Same, but blank is allowed: a saved profile only needs one by checkout | "Enter a 10-digit phone number" |
 
 ## Not enforced yet
 

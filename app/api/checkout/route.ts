@@ -1,3 +1,4 @@
+import { currentAccount } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/errors'
 import { attachSession, releaseOrder, reserve } from '@/lib/orders'
 import { createCheckoutSession } from '@/lib/payments'
@@ -6,7 +7,9 @@ import { checkoutSchema } from '@/lib/validation'
 export async function POST(request: Request) {
   try {
     const input = await parseBody(request, checkoutSchema)
-    const reservation = await reserve(input)
+    // Taken from the session, never the request body: a cart cannot claim someone else's account.
+    const account = await currentAccount()
+    const reservation = await reserve(input, account?.id ?? null)
 
     try {
       const session = await createCheckoutSession({

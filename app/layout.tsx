@@ -35,6 +35,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/order/lookup" className="text-sm text-secondary hover:text-primary">
                 Find my order
               </Link>
+              <Link href="/account" className="text-sm text-secondary hover:text-primary">
+                Account
+              </Link>
               <CartLink />
             </nav>
           </div>

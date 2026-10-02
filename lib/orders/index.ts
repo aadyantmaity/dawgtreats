@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { and, asc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents } from '@/lib/db/schema'
@@ -42,7 +42,7 @@ function isDuplicateCode(error: unknown): boolean {
 
 // One transaction of conditional updates: a row only moves if there is room, and any
 // statement that changes nothing rolls the whole checkout back.
-export async function reserve(input: CheckoutInput): Promise<Reservation> {
+export async function reserve(input: CheckoutInput, accountId?: string | null): Promise<Reservation> {
   const week = await getOrderableWeek()
   if (!week) throw new DomainError('Orders are closed right now', 409)
 
@@ -126,6 +126,7 @@ export async function reserve(input: CheckoutInput): Promise<Reservation> {
             phone: input.phone,
             totalCents,
             reservedUntil,
+            userId: accountId ?? null,
           })
           .returning({ id: orders.id, orderCode: orders.orderCode })
 
@@ -299,4 +300,20 @@ export async function listStuckOrders(olderThanMinutes = 35) {
       ),
     )
     .orderBy(asc(orders.createdAt))
+}
+
+export async function listOrdersForAccount(accountId: string) {
+  return db
+    .select({
+      orderCode: orders.orderCode,
+      status: orders.status,
+      totalCents: orders.totalCents,
+      createdAt: orders.createdAt,
+      pickupStartsAt: pickupSlots.startsAt,
+      pickupEndsAt: pickupSlots.endsAt,
+    })
+    .from(orders)
+    .innerJoin(pickupSlots, eq(pickupSlots.id, orders.pickupSlotId))
+    .where(eq(orders.userId, accountId))
+    .orderBy(desc(orders.createdAt))
 }

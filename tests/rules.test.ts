@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
 import { formatCents, parsePriceCents } from '@/lib/money'
-import { checkoutSchema, nameError, priceError, quantityError } from '@/lib/validation'
+import {
+  checkoutSchema,
+  emailError,
+  formatPhoneInput,
+  nameError,
+  phoneError,
+  phoneSchema,
+  priceError,
+  quantityError,
+} from '@/lib/validation'
 import { ptToUtc, upcomingWeekend } from '@/lib/weeks'
 
 describe('money never goes through a float', () => {
@@ -42,6 +51,43 @@ describe('input rules', () => {
     expect(quantityError('5', 5)).toBeNull()
     expect(quantityError('', 0)).toBeNull()
     expect(quantityError('1001', 0)).toMatch(/1000 or fewer/)
+  })
+
+  it('wants an email that could exist', () => {
+    expect(emailError('')).toBe('Email is required')
+    expect(emailError('buyer@')).toMatch(/does not look right/)
+    expect(emailError('buyer@example.com')).toBeNull()
+  })
+
+  it('wants ten digits of phone, however they are typed', () => {
+    expect(phoneError('')).toBe('Phone number is required')
+    expect(phoneError('206555')).toMatch(/10-digit/)
+    expect(phoneError('(206) 555-0123')).toBeNull()
+    expect(phoneError('+1 206 555 0123')).toBeNull()
+  })
+
+  it('lets an account leave its phone blank', () => {
+    expect(phoneError('', false)).toBeNull()
+    expect(phoneError('206555', false)).toMatch(/10-digit/)
+  })
+})
+
+describe('phone numbers', () => {
+  it('formats while it is being typed', () => {
+    expect(formatPhoneInput('206')).toBe('206')
+    expect(formatPhoneInput('206555')).toBe('(206) 555')
+    expect(formatPhoneInput('2065550123')).toBe('(206) 555-0123')
+  })
+
+  it('throws away anything past ten digits', () => {
+    expect(formatPhoneInput('20655501239999')).toBe('(206) 555-0123')
+  })
+
+  // The database only ever sees digits, so two people typing the same number match.
+  it('strips formatting and the country code before storing', () => {
+    expect(phoneSchema.parse('(206) 555-0123')).toBe('2065550123')
+    expect(phoneSchema.parse('+1 (206) 555-0123')).toBe('2065550123')
+    expect(phoneSchema.safeParse('206-555').success).toBe(false)
   })
 })
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CheckoutForm, type SlotChoice } from "@/app/checkout/checkout-form";
+import { currentAccount } from "@/lib/auth";
 import { getMenu, listSlots } from "@/lib/inventory";
 import { formatClosesAt, formatPickupWeekend, formatPt, getOrderableWeek } from "@/lib/weeks";
 
@@ -21,7 +22,7 @@ export default async function CheckoutPage() {
     );
   }
 
-  const [menu, slots] = await Promise.all([getMenu(week.id), listSlots(week.id)]);
+  const [menu, slots, account] = await Promise.all([getMenu(week.id), listSlots(week.id), currentAccount()]);
   const choices: SlotChoice[] = slots
     .filter((slot) => slot.bookedCount < slot.capacity)
     .map((slot) => ({
@@ -37,7 +38,11 @@ export default async function CheckoutPage() {
         <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>
         <p>Orders close {formatClosesAt(week.ordersCloseAt)}</p>
       </div>
-      <CheckoutForm menu={menu} slots={choices} />
+      <CheckoutForm
+        menu={menu}
+        slots={choices}
+        contact={{ name: account?.name ?? "", email: account?.email ?? "", phone: account?.phone ?? "" }}
+      />
     </main>
   );
 }

@@ -201,8 +201,31 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 5\. Concurrency test: fire 20 simultaneous checkouts at the last 5 cookies and assert no overselling
 - [x] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
 - [x] 7\. Order lookup by code, plus the success page polling
-- [ ] 8\. Google sign-in, account page, and linking past guest orders by verified email
+- [x] 8\. Google sign-in, account page, and linking past guest orders by verified email
 - [ ] 9\. Buy the domain, verify it with Resend, send confirmation emails
 - [ ] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
 - [ ] 11\. Sentry, rate limits, event logging
-- [ ] 12\. Switch Stripe to live mode, place a real test order, open the first week
+- [ ] 12\. Security audit of every request path, before any real money moves
+- [ ] 13\. Switch Stripe to live mode, place a real test order, open the first week
+
+### Slice 12: the security audit
+
+Runs after rate limits exist and before live mode, because it is the last gate before real
+cards and real addresses. It is a review with a written result, not a feature. Go through
+every route under `app/api/`, every page that reads a session, and the CLI, and check:
+
+- **Who is allowed.** Each route states its caller: anyone, a signed-in account, Stripe, or
+  the cron secret. Anything reading `currentAccount()` takes the id from the session and
+  never from the body.
+- **What leaks.** No response includes another person's contact details. `getPublicOrder`
+  stays the only shape a guest code returns. Personalised pages keep `force-dynamic` and
+  `no-cache`, so no CDN can hand one person's account page to the next visitor.
+- **What a script can cost.** Every unauthenticated write is rate limited, `/api/checkout`
+  included: reservations hold stock for 30 minutes, so an unlimited loop can sell out a week
+  for free. Limits are shared across instances and keyed on an address the caller cannot forge.
+- **What is trusted.** Prices, totals and quantities are read from the database. Webhook
+  signatures are verified. The cron secret is compared in constant time.
+- **What gets logged.** Errors carry context; no log line contains a card, a token or a session cookie.
+
+Done when each item above is confirmed by a test or a note saying how it was checked, written
+up in `docs/AUDIT.md`, and every gap found is either fixed or listed there with a decision.
