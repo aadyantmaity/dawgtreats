@@ -31,7 +31,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="font-serif text-xl font-semibold">
               Dawg Treats
             </Link>
-            <CartLink />
+            <nav className="flex items-center gap-4">
+              <Link href="/order/lookup" className="text-sm text-secondary hover:text-primary">
+                Find my order
+              </Link>
+              <CartLink />
+            </nav>
           </div>
         </header>
         {children}

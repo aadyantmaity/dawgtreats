@@ -187,6 +187,31 @@ export async function getOrderByCode(orderCode: string) {
   return { order, lines, slot }
 }
 
+export type PublicOrder = {
+  orderCode: string
+  status: (typeof orders.$inferSelect)['status']
+  totalCents: number
+  pickupStartsAt: Date
+  pickupEndsAt: Date
+  lines: { name: string; quantity: number; unitPriceCents: number }[]
+}
+
+// The order code is the only thing guarding a guest's order, so this never returns
+// contact details: knowing a code must not reveal who placed the order.
+export async function getPublicOrder(orderCode: string): Promise<PublicOrder | null> {
+  const found = await getOrderByCode(orderCode)
+  if (!found) return null
+
+  return {
+    orderCode: found.order.orderCode,
+    status: found.order.status,
+    totalCents: found.order.totalCents,
+    pickupStartsAt: found.slot.startsAt,
+    pickupEndsAt: found.slot.endsAt,
+    lines: found.lines,
+  }
+}
+
 // Returns false for an event id already written, so a Stripe retry does nothing twice.
 export async function recordEvent(stripeEventId: string, type: string): Promise<boolean> {
   const written = await db

@@ -1,23 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
 import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
-
-const tone = { pending: "neutral", paid: "success", ready: "success", picked_up: "success", expired: "warning" } as const;
-
-const headline = {
-  pending: "Waiting on payment",
-  paid: "You're all set",
-  ready: "Ready for pickup",
-  picked_up: "Picked up",
-  expired: "This order expired",
-} as const;
 
 export default async function OrderPage({ params }: PageProps<"/order/[code]">) {
   const { code } = await params;
@@ -29,15 +19,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-4xl font-semibold">{headline[order.status]}</h1>
-        <Badge tone={tone[order.status]} className="capitalize">
-          {order.status.replace("_", " ")}
-        </Badge>
-      </div>
-      <p className="mt-3 text-secondary">
-        Order <span className="font-semibold text-primary tabular-nums">{order.orderCode}</span>
-      </p>
+      <OrderStatus orderCode={order.orderCode} initial={order.status} />
 
       <Card title="Pickup" className="mt-8">
         <p>{pickup}</p>
@@ -60,17 +42,6 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
           <span className="tabular-nums">{formatCents(order.totalCents)}</span>
         </div>
       </Card>
-
-      {order.status === "pending" && (
-        <p className="mt-6 text-secondary">
-          If you just paid, this page updates once Stripe confirms it. Refresh in a moment.
-        </p>
-      )}
-      {order.status === "expired" && (
-        <p className="mt-6 text-secondary">
-          The hold ran out before payment arrived, so the cookies went back on the menu.
-        </p>
-      )}
 
       <Link href="/" className="mt-8 inline-block underline">
         Back to the menu

@@ -200,7 +200,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 4\. Cart and the checkout reservation transaction, no payment yet
 - [x] 5\. Concurrency test: fire 20 simultaneous checkouts at the last 5 cookies and assert no overselling
 - [x] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
-- [ ] 7\. Order lookup by code, plus the success page polling
+- [x] 7\. Order lookup by code, plus the success page polling
 - [ ] 8\. Google sign-in, account page, and linking past guest orders by verified email
 - [ ] 9\. Buy the domain, verify it with Resend, send confirmation emails
 - [ ] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
