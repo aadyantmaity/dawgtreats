@@ -19,12 +19,32 @@ function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000'
 }
 
+// Stripe sends the customer back here, so only our own origins are allowed: a forged
+// Origin header must not be able to land them on someone else's page after paying.
+export function returnOrigin(requested: string | null): string {
+  if (!requested) return siteUrl()
+  try {
+    const url = new URL(requested)
+    const allowed =
+      url.origin === siteUrl() ||
+      url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1' ||
+      url.hostname.endsWith('.vercel.app')
+    return allowed ? url.origin : siteUrl()
+  } catch {
+    return siteUrl()
+  }
+}
+
 export async function createCheckoutSession(order: {
   id: string
   orderCode: string
   email: string
   lines: CheckoutLine[]
+  origin?: string | null
 }): Promise<{ sessionId: string; url: string }> {
+  const origin = returnOrigin(order.origin ?? null)
+
   const session = await client().checkout.sessions.create({
     mode: 'payment',
     customer_email: order.email,
@@ -39,8 +59,8 @@ export async function createCheckoutSession(order: {
         product_data: { name: line.name },
       },
     })),
-    success_url: `${siteUrl()}/order/${order.orderCode}?paid=1`,
-    cancel_url: `${siteUrl()}/order/${order.orderCode}`,
+    success_url: `${origin}/order/${order.orderCode}?paid=1`,
+    cancel_url: `${origin}/order/${order.orderCode}`,
   })
 
   if (!session.url) throw new DomainError('Stripe did not return a payment page', 502)

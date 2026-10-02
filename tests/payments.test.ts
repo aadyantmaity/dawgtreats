@@ -11,6 +11,8 @@ import {
   reserve,
 } from '@/lib/orders'
 
+import { returnOrigin } from '@/lib/payments'
+
 import { buyer, resetDatabase, seedWeek } from './helpers'
 
 beforeEach(resetDatabase)
@@ -106,5 +108,22 @@ describe('finding orders the webhooks forgot', () => {
 
     await markPaid(order.orderId, { paymentIntentId: 'pi_1', amountCents: 600 })
     expect(await listStuckOrders()).toHaveLength(0)
+  })
+})
+
+describe('where Stripe sends the customer back', () => {
+  it('uses the origin they came from', () => {
+    expect(returnOrigin('http://localhost:3100')).toBe('http://localhost:3100')
+    expect(returnOrigin('https://dawgtreats.vercel.app')).toBe('https://dawgtreats.vercel.app')
+    expect(returnOrigin('https://dawgtreats-git-main-x.vercel.app')).toBe(
+      'https://dawgtreats-git-main-x.vercel.app',
+    )
+  })
+
+  it('ignores an origin that is not ours, so payment cannot end on someone else’s page', () => {
+    const site = process.env.NEXT_PUBLIC_SITE_URL
+    expect(returnOrigin('https://evil.example.com')).toBe(site)
+    expect(returnOrigin('not a url')).toBe(site)
+    expect(returnOrigin(null)).toBe(site)
   })
 })

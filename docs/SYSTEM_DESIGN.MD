@@ -106,7 +106,7 @@ flowchart TD
 | GitHub Actions | Hourly backup sweep | Calls a secret-protected route |
 | Sentry | Error tracking | Chosen over Datadog, which targets infrastructure at a much larger scale |
 
-**Secrets.** Service-role key, database URL, Stripe secret and webhook signing secrets, and the cron secret stay in Vercel env vars. The browser gets only the Supabase anon key, for sign-in. RLS on everywhere as a backstop.
+**Secrets.** Database URL, Stripe secret and webhook signing secrets, and the cron secret stay in Vercel env vars; `CRON_SECRET` is also a GitHub Actions secret, since the hourly sweep calls the site with it. The browser gets only the Supabase anon key, for sign-in. RLS on everywhere as a backstop.
 
 **Domain.** Development runs on `dawgtreats.vercel.app`; a domain is bought at the email step, since Resend needs a verified one. The site URL is a single env var.
 
@@ -199,7 +199,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 3\. Weeks from the CLI: quantities, slots, open and close behaviour
 - [x] 4\. Cart and the checkout reservation transaction, no payment yet
 - [x] 5\. Concurrency test: fire 20 simultaneous checkouts at the last 5 cookies and assert no overselling
-- [ ] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
+- [x] 6\. Stripe Checkout, both webhooks, and the hourly sweep in GitHub Actions
 - [ ] 7\. Order lookup by code, plus the success page polling
 - [ ] 8\. Google sign-in, account page, and linking past guest orders by verified email
 - [ ] 9\. Buy the domain, verify it with Resend, send confirmation emails

@@ -14,6 +14,7 @@ export async function POST(request: Request) {
         orderCode: reservation.orderCode,
         email: input.email,
         lines: reservation.lines,
+        origin: request.headers.get('origin'),
       })
       await attachSession(reservation.orderId, session.sessionId)
       return Response.json({ orderCode: reservation.orderCode, url: session.url }, { status: 201 })
