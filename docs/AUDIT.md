@@ -21,8 +21,7 @@ session, or a table.
 | `POST /api/webhooks/stripe` | Stripe | Signature verified against `STRIPE_WEBHOOK_SECRET` |
 | `GET /api/cron/sweep` | the scheduler | Bearer secret compared with `timingSafeEqual`; 404 otherwise |
 | `GET /auth/callback` | Google, via Supabase | Exchanges a code; `next` must be a relative path |
-| `submitReview` | anyone with a collected order's code | Rate limited; refuses an order that is not `picked_up`, and one review per order |
-| `submitRequest` | anyone | Rate limited; stores only what is typed |
+| `submitFeedback` | anyone | Rate limited; stores only a rating, a message and a name |
 | `npm run admin` | whoever holds `.env.local` | No network surface; runs on the owner's machine |
 
 A server action is a public endpoint. `/pickup` having rendered once says nothing about who
@@ -47,8 +46,7 @@ page.
 | --- | --- | --- |
 | Reserve cookies without paying | 5 per 10 minutes per address | Previously unlimited; a loop could hold a whole week |
 | Guess order codes | 20 per minute per address | 32^8 codes; guessing is not viable at this rate |
-| Leave reviews | 5 per 10 minutes per address | Needs a collected order's code; one review per order |
-| Send flavour requests | 3 per 10 minutes per address | An unauthenticated public write, so a spam box without this |
+| Send feedback | 5 per 10 minutes per address | An unauthenticated public write, so a spam box without this |
 | Everything else | unmetered | No write, no cost |
 
 Limits key on `x-real-ip`, which Vercel sets itself. The left-most `x-forwarded-for` entry is
@@ -94,6 +92,9 @@ deliberately, with RLS policies written first. Do not re-grant to get something 
 
 - **PostgREST is returning 503** (`no exposed schemas`). Harmless today — it is the API we do
   not use — but it means the REST layer is misconfigured rather than deliberately disabled.
+- **Feedback is unverified.** Anyone can rate the shop without having bought anything, which
+  was a deliberate trade for getting more of it. Worth revisiting only if ratings are ever
+  shown publicly, where an unearned rating would mislead a customer rather than just the owner.
 - **No alerting on the rate limiter.** `rate_limit_unavailable` reaches Sentry only if it
   throws; a sustained outage is currently silent.
 - **The admin CLI has no audit trail.** Whoever holds `.env.local` can change any week or

@@ -36,6 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/order/lookup" className="text-sm text-secondary hover:text-primary">
                 Find my order
               </Link>
+              <Link href="/feedback" className="text-sm text-secondary hover:text-primary">
+                Feedback
+              </Link>
               <Link href="/account" className="text-sm text-secondary hover:text-primary">
                 Account
               </Link>
@@ -46,8 +49,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <footer className="mt-16 border-t border-default">
           <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-4 px-6 py-6 pb-fab-clearance text-sm text-secondary sm:pb-6">
-            <Link href="/requests" className="hover:text-primary">
-              Request a flavour
+            <Link href="/feedback" className="hover:text-primary">
+              Feedback
             </Link>
             <Link href="/order/lookup" className="hover:text-primary">
               Find my order

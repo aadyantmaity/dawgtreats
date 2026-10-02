@@ -9,8 +9,7 @@ export const LIMITS = {
   quantityMax: 1000,
   perFlavorMax: 24,
   perOrderMax: 24,
-  commentMax: 500,
-  requestMax: 300,
+  messageMax: 500,
 } as const
 
 const MESSAGES = {
@@ -27,10 +26,8 @@ const MESSAGES = {
   emailFormat: 'That email address does not look right',
   phoneRequired: 'Phone number is required',
   phoneFormat: 'Enter a 10-digit phone number',
-  ratingRequired: 'Pick a rating',
-  commentTooLong: `Keep it to ${LIMITS.commentMax} characters or fewer`,
-  requestRequired: 'Tell us what to bake',
-  requestTooLong: `Keep it to ${LIMITS.requestMax} characters or fewer`,
+  messageRequired: 'Tell us what you think',
+  messageTooLong: `Keep it to ${LIMITS.messageMax} characters or fewer`,
 } as const
 
 export const flavorSchema = z.object({
@@ -144,29 +141,19 @@ export const checkoutSchema = z.object({
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
-export const reviewSchema = z.object({
-  rating: z.int(MESSAGES.ratingRequired).min(1, MESSAGES.ratingRequired).max(5, MESSAGES.ratingRequired),
-  comment: z
+export const feedbackSchema = z.object({
+  rating: z
+    .union([z.int().min(1).max(5), z.literal(0), z.null()])
+    .transform((r) => (r === 0 ? null : r)),
+  message: z
     .string()
     .trim()
-    .max(LIMITS.commentMax, MESSAGES.commentTooLong)
-    .transform((c) => c || null),
-})
-
-export const requestSchema = z.object({
+    .min(1, MESSAGES.messageRequired)
+    .max(LIMITS.messageMax, MESSAGES.messageTooLong),
   name: z.string().trim().max(LIMITS.nameMax, MESSAGES.nameTooLong).transform((n) => n || null),
-  text: z
-    .string()
-    .trim()
-    .min(1, MESSAGES.requestRequired)
-    .max(LIMITS.requestMax, MESSAGES.requestTooLong),
 })
 
-export function commentError(value: string): string | null {
-  return value.trim().length > LIMITS.commentMax ? MESSAGES.commentTooLong : null
-}
-
-export function requestError(value: string): string | null {
-  if (!value.trim()) return MESSAGES.requestRequired
-  return value.trim().length > LIMITS.requestMax ? MESSAGES.requestTooLong : null
+export function messageError(value: string): string | null {
+  if (!value.trim()) return MESSAGES.messageRequired
+  return value.trim().length > LIMITS.messageMax ? MESSAGES.messageTooLong : null
 }

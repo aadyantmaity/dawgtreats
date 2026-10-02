@@ -1,109 +1,61 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { markPaid, markPickedUp, reserve } from '@/lib/orders'
-import { askFor, hasReview, leaveReview, listRequests, listReviews } from '@/lib/reviews'
-import { requestSchema, reviewSchema } from '@/lib/validation'
+import { leaveFeedback, listFeedback } from '@/lib/feedback'
+import { feedbackSchema } from '@/lib/validation'
 
-import { buyer, resetDatabase, seedWeek } from './helpers'
+import { resetDatabase } from './helpers'
 
 beforeEach(resetDatabase)
 
-async function collectedOrder() {
-  const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 10 })
-  const order = await reserve({
-    ...buyer,
-    pickupSlotId: week.slotIds[0],
-    items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 2 }],
-  })
-  await markPaid(order.orderId, { paymentIntentId: `pi_${order.orderCode}`, amountCents: 600 })
-  await markPickedUp(order.orderId)
-  return order
-}
+describe('sending feedback', () => {
+  it('keeps a rating and a message together', async () => {
+    await leaveFeedback({ rating: 5, message: 'Perfect', name: 'Alex' })
 
-describe('leaving a review', () => {
-  it('takes one from someone who collected their order', async () => {
-    const order = await collectedOrder()
-
-    await leaveReview(order.orderCode, { rating: 5, comment: 'Perfect' })
-
-    const [saved] = await listReviews()
-    expect(saved).toMatchObject({ rating: 5, comment: 'Perfect', orderCode: order.orderCode })
-    expect(await hasReview(order.orderCode)).toBe(true)
+    const [saved] = await listFeedback()
+    expect(saved).toMatchObject({ rating: 5, message: 'Perfect', name: 'Alex' })
   })
 
-  it('accepts a lowercase code, the way it is typed', async () => {
-    const order = await collectedOrder()
+  // A flavour idea needs no rating, which is why the column is nullable.
+  it('takes a message with no rating and no name', async () => {
+    await leaveFeedback({ rating: null, message: 'Matcha please', name: null })
 
-    await leaveReview(order.orderCode.toLowerCase(), { rating: 4, comment: null })
-
-    expect(await listReviews()).toHaveLength(1)
+    const [saved] = await listFeedback()
+    expect(saved).toMatchObject({ rating: null, message: 'Matcha please', name: null })
   })
 
-  // The order code is the only proof a review came from a customer.
-  it('refuses an order that was never collected', async () => {
-    const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 10 })
-    const order = await reserve({
-      ...buyer,
-      pickupSlotId: week.slotIds[0],
-      items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }],
-    })
+  it('newest first', async () => {
+    await leaveFeedback({ rating: null, message: 'First', name: null })
+    await leaveFeedback({ rating: null, message: 'Second', name: null })
 
-    await expect(leaveReview(order.orderCode, { rating: 5, comment: null })).rejects.toThrow(
-      /picked it up/,
-    )
-    expect(await listReviews()).toHaveLength(0)
-  })
-
-  it('refuses a code that does not exist', async () => {
-    await expect(leaveReview('ZZZZZZZZ', { rating: 5, comment: null })).rejects.toThrow(
-      /No order with that code/,
-    )
-  })
-
-  it('takes only one review per order', async () => {
-    const order = await collectedOrder()
-    await leaveReview(order.orderCode, { rating: 5, comment: 'First' })
-
-    await expect(leaveReview(order.orderCode, { rating: 1, comment: 'Second' })).rejects.toThrow(
-      /already been reviewed/,
-    )
-
-    const all = await listReviews()
-    expect(all).toHaveLength(1)
-    expect(all[0].comment).toBe('First')
+    expect((await listFeedback()).map((f) => f.message)).toEqual(['Second', 'First'])
   })
 })
 
-describe('what a review may say', () => {
-  it('keeps the rating between one and five', () => {
-    expect(reviewSchema.safeParse({ rating: 0, comment: '' }).success).toBe(false)
-    expect(reviewSchema.safeParse({ rating: 6, comment: '' }).success).toBe(false)
-    expect(reviewSchema.safeParse({ rating: 3, comment: '' }).success).toBe(true)
-  })
+describe('what feedback may say', () => {
+  const parse = (form: Record<string, unknown>) =>
+    feedbackSchema.safeParse({ rating: 0, message: 'Something', name: '', ...form })
 
-  it('stores an empty comment as nothing', () => {
-    expect(reviewSchema.parse({ rating: 3, comment: '   ' }).comment).toBeNull()
+  it('needs something actually said', () => {
+    expect(parse({ message: '   ' }).success).toBe(false)
+    expect(parse({ message: 'Lemon' }).success).toBe(true)
   })
 
   it('refuses an essay', () => {
-    expect(reviewSchema.safeParse({ rating: 3, comment: 'x'.repeat(501) }).success).toBe(false)
-  })
-})
-
-describe('asking for a flavour', () => {
-  it('takes one without a name', async () => {
-    await askFor({ name: null, text: 'Double chocolate' })
-
-    const [saved] = await listRequests()
-    expect(saved).toMatchObject({ name: null, text: 'Double chocolate' })
+    expect(parse({ message: 'x'.repeat(501) }).success).toBe(false)
   })
 
-  it('needs something to actually say', () => {
-    expect(requestSchema.safeParse({ name: '', text: '   ' }).success).toBe(false)
-    expect(requestSchema.safeParse({ name: '', text: 'Lemon' }).success).toBe(true)
+  // The form sends 0 for "no stars picked", which has to become null, not a zero rating.
+  it('reads no stars as no rating', () => {
+    expect(parse({ rating: 0 }).data?.rating).toBeNull()
+    expect(parse({ rating: 4 }).data?.rating).toBe(4)
+  })
+
+  it('keeps a rating between one and five', () => {
+    expect(parse({ rating: 6 }).success).toBe(false)
+    expect(parse({ rating: -1 }).success).toBe(false)
   })
 
   it('stores an empty name as nothing', () => {
-    expect(requestSchema.parse({ name: '  ', text: 'Lemon' }).name).toBeNull()
+    expect(parse({ name: '  ' }).data?.name).toBeNull()
   })
 })

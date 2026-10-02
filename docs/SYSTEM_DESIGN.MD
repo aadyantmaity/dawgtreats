@@ -207,7 +207,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 11\. Sentry, rate limits, event logging
 - [x] 12\. Security audit of every request path, before any real money moves
 - [ ] 13\. Switch Stripe to live mode, place a real test order, open the first week
-- [x] 14\. Reviews and flavour requests: what people thought, and what they want baked next
+- [x] 14\. Feedback: one form for how the cookies were and what to bake next
 
 ### Slice 12: the security audit
 
@@ -231,23 +231,17 @@ every route under `app/api/`, every page that reads a session, and the CLI, and 
 Done when each item above is confirmed by a test or a note saying how it was checked, written
 up in `docs/AUDIT.md`, and every gap found is either fixed or listed there with a decision.
 
-### Slice 14: reviews and requests
+### Slice 14: feedback
 
-Two things customers want to tell the baker, and neither fits an order: how the cookies
-were, and what they wish were on the menu. Both arrive after pickup, so this slice comes
-after the first real week has run and there is something to review.
+One form, reachable from the nav bar, the footer and a floating button on every page. It
+takes an optional star rating, a message, and an optional name, and writes a row to
+`feedback`. Rate limited like every other unauthenticated write.
 
-Open questions to settle before building, not now:
+Reviews were originally gated on a `picked_up` order, so that a rating could only come from
+someone who had actually bought cookies. That gate was removed deliberately: it split
+feedback into two forms, and most people with something to say have not ordered yet. The
+trade is that a rating is now unverified, which matters only if ratings are ever shown to
+customers rather than read by the owner.
 
-- **Who may review.** Tying a review to a `picked_up` order stops strangers rating a shop
-  they never bought from; it also means the review link belongs in the pickup confirmation
-  rather than on the public site.
-- **Whether reviews are public.** Public reviews need moderation and a policy for bad ones.
-  Private feedback that only the owner reads needs neither and is probably the right first
-  version.
-- **Requests are simpler.** A name and a sentence, no account needed, rate limited like
-  everything else. The value is a list the owner reads when planning next week's flavors.
-
-Expect new tables (`reviews`, `requests`), a public form, and a CLI command to read them.
-Keep it behind the same rules as the rest: validation in `lib/validation.ts`, writes through
-`lib/`, nothing trusted from the request body.
+Read with `npm run admin -- feedback`, which prints each message with its stars and the
+average of the ones that carried a rating.

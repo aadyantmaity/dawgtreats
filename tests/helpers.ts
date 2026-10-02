@@ -5,7 +5,7 @@ import { batchItems, flavors, pickupSlots, weeks } from '@/lib/db/schema'
 
 export async function resetDatabase() {
   await db.execute(
-    sql`truncate stripe_events, payments, order_items, orders, pickup_slots, batch_items, weeks, flavors, users restart identity cascade`,
+    sql`truncate feedback, stripe_events, payments, order_items, orders, pickup_slots, batch_items, weeks, flavors, users restart identity cascade`,
   )
 }
 

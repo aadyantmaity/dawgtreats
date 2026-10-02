@@ -41,9 +41,9 @@ Every rule lives in `lib/validation.ts` and is shared by whatever takes the inpu
 | Email | Checkout | Required, has to look like an address, 120 characters or fewer | "Email is required", "That email address does not look right" |
 | Phone | Checkout | Required, exactly 10 digits however they are typed; formats to (425) 515-4457 as you type and stores digits only | "Phone number is required", "Enter a 10-digit phone number" |
 | Phone | Account details | Same, but blank is allowed: a saved profile only needs one by checkout | "Enter a 10-digit phone number" |
-| Rating | Review | One to five stars, required | "Pick a rating" |
-| Review comment | Review | Optional, 500 characters or fewer; blank stores nothing | "Keep it to 500 characters or fewer" |
-| Flavour request | Request form | Required after trimming, 300 characters or fewer | "Tell us what to bake", "Keep it to 300 characters or fewer" |
+| Rating | Feedback | Optional, one to five stars; tapping the same star again clears it | — |
+| Message | Feedback | Required after trimming, 500 characters or fewer | "Tell us what you think", "Keep it to 500 characters or fewer" |
+| Name | Feedback | Optional, 60 characters or fewer; blank stores nothing | "Name must be 60 characters or fewer" |
 
 ## Not enforced yet
 

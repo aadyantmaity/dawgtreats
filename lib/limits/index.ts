@@ -34,9 +34,8 @@ function limiter(name: string, limit: number, window: `${number} ${'s' | 'm'}`) 
 const limiters = {
   checkout: limiter('checkout', 5, '10 m'),
   lookup: limiter('lookup', 20, '1 m'),
-  // Both are unauthenticated public writes, so they are a spam box without a limit.
-  review: limiter('review', 5, '10 m'),
-  request: limiter('request', 3, '10 m'),
+  // An unauthenticated public write, so a spam box without a limit.
+  feedback: limiter('feedback', 5, '10 m'),
 } as const
 
 export type LimitName = keyof typeof limiters
