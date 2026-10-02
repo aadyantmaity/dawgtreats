@@ -204,9 +204,10 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 8\. Google sign-in, account page, and linking past guest orders by verified email
 - [x] 9\. Buy the domain, verify it with Resend, send confirmation emails
 - [x] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
-- [ ] 11\. Sentry, rate limits, event logging
+- [x] 11\. Sentry, rate limits, event logging
 - [ ] 12\. Security audit of every request path, before any real money moves
 - [ ] 13\. Switch Stripe to live mode, place a real test order, open the first week
+- [ ] 14\. Reviews and flavour requests: what people thought, and what they want baked next
 
 ### Slice 12: the security audit
 
@@ -229,3 +230,24 @@ every route under `app/api/`, every page that reads a session, and the CLI, and 
 
 Done when each item above is confirmed by a test or a note saying how it was checked, written
 up in `docs/AUDIT.md`, and every gap found is either fixed or listed there with a decision.
+
+### Slice 14: reviews and requests
+
+Two things customers want to tell the baker, and neither fits an order: how the cookies
+were, and what they wish were on the menu. Both arrive after pickup, so this slice comes
+after the first real week has run and there is something to review.
+
+Open questions to settle before building, not now:
+
+- **Who may review.** Tying a review to a `picked_up` order stops strangers rating a shop
+  they never bought from; it also means the review link belongs in the pickup confirmation
+  rather than on the public site.
+- **Whether reviews are public.** Public reviews need moderation and a policy for bad ones.
+  Private feedback that only the owner reads needs neither and is probably the right first
+  version.
+- **Requests are simpler.** A name and a sentence, no account needed, rate limited like
+  everything else. The value is a list the owner reads when planning next week's flavors.
+
+Expect new tables (`reviews`, `requests`), a public form, and a CLI command to read them.
+Keep it behind the same rules as the rest: validation in `lib/validation.ts`, writes through
+`lib/`, nothing trusted from the request body.
