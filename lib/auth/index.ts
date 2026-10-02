@@ -5,6 +5,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 
 import { db } from '@/lib/db'
+import { DomainError } from '@/lib/errors'
 import { orders, users } from '@/lib/db/schema'
 
 export type Account = typeof users.$inferSelect
@@ -88,6 +89,23 @@ export async function currentAccount(): Promise<Account | null> {
   const name =
     typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null
   return syncAccount({ supabaseUid: user.id, email: user.email, name })
+}
+
+// The pickup page is the only admin screen. A non-admin gets nothing back, and the
+// page 404s rather than saying "forbidden": no reason to advertise that it exists.
+export async function currentAdmin(): Promise<Account | null> {
+  const account = await currentAccount()
+  return account?.role === 'admin' ? account : null
+}
+
+export async function setRole(email: string, role: 'customer' | 'admin'): Promise<Account> {
+  const [updated] = await db
+    .update(users)
+    .set({ role })
+    .where(sql`lower(${users.email}) = lower(${email})`)
+    .returning()
+  if (!updated) throw new DomainError(`No account for ${email}. They must sign in once first.`)
+  return updated
 }
 
 export async function updateAccount(

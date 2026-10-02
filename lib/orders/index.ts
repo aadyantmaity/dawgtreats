@@ -317,3 +317,112 @@ export async function listOrdersForAccount(accountId: string) {
     .where(eq(orders.userId, accountId))
     .orderBy(desc(orders.createdAt))
 }
+
+// Pickup day only cares about orders that were actually paid for; pending and
+// expired ones have no cookies behind them.
+const COLLECTABLE = ['paid', 'ready', 'picked_up'] as const
+
+export type CollectableStatus = (typeof COLLECTABLE)[number]
+
+export type PickupOrder = {
+  id: string
+  orderCode: string
+  status: CollectableStatus
+  name: string
+  phone: string | null
+  totalCents: number
+  cookieCount: number
+  lines: { name: string; quantity: number }[]
+}
+
+export type PickupSlotGroup = {
+  slotId: string
+  startsAt: Date
+  endsAt: Date
+  orders: PickupOrder[]
+}
+
+export async function listPickupDay(weekId: string): Promise<PickupSlotGroup[]> {
+  const slots = await db
+    .select({ id: pickupSlots.id, startsAt: pickupSlots.startsAt, endsAt: pickupSlots.endsAt })
+    .from(pickupSlots)
+    .where(eq(pickupSlots.weekId, weekId))
+    .orderBy(asc(pickupSlots.startsAt))
+
+  const rows = await db
+    .select({
+      id: orders.id,
+      orderCode: orders.orderCode,
+      status: orders.status,
+      name: orders.name,
+      phone: orders.phone,
+      totalCents: orders.totalCents,
+      pickupSlotId: orders.pickupSlotId,
+      flavor: flavors.name,
+      quantity: orderItems.quantity,
+    })
+    .from(orders)
+    .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+    .innerJoin(flavors, eq(flavors.id, orderItems.flavorId))
+    .where(and(eq(orders.weekId, weekId), inArray(orders.status, [...COLLECTABLE])))
+    .orderBy(asc(orders.createdAt), asc(flavors.name))
+
+  const byOrder = new Map<string, PickupOrder & { pickupSlotId: string }>()
+  for (const row of rows) {
+    let order = byOrder.get(row.id)
+    if (!order) {
+      order = {
+        id: row.id,
+        orderCode: row.orderCode,
+        status: row.status as CollectableStatus,
+        name: row.name,
+        phone: row.phone,
+        totalCents: row.totalCents,
+        cookieCount: 0,
+        lines: [],
+        pickupSlotId: row.pickupSlotId,
+      }
+      byOrder.set(row.id, order)
+    }
+    order.lines.push({ name: row.flavor, quantity: row.quantity })
+    order.cookieCount += row.quantity
+  }
+
+  const grouped = [...byOrder.values()]
+  return slots.map((slot) => ({
+    slotId: slot.id,
+    startsAt: slot.startsAt,
+    endsAt: slot.endsAt,
+    orders: grouped.filter((order) => order.pickupSlotId === slot.id),
+  }))
+}
+
+// Guarded like every other transition: a double tap, or two phones open at once,
+// cannot walk an order backwards or skip payment.
+async function moveTo(
+  orderId: string,
+  to: 'ready' | 'picked_up',
+  from: readonly ('paid' | 'ready')[],
+): Promise<boolean> {
+  const [moved] = await db
+    .update(orders)
+    .set({ status: to })
+    .where(and(eq(orders.id, orderId), inArray(orders.status, [...from])))
+    .returning({ orderCode: orders.orderCode })
+  if (moved) console.log(`order_${to}`, { orderCode: moved.orderCode })
+  return Boolean(moved)
+}
+
+export const markReady = (orderId: string) => moveTo(orderId, 'ready', ['paid'])
+
+// Someone turning up before their bag is packed skips straight past ready.
+export const markPickedUp = (orderId: string) => moveTo(orderId, 'picked_up', ['paid', 'ready'])
+
+export async function markBackToPaid(orderId: string): Promise<boolean> {
+  const [moved] = await db
+    .update(orders)
+    .set({ status: 'paid' })
+    .where(and(eq(orders.id, orderId), inArray(orders.status, ['ready', 'picked_up'])))
+    .returning({ orderCode: orders.orderCode })
+  return Boolean(moved)
+}

@@ -2,6 +2,7 @@ import { asc, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { flavors, orders, weeks } from '@/lib/db/schema'
+import { setRole } from '@/lib/auth'
 import { DomainError } from '@/lib/errors'
 import { createFlavor, listFlavors, updateFlavor, type Flavor } from '@/lib/flavors'
 import {
@@ -50,6 +51,10 @@ This week
   qty <flavor> <count>                     how many to bake
   slots:add <sat|sun> <from> [to]          one slot, or every half hour up to "to"
   slots:rm <sat|sun> <time>                remove a slot
+
+Pickup day
+  admin:add <email>                        let this account open /pickup
+  admin:rm <email>                         take that away
 
 Test data
   seed                                     flavors, quantities and slots for the upcoming week
@@ -227,6 +232,16 @@ const commands: Record<string, () => Promise<void>> = {
   async 'flavor:on'() {
     const flavor = await updateFlavor((await findFlavor(positional[0] ?? fail('Usage: flavor:on <name>'))).id, { active: true })
     console.log(`${flavor.name} is back on the menu.`)
+  },
+
+  async 'admin:add'() {
+    const account = await setRole(positional[0] ?? fail('Usage: admin:add <email>'), 'admin')
+    console.log(`${account.email} can now open /pickup.`)
+  },
+
+  async 'admin:rm'() {
+    const account = await setRole(positional[0] ?? fail('Usage: admin:rm <email>'), 'customer')
+    console.log(`${account.email} can no longer open /pickup.`)
   },
 
   async qty() {

@@ -125,7 +125,7 @@ flowchart TD
 
 **Admin is a CLI, not pages.** `scripts/admin.ts` (`npm run admin -- <command>`) creates and opens weeks, sets quantities, adds and removes slots, and manages flavors. It calls the same `lib/` modules the site uses, so quantities still can't drop below what is sold, slots with orders still can't be removed, and only one week is open at a time. It runs on the owner's machine with the database URL from `.env.local`, so there is no admin role to protect and no admin surface on the public site.
 
-The one admin screen still planned is the pickup-day view (slice 10): a phone-friendly page listing a slot's orders with ready and picked-up buttons, since that job happens at the door, not at a terminal.
+The one admin screen is the pickup-day view at `/pickup`: a slot-by-slot list of a week's paid orders with bagged and picked-up buttons, since that job happens at the door, not at a terminal. It is gated on `users.role = 'admin'` (granted with `npm run admin -- admin:add <email>`), 404s for anyone else, and changes orders through server actions that re-check the admin every call. Transitions are status-guarded the same way payment is: `paid -> ready -> picked_up`, with a direct `paid -> picked_up` for someone who arrives before their bag is packed.
 
 **Endpoints**
 
@@ -203,7 +203,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 7\. Order lookup by code, plus the success page polling
 - [x] 8\. Google sign-in, account page, and linking past guest orders by verified email
 - [x] 9\. Buy the domain, verify it with Resend, send confirmation emails
-- [ ] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
+- [x] 10\. Pickup-day page (phone): orders by slot, ready and picked-up states
 - [ ] 11\. Sentry, rate limits, event logging
 - [ ] 12\. Security audit of every request path, before any real money moves
 - [ ] 13\. Switch Stripe to live mode, place a real test order, open the first week

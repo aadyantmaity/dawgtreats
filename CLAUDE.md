@@ -24,7 +24,7 @@ npm run lint
 - API routes stay thin: parse → authorize → call `lib/` → respond. No SQL in routes.
 - All stock and slot changes go through `lib/inventory`. Never inline.
 - Server-only modules start with `import 'server-only'`.
-- Public routes under `/api/`. There are no admin pages or admin API routes: admin work runs through the CLI (`scripts/admin.ts`, `npm run admin`), which calls `lib/` directly and so obeys the same rules.
+- Public routes under `/api/`. Admin work runs through the CLI (`scripts/admin.ts`, `npm run admin`), which calls `lib/` directly and so obeys the same rules. The one exception is `/pickup`, the pickup-day screen: it is gated on `currentAdmin()`, 404s for everyone else, and mutates through server actions that re-check the admin on every call, so there are still no admin API routes.
 - Expected failures throw `DomainError` from `lib/`; routes return them with `errorResponse`, so the user sees the specific message.
 
 ## Correctness rules
