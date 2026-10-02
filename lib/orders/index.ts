@@ -1,9 +1,9 @@
 import 'server-only'
 
-import { and, eq, gte, inArray, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
-import { batchItems, flavors, orderItems, orders, pickupSlots } from '@/lib/db/schema'
+import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents } from '@/lib/db/schema'
 import { DomainError } from '@/lib/errors'
 import type { CheckoutInput } from '@/lib/validation'
 import { getOrderableWeek } from '@/lib/weeks'
@@ -21,10 +21,12 @@ function newOrderCode(): string {
 }
 
 export type Reservation = {
+  orderId: string
   orderCode: string
   totalCents: number
   reservedUntil: Date
   pickupStartsAt: Date
+  lines: { name: string; quantity: number; unitPriceCents: number }[]
 }
 
 function isDuplicateCode(error: unknown): boolean {
@@ -138,10 +140,16 @@ export async function reserve(input: CheckoutInput): Promise<Reservation> {
 
         console.log('checkout_started', { orderCode: order.orderCode, totalCents, weekId: week.id })
         return {
+          orderId: order.id,
           orderCode: order.orderCode,
           totalCents,
           reservedUntil,
           pickupStartsAt: booked[0].startsAt,
+          lines: input.items.map((item) => ({
+            name: byId.get(item.flavorId)!.name,
+            quantity: item.quantity,
+            unitPriceCents: byId.get(item.flavorId)!.priceCents,
+          })),
         }
       })
     } catch (error) {
@@ -150,4 +158,120 @@ export async function reserve(input: CheckoutInput): Promise<Reservation> {
   }
 
   throw new DomainError('Could not start checkout. Please try again.', 409)
+}
+
+export async function attachSession(orderId: string, stripeSessionId: string): Promise<void> {
+  await db.update(orders).set({ stripeSessionId }).where(eq(orders.id, orderId))
+}
+
+export async function getOrderByCode(orderCode: string) {
+  const [order] = await db.select().from(orders).where(eq(orders.orderCode, orderCode))
+  if (!order) return null
+
+  const lines = await db
+    .select({
+      name: flavors.name,
+      quantity: orderItems.quantity,
+      unitPriceCents: orderItems.unitPriceCents,
+    })
+    .from(orderItems)
+    .innerJoin(flavors, eq(flavors.id, orderItems.flavorId))
+    .where(eq(orderItems.orderId, order.id))
+    .orderBy(asc(flavors.name))
+
+  const [slot] = await db
+    .select({ startsAt: pickupSlots.startsAt, endsAt: pickupSlots.endsAt })
+    .from(pickupSlots)
+    .where(eq(pickupSlots.id, order.pickupSlotId))
+
+  return { order, lines, slot }
+}
+
+// Returns false for an event id already written, so a Stripe retry does nothing twice.
+export async function recordEvent(stripeEventId: string, type: string): Promise<boolean> {
+  const written = await db
+    .insert(stripeEvents)
+    .values({ stripeEventId, type })
+    .onConflictDoNothing({ target: stripeEvents.stripeEventId })
+    .returning({ id: stripeEvents.id })
+  return written.length > 0
+}
+
+// Status-guarded, so only a pending order can become paid, however often this is called.
+export async function markPaid(
+  orderId: string,
+  payment: { paymentIntentId: string; amountCents: number },
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [order] = await tx
+      .update(orders)
+      .set({ status: 'paid', paidAt: new Date() })
+      .where(and(eq(orders.id, orderId), eq(orders.status, 'pending')))
+      .returning({ id: orders.id, orderCode: orders.orderCode })
+    if (!order) return false
+
+    await tx
+      .insert(payments)
+      .values({
+        orderId: order.id,
+        stripePaymentIntentId: payment.paymentIntentId,
+        amountCents: payment.amountCents,
+        status: 'succeeded',
+      })
+      .onConflictDoNothing({ target: payments.stripePaymentIntentId })
+
+    console.log('order_paid', { orderCode: order.orderCode, amountCents: payment.amountCents })
+    return true
+  })
+}
+
+// Puts the cookies and the slot back. Only a pending order releases anything.
+export async function releaseOrder(orderId: string): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [order] = await tx
+      .update(orders)
+      .set({ status: 'expired' })
+      .where(and(eq(orders.id, orderId), eq(orders.status, 'pending')))
+      .returning({
+        id: orders.id,
+        orderCode: orders.orderCode,
+        weekId: orders.weekId,
+        pickupSlotId: orders.pickupSlotId,
+      })
+    if (!order) return false
+
+    const lines = await tx
+      .select({ flavorId: orderItems.flavorId, quantity: orderItems.quantity })
+      .from(orderItems)
+      .where(eq(orderItems.orderId, order.id))
+
+    for (const line of lines) {
+      await tx
+        .update(batchItems)
+        .set({ quantityRemaining: sql`${batchItems.quantityRemaining} + ${line.quantity}` })
+        .where(and(eq(batchItems.weekId, order.weekId), eq(batchItems.flavorId, line.flavorId)))
+    }
+
+    await tx
+      .update(pickupSlots)
+      .set({ bookedCount: sql`greatest(${pickupSlots.bookedCount} - 1, 0)` })
+      .where(eq(pickupSlots.id, order.pickupSlotId))
+
+    console.log('order_expired', { orderCode: order.orderCode })
+    return true
+  })
+}
+
+// Anything still pending well past its hold: the webhook never arrived, or never will.
+export async function listStuckOrders(olderThanMinutes = 35) {
+  return db
+    .select({ id: orders.id, orderCode: orders.orderCode, stripeSessionId: orders.stripeSessionId })
+    .from(orders)
+    .where(
+      and(
+        eq(orders.status, 'pending'),
+        lt(orders.createdAt, new Date(Date.now() - olderThanMinutes * 60_000)),
+      ),
+    )
+    .orderBy(asc(orders.createdAt))
 }

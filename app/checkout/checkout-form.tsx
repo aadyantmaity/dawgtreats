@@ -72,6 +72,11 @@ export function CheckoutForm({ menu, slots }: { menu: MenuItem[]; slots: SlotCho
         setError(message);
         return;
       }
+      if (data && typeof data === "object" && "url" in data && typeof data.url === "string") {
+        clear();
+        window.location.assign(data.url);
+        return;
+      }
       if (isReserved(data)) {
         clear();
         setReserved(data);
@@ -193,7 +198,7 @@ export function CheckoutForm({ menu, slots }: { menu: MenuItem[]; slots: SlotCho
         size="md"
         disabled={pending || slots.length === 0 || shortfalls.length > 0}
       >
-        {pending ? "Holding your cookies…" : `Reserve ${count} cookies`}
+        {pending ? "Taking you to payment…" : `Pay for ${count} cookies`}
       </Button>
 
       <p className="text-sm text-tertiary">

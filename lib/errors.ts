@@ -3,7 +3,7 @@ import type { z } from 'zod'
 export class DomainError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 404 | 409 = 409,
+    readonly status: 400 | 404 | 409 | 502 | 503 = 409,
   ) {
     super(message)
     this.name = 'DomainError'

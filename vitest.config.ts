@@ -14,7 +14,14 @@ export default defineConfig({
     },
   },
   test: {
-    env: { DATABASE_URL: TEST_DATABASE_URL, TEST_DATABASE_URL },
+    env: {
+      DATABASE_URL: TEST_DATABASE_URL,
+      TEST_DATABASE_URL,
+      // Fake Stripe credentials: signatures are made and checked locally, nothing is sent.
+      STRIPE_SECRET_KEY: 'sk_test_not_a_real_key',
+      STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
+      NEXT_PUBLIC_SITE_URL: 'http://localhost:3000',
+    },
     globalSetup: ['./tests/setup/migrate.ts'],
     // One database, so files must not race each other.
     fileParallelism: false,
