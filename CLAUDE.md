@@ -43,6 +43,7 @@ npm run lint
 - Named exports. No default exports except pages.
 - Validate request bodies with Zod at the route boundary, and CLI arguments the same way. Input rules follow `docs/INPUTS.md`; rules and messages live in `lib/validation.ts`, shared by the browser, the API and the CLI.
 - Colours use role tokens only (`text-secondary`, `bg-surface`, `border-error`), named by job, never by hue. Spacing, sizes and radii come from the fixed scale (`p-4`, `h-control`, `rounded-card`); values off it don't compile. No hex, `rgb()` or arbitrary values in components. See `docs/TOKENS.md`.
+- The name is **Dawg Treats** wherever a person reads it (titles, headings, emails, CLI output) and **dawgtreats** wherever a machine does (package, repo, domain, containers, storage keys). Never `Dawgtreats` or `DawgTreats`.
 - Return specific, actionable errors ("snickerdoodle sold out"), not generic 500s.
 - Never swallow errors. Log with context.
 
