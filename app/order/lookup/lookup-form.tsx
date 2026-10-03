@@ -6,7 +6,8 @@ import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const CODE = /^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{8}$/;
+// Codes are four characters now; the older eight-character ones still have to work.
+const CODE = /^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4,8}$/;
 
 export function LookupForm() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function LookupForm() {
     event.preventDefault();
     const clean = code.trim().toUpperCase();
     if (!CODE.test(clean)) {
-      setError("That code is 8 characters, letters and numbers.");
+      setError("That code is letters and numbers, 4 characters.");
       return;
     }
 
@@ -60,7 +61,7 @@ export function LookupForm() {
         autoCapitalize="characters"
         spellCheck={false}
         maxLength={8}
-        placeholder="486N6XNV"
+        placeholder="4X7K"
         error={error ?? undefined}
         className="font-mono tracking-widest tabular-nums"
       />

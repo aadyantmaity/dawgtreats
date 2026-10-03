@@ -45,7 +45,7 @@ page.
 | Attempt | Limit | What it costs |
 | --- | --- | --- |
 | Reserve cookies without paying | 5 per 10 minutes per address | Previously unlimited; a loop could hold a whole week |
-| Guess order codes | 20 per minute per address | 32^8 codes; guessing is not viable at this rate |
+| Guess order codes | 20 per minute per address | 32^4 codes, about a million. Weeks of sustained guessing to land one, and it shows cookies and a pickup time, never who ordered |
 | Send feedback | 5 per 10 minutes per address | An unauthenticated public write, so a spam box without this |
 | Everything else | unmetered | No write, no cost |
 

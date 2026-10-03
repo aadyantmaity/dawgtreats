@@ -167,7 +167,7 @@ describe('what an order records', () => {
         pickupSlotId: slotIds[0],
         items: [{ flavorId: flavorIds.Snickerdoodle, quantity: 1 }],
       })
-      expect(orderCode).toMatch(/^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{8}$/)
+      expect(orderCode).toMatch(/^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}$/)
       codes.add(orderCode)
     }
     expect(codes.size).toBe(10)

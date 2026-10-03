@@ -12,8 +12,10 @@ import { getOrderableWeek } from '@/lib/weeks'
 const HOLD_MINUTES = 30
 
 // Crockford's alphabet: no I, L, O or U, so a code read aloud can't be mistyped.
+// Four characters is about a million codes. Guessing one is slow against the lookup
+// rate limit, and a guessed code shows cookies and a pickup time, never who ordered.
 const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-const CODE_LENGTH = 8
+const CODE_LENGTH = 4
 
 function newOrderCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH))
