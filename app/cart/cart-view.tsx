@@ -5,6 +5,8 @@ import { useEffect } from "react";
 
 import { reconcile, useCart } from "@/components/cart";
 import { Card } from "@/components/ui/card";
+import Image from "next/image";
+
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { Stepper } from "@/components/ui/stepper";
 import type { MenuItem } from "@/lib/inventory";
@@ -24,9 +26,21 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
 
   const total = rows.reduce((sum, row) => sum + row.priceCents * row.quantity, 0);
 
+  // Rendered in both states: an emptied cart is exactly when someone needs telling why.
+  const changed = notices.length > 0 && (
+    <div className="mt-6 flex flex-col gap-1" role="status">
+      {notices.map((note) => (
+        <p key={note} className="text-urgent">
+          {note}
+        </p>
+      ))}
+    </div>
+  );
+
   if (rows.length === 0) {
     return (
       <>
+        {changed}
         <p className="mt-3 text-secondary">Your cart is empty.</p>
         <Link href="/" className="mt-6 inline-block underline">
           Back to the menu
@@ -37,20 +51,22 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
 
   return (
     <div className="mt-8 flex flex-col gap-6">
-      {notices.length > 0 && (
-        <div className="flex flex-col gap-1" role="status">
-          {notices.map((note) => (
-            <p key={note} className="text-urgent">
-              {note}
-            </p>
-          ))}
-        </div>
-      )}
+      {changed}
       <Card className="p-0">
         <ul className="divide-y divide-default">
           {rows.map((row) => (
             <li key={row.id} className="flex flex-wrap items-center gap-4 p-5">
-              <PhotoPlaceholder className="size-12" />
+              {row.imageUrl ? (
+                <Image
+                  src={row.imageUrl}
+                  alt={row.name}
+                  width={48}
+                  height={48}
+                  className="size-12 rounded-control-sm object-cover"
+                />
+              ) : (
+                <PhotoPlaceholder className="size-12" />
+              )}
               <div className="min-w-0 flex-1 basis-40">
                 <p className="font-semibold">{row.name}</p>
                 <p className="text-sm text-secondary">{formatCents(row.priceCents)} each</p>
