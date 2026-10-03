@@ -83,6 +83,22 @@ For values that repeat with a meaning, so they can change in one place.
 
 Tailwind's own `rounded-lg`, `rounded-xl` and friends are removed.
 
+## Page width
+
+Every page is `mx-auto w-full flex-1 px-6 py-12` and left-aligned. Only the maximum width
+changes, and only by what the page holds:
+
+| Width | For | Pages |
+| --- | --- | --- |
+| `max-w-md` | one short form and nothing else | feedback, order lookup, 404 |
+| `max-w-2xl` | a page with content to read | cart, checkout, an order, account, pickup |
+| `max-w-4xl` | the card grid | the menu |
+
+A page must not change width with its own state. The account page used to be `md` signed out
+and `2xl` signed in, so it jumped when you signed in.
+
+The 404 is the one page that centres its text, because it has nowhere to send the eye next.
+
 ## Adding to the scale
 
 1. Round to an existing step first; that is almost always right.

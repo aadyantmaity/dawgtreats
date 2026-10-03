@@ -53,7 +53,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {admin && (
                 <Link
                   href="/pickup"
-                  className="text-sm whitespace-nowrap text-primary underline hover:text-primary"
+                  className="text-sm whitespace-nowrap text-secondary hover:text-primary"
                 >
                   Pickup
                 </Link>

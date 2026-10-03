@@ -50,7 +50,7 @@ export default async function MenuPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
-      <h1 className="text-4xl font-semibold sm:text-5xl">
+      <h1 className="text-4xl font-semibold">
         {week ? "This week's bake" : "The menu"}
       </h1>
       {week ? (
