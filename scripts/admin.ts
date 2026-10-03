@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+
 import { asc, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
@@ -44,7 +46,8 @@ Weeks
 Flavors
   flavors                                  the whole menu
   flavor:add <name> <price> [description]  add a flavor, price in dollars
-  flavor:edit <name> [--name=] [--price=] [--description=]
+  flavor:edit <name> [--name=] [--price=] [--description=] [--image=]
+                                           --image is a file in public/, e.g. flavors/chocolate-chip.jpg
   flavor:off <name>                        hide from the menu
   flavor:on <name>                         show again
 
@@ -157,6 +160,15 @@ async function showWeek(week: Week) {
   console.log()
 }
 
+function imagePath(value: string): string | null {
+  const image = value.trim()
+  if (!image) return null
+  if (image.startsWith('http://') || image.startsWith('https://')) return image
+  const path = image.startsWith('/') ? image : `/${image}`
+  if (!existsSync(`public${path}`)) fail(`No file at public${path}`)
+  return path
+}
+
 const commands: Record<string, () => Promise<void>> = {
   async help() {
     console.log(HELP)
@@ -217,14 +229,18 @@ const commands: Record<string, () => Promise<void>> = {
   },
 
   async 'flavor:edit'() {
-    const flavor = await findFlavor(positional[0] ?? fail('Usage: flavor:edit <name> [--name=] [--price=] [--description=]'))
+    // Declared here rather than inline so the usage line above stays readable.
+    const flavor = await findFlavor(positional[0] ?? fail('Usage: flavor:edit <name> [--name=] [--price=] [--description=] [--image=]'))
     const price = flag('price')
     const patch = {
       ...(flag('name') ? { name: flag('name')! } : {}),
       ...(flag('description') !== undefined ? { description: flag('description') || null } : {}),
       ...(price ? { priceCents: requirePrice(price) } : {}),
+      ...(flag('image') !== undefined ? { imageUrl: imagePath(flag('image')!) } : {}),
     }
-    if (Object.keys(patch).length === 0) fail('Nothing to change. Pass --name=, --price= or --description=')
+    if (Object.keys(patch).length === 0) {
+      fail('Nothing to change. Pass --name=, --price=, --description= or --image=')
+    }
     const updated = await updateFlavor(flavor.id, patch)
     console.log(`Updated ${updated.name}: ${formatCents(updated.priceCents)}${updated.description ? ` — ${updated.description}` : ''}`)
   },

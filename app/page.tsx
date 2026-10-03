@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { AddToCart } from "@/components/cart";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { getMenu, type MenuItem } from "@/lib/inventory";
@@ -24,7 +26,20 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
 
   return (
     <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-4">
-      <PhotoPlaceholder className={`aspect-photo w-full ${soldOut ? "opacity-60" : ""}`} />
+      {flavor.imageUrl ? (
+        <Image
+          src={flavor.imageUrl}
+          alt={flavor.name}
+          width={600}
+          height={450}
+          // Both cards are above the fold on a laptop, so neither should wait for lazy loading.
+          priority
+          sizes="(min-width: 768px) 24rem, 100vw"
+          className={`aspect-photo w-full rounded-card object-cover ${soldOut ? "opacity-60" : ""}`}
+        />
+      ) : (
+        <PhotoPlaceholder className={`aspect-photo w-full ${soldOut ? "opacity-60" : ""}`} />
+      )}
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className={`font-sans text-lg font-semibold ${soldOut ? "text-tertiary" : ""}`}>
