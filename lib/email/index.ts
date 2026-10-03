@@ -8,7 +8,7 @@ const FROM = 'Dawg Treats <orders@dawgtreats.shop>'
 
 type Sent = { id: string }
 
-// Resend's REST API is one POST; the SDK would only wrap fetch.
+// Resend's REST API is one POST call. The SDK would only wrap fetch.
 async function send(message: {
   to: string
   subject: string
@@ -58,8 +58,8 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
   ].join('\n')
 }
 
-// Never throws into the webhook: the order is already paid, so a failed email is
-// a logged problem to chase, not a reason to tell Stripe the payment failed.
+// The order is already paid, so a failed email is a logged problem to chase, never
+// a reason to tell Stripe the payment failed. This never throws into the webhook.
 export async function sendConfirmation(orderCode: string): Promise<boolean> {
   try {
     const order = await getOrderByCode(orderCode)

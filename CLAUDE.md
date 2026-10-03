@@ -49,10 +49,28 @@ npm run lint
 
 ## Comments
 
+Write few, and write them to outlast the code they sit above.
+
 - Comment why, never what. If the code needs a comment to say what it does, rename things instead.
-- Two lines maximum. Longer than that means the explanation belongs in `docs/`.
+- Describe the outcome, not the mechanism. "Stock is only released once Stripe says the session is
+  dead" survives a rewrite; "calls getSession then compares status" goes stale the day someone
+  reorders two lines.
+- Two lines maximum. Longer than that belongs in `docs/`.
 - Comment the non-obvious: pooler quirks, Stripe timing, anything that looks wrong but is deliberate.
-- No section banners, no JSDoc on internal functions, no commented-out code.
+- Nothing that restates the next line, no section banners, no JSDoc on internal functions, no
+  commented-out code.
+
+Phrasing follows ASD-STE100, the controlled English written for aircraft manuals, in the parts that
+earn their place here. It applies to comments, docs, commit messages and error text, never to copy a
+customer reads.
+
+- One idea per sentence. Two ideas means two sentences.
+- Put the condition or the reason first, then the point.
+- Active voice, present tense, and name the actor: "Stripe retries this", not "this may be retried".
+- Say what breaks, specifically, before saying why.
+- Plain English over Latin: "for example" not "e.g.", "that is" not "i.e.", "through" not "via".
+- Keep `should`, `may` and `might` for real uncertainty. A rule is not a suggestion.
+- One name per idea, the same name every time.
 
 ## Testing
 

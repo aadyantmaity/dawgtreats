@@ -55,7 +55,6 @@ export function FeedbackForm({
     <form onSubmit={submit} noValidate className={`flex flex-col gap-4 ${className}`}>
       <div className="flex flex-col gap-1.5">
         <span className="text-sm text-secondary">Rate the cookies (optional)</span>
-        {/* Hovering previews the whole run up to that star, the way every rating widget does. */}
         <div className="flex gap-1" onMouseLeave={() => setHovered(0)}>
           {STARS.map((star) => (
             <button

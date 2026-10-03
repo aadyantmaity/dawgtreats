@@ -19,8 +19,8 @@ function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000'
 }
 
-// Stripe sends the customer back here, so only our own origins are allowed: a forged
-// Origin header must not be able to land them on someone else's page after paying.
+// Stripe sends the customer back here, so this allows only our own origins: a forged
+// Origin header must not land them on someone else's page after paying.
 export function returnOrigin(requested: string | null): string {
   if (!requested) return siteUrl()
   try {

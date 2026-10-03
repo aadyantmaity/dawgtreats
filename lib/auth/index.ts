@@ -28,14 +28,14 @@ export async function supabaseServer() {
         try {
           for (const { name, value, options } of written) store.set(name, value, options)
         } catch {
-          // Server components cannot set cookies; the callback route and middleware do.
+          // Server components cannot set cookies. The callback route and middleware do that instead.
         }
       },
     },
   })
 }
 
-// Google has verified this email, which is the only reason it is safe to claim orders with it.
+// Google verifies this email. That is the only reason it is safe to claim orders with it.
 export async function syncAccount(identity: {
   supabaseUid: string
   email: string
@@ -91,10 +91,8 @@ export async function currentAccount(): Promise<Account | null> {
   return syncAccount({ supabaseUid: user.id, email: user.email, name })
 }
 
-// The pickup page is the only admin screen. A non-admin gets nothing back, and the
-// page 404s rather than saying "forbidden": no reason to advertise that it exists.
-// The header asks this on every page load, so it reads the role and writes nothing:
-// an account is created when someone signs in, not when they look at the menu.
+// A non-admin gets false and the page 404s, never "forbidden": no reason to advertise
+// that an admin screen exists. This never creates an account; signing in does that.
 export async function viewerIsAdmin(): Promise<boolean> {
   const supabase = await supabaseServer()
   const { data } = await supabase.auth.getUser()

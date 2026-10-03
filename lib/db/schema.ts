@@ -136,7 +136,7 @@ export const stripeEvents = pgTable('stripe_events', {
 })
 
 // One form for everything a customer wants to say: how the cookies were, what they
-// want baked next, or both. A rating is optional because a flavour idea needs none.
+// want baked next, or both. A rating is optional because a flavor idea needs none.
 export const feedback = pgTable(
   'feedback',
   {

@@ -11,10 +11,11 @@ import { getOrderableWeek } from '@/lib/weeks'
 // Matches Stripe's minimum Checkout session expiry, so stock is released only once Stripe says the session is dead.
 const HOLD_MINUTES = 30
 
-// Crockford's alphabet: no I, L, O or U, so a code read aloud can't be mistyped.
-// Four characters is about a million codes. Guessing one is slow against the lookup
-// rate limit, and a guessed code shows cookies and a pickup time, never who ordered.
+// Crockford's alphabet: no I, L, O or U, so a code read aloud is never mistyped.
 const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+
+// Four characters leaves about a million codes. A guessed code only shows cookies
+// and a pickup time, never who ordered, and the lookup rate limit slows guessing.
 const CODE_LENGTH = 4
 
 function newOrderCode(): string {
@@ -215,7 +216,7 @@ export async function getPublicOrder(orderCode: string): Promise<PublicOrder | n
   }
 }
 
-// Returns false for an event id already written, so a Stripe retry does nothing twice.
+// A Stripe retry of the same event does nothing: the second insert finds nothing new to write.
 export async function recordEvent(stripeEventId: string, type: string): Promise<boolean> {
   const written = await db
     .insert(stripeEvents)
@@ -225,7 +226,7 @@ export async function recordEvent(stripeEventId: string, type: string): Promise<
   return written.length > 0
 }
 
-// Status-guarded, so only a pending order can become paid, however often this is called.
+// Idempotent: calling this again for an order that is already paid changes nothing.
 export async function markPaid(
   orderId: string,
   payment: { paymentIntentId: string; amountCents: number },
@@ -253,7 +254,7 @@ export async function markPaid(
   })
 }
 
-// Puts the cookies and the slot back. Only a pending order releases anything.
+// Guarded the same way as markPaid: an order already paid or expired releases nothing twice.
 export async function releaseOrder(orderId: string): Promise<boolean> {
   return db.transaction(async (tx) => {
     const [order] = await tx
@@ -320,7 +321,7 @@ export async function listOrdersForAccount(accountId: string) {
     .orderBy(desc(orders.createdAt))
 }
 
-// Pickup day only cares about orders that were actually paid for; pending and
+// Pickup day only cares about orders that were actually paid for. Pending and
 // expired ones have no cookies behind them.
 const COLLECTABLE = ['paid', 'ready', 'picked_up'] as const
 

@@ -10,7 +10,7 @@ export async function resetDatabase() {
 }
 
 type WeekSpec = {
-  /** name -> cookies left this week */
+  // Keys are flavor names; values are how many are left.
   stock: Record<string, number>
   slots?: number
   capacity?: number

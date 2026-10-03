@@ -107,7 +107,7 @@ function ordersCloseAtFor(pickupWeekendStart: string): Date {
   return ptToUtc(addDays(pickupWeekendStart, -2), '23:59')
 }
 
-// The next Saturday whose Thursday 11:59pm PT cutoff is still ahead; from Friday on, that's next week.
+// The next Saturday whose Thursday 11:59pm PT cutoff is still ahead. From Friday on, that's next week.
 export function upcomingWeekend(now = new Date()): { pickupWeekendStart: string; ordersCloseAt: Date } {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: PT }).format(now)
   const [y, m, d] = today.split('-').map(Number)
@@ -135,8 +135,8 @@ export async function openWeek(id: string): Promise<Week> {
   return db.transaction(async (tx) => {
     const [week] = await tx.select().from(weeks).where(eq(weeks.id, id)).for('update')
     if (!week) throw new DomainError('Week not found', 404)
-    // A week closed by hand can be reopened while its cutoff is still ahead: closing
-    // early is a judgement call, and there was no way back from a mistaken one.
+    // A week closed by hand can reopen while its cutoff is still ahead: closing early
+    // is a judgement call, and a mistaken one needs a way back.
     if (week.status === 'open') throw new DomainError('This week is already open')
     if (week.ordersCloseAt.getTime() <= Date.now()) {
       throw new DomainError('The Thursday cutoff for this week has passed')
@@ -180,7 +180,7 @@ export async function closeWeek(id: string): Promise<Week> {
   throw new DomainError(`Only an open week can be closed; this one is ${week.status}`)
 }
 
-// Admin CLI only: a draft week that nobody has ordered from can be thrown away.
+// Admin CLI only.
 export async function deleteWeek(id: string): Promise<Week> {
   const week = await getWeek(id)
   if (week.status !== 'draft') throw new DomainError(`Only a draft week can be deleted; this one is ${week.status}`)

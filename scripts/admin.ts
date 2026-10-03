@@ -229,7 +229,6 @@ const commands: Record<string, () => Promise<void>> = {
   },
 
   async 'flavor:edit'() {
-    // Declared here rather than inline so the usage line above stays readable.
     const flavor = await findFlavor(positional[0] ?? fail('Usage: flavor:edit <name> [--name=] [--price=] [--description=] [--image=]'))
     const price = flag('price')
     const patch = {

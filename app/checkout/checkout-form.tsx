@@ -76,8 +76,8 @@ export function CheckoutForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // State updates aren't synchronous, so two fast clicks can both pass the
-    // `pending` check before React re-renders the disabled button.
+    // React state updates aren't synchronous, so a second click can fire before the
+    // disabled button re-renders. `submitting` is a ref, so it blocks that click right away.
     if (submitting.current) return;
     submitting.current = true;
     setTouched({ name: true, email: true, phone: true });
@@ -106,8 +106,8 @@ export function CheckoutForm({
       }
       if (data && typeof data === "object" && "url" in data && typeof data.url === "string") {
         clear();
-        // Stay locked: assigning location does not stop this component, and releasing
-        // in `finally` would re-enable the button while Stripe's page is still loading.
+        // Stay locked: assigning location does not stop this component, so clearing the
+        // lock now would re-enable the button while Stripe's page is still loading.
         leaving.current = true;
         window.location.assign(data.url);
         return;

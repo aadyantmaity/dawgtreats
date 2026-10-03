@@ -42,7 +42,7 @@ export async function getWeekInventory(weekId: string): Promise<InventoryRow[]> 
   }))
 }
 
-// "Sold" includes cookies held by pending checkouts, since those can still be paid for.
+// A pending checkout can still be paid for, so "sold" counts the cookies it holds.
 export async function setBatchQuantities(
   weekId: string,
   items: { flavorId: string; quantity: number }[],

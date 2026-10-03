@@ -1,18 +1,13 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Server actions are public endpoints; `revalidatePath` only works inside a Next.js
-// request/render context, which this suite never has. Stub it so the actions under
-// test can run to completion — it has nothing to do with the admin gate being tested.
+// `revalidatePath` only works inside a Next.js request/render context, which this suite never has.
+// Stubbing it lets the actions run to completion; it has no bearing on the admin gate under test.
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
-// `currentAdmin()` ultimately depends on a signed-in Supabase session, read from request
-// cookies via `next/headers`. There is no request here, so there is no session to read.
-// Mocking `currentAccount` (the session lookup, leaving the role check alone) was tried
-// first, but `currentAdmin` calls it as a same-module reference, so overriding the export
-// has no effect on that internal call — only `currentAdmin` itself is visible to callers
-// outside `lib/auth`. It is the narrowest thing that can actually be mocked here: `asAdmin`
-// in actions.ts, the code under test, still does its own real `if (!(await currentAdmin()))`.
+// `currentAdmin()` calls `currentAccount()` internally, so mocking that export instead would miss
+// the call; `currentAdmin` is the narrowest thing reachable from outside `lib/auth` to mock here.
+// `asAdmin` in actions.ts, the code under test, still runs its own real check against the mock.
 vi.mock('@/lib/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/auth')>()
   return { ...actual, currentAdmin: vi.fn() }

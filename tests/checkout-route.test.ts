@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// `currentAccount` depends on a signed-in Supabase session read from request cookies via
-// `next/headers`, which has no request context in this suite. Mocked to a guest (null),
-// the same as every real unauthenticated checkout — the route code under test is untouched.
+// This suite has no request, so `currentAccount` cannot read a session from cookies through `next/headers`.
+// The mock returns null, the same result a real guest checkout gets; the route itself stays untouched.
 vi.mock('@/lib/auth', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/auth')>()
   return { ...actual, currentAccount: vi.fn() }
@@ -104,8 +103,7 @@ describe('when Stripe cannot create the session', () => {
 
   it('releases the reservation instead of leaving stock locked', async () => {
     const week = await anOrderableWeek()
-    // `lib/payments` throws a DomainError(503) with no key configured — confirmed by
-    // reading `client()` in lib/payments/index.ts before writing this assertion.
+    // `lib/payments` throws a 503 when `STRIPE_SECRET_KEY` is unset, which this deletion triggers on purpose.
     delete process.env.STRIPE_SECRET_KEY
 
     const response = await checkoutRequest(validBody(week))
@@ -114,7 +112,7 @@ describe('when Stripe cannot create the session', () => {
     expect(response.status).toBe(503)
     expect(typeof json.error).toBe('string')
 
-    // The whole point: a reservation was made and then given back, not left pending.
+    // The whole point: checkout reserves stock, then gives it back rather than leaving it pending.
     const [order] = await db.select().from(orders)
     expect(order.status).toBe('expired')
     expect(await stockLeft(week.flavorIds.Snickerdoodle)).toBe(10)

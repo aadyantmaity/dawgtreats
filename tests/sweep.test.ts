@@ -13,9 +13,8 @@ import { buyer, resetDatabase, seedWeek } from './helpers'
 // global test value, and the whole point of these tests is exercising the real check.
 process.env.CRON_SECRET = 'sweep_test_secret_0123456789'
 
-// Only `getSession` is mocked, and only in this file: the sweep is the one route that
-// reacts to what Stripe says about a session, so there is no local way to make a lookup
-// come back "resource_missing" or throw mid-sweep. Everything else here hits the real database.
+// `getSession` is the only mock in this file, because the sweep is the one route that reacts
+// to what Stripe reports about a session; everything else here runs against the real database.
 vi.mock('@/lib/payments', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/payments')>()
   return { ...actual, getSession: vi.fn() }
@@ -32,7 +31,7 @@ function sweepRequest(authorization?: string) {
 }
 
 function missingSessionError() {
-  // Shape of the error Stripe's SDK throws for a session id it no longer recognizes.
+  // Stripe's SDK throws this shape when it no longer recognizes a session id.
   return Object.assign(new Error('No such checkout.session'), { code: 'resource_missing' })
 }
 
@@ -57,9 +56,8 @@ async function aStuckOrder(sessionId: string) {
   return { ...week, ...reservation }
 }
 
-// Same as `aStuckOrder`, but against a week the caller already seeded — only one open
-// week can exist at a time (`getOrderableWeek` has no tie-breaker), so several stuck
-// orders in one test must share a week rather than each seeding their own.
+// Same as `aStuckOrder`, but against a week the caller already seeded: only one open week
+// can exist at a time, so several stuck orders in one test must share a week, not each seed their own.
 async function stuckOrderIn(week: Awaited<ReturnType<typeof seedWeek>>, flavorName: string, sessionId: string) {
   const reservation = await reserve({
     ...buyer,
