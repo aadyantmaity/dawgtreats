@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CheckoutForm, type SlotChoice } from "@/app/checkout/checkout-form";
 import { currentAccount } from "@/lib/auth";
 import { getMenu, listSlots } from "@/lib/inventory";
-import { formatClosesAt, formatPickupWeekend, formatPt, getOrderableWeek } from "@/lib/weeks";
+import { PICKUP_PLACE, formatClosesAt, formatPickupWeekend, formatPt, getOrderableWeek } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Checkout" };
@@ -37,6 +37,7 @@ export default async function CheckoutPage() {
       <h1 className="text-4xl font-semibold">Checkout</h1>
       <div className="mt-3 flex flex-col gap-1 text-secondary">
         <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>
+        <p>{PICKUP_PLACE}</p>
         <p>Orders close {formatClosesAt(week.ordersCloseAt)}</p>
       </div>
       <CheckoutForm
