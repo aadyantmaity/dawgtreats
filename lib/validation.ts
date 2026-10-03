@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { formatCents, parsePriceCents } from '@/lib/money'
+import { formatCents } from '@/lib/money'
 
 export const LIMITS = {
   nameMax: 60,
@@ -16,7 +16,6 @@ const MESSAGES = {
   nameRequired: 'Name is required',
   nameTooLong: `Name must be ${LIMITS.nameMax} characters or fewer`,
   descriptionTooLong: `Description must be ${LIMITS.descriptionMax} characters or fewer`,
-  priceRequired: 'Price is required',
   priceFormat: 'Enter a price like 3.50',
   priceZero: 'Price must be more than $0',
   priceTooHigh: `Price must be ${formatCents(LIMITS.priceMaxCents)} or less`,
@@ -48,31 +47,8 @@ export const quantitySchema = z
   .min(0, 'Quantities can’t be negative')
   .max(LIMITS.quantityMax, MESSAGES.quantityTooHigh)
 
-// Keystroke filters: return the value to keep, or null to reject the keystroke.
-export function filterPriceInput(raw: string): string | null {
-  const value = raw.replace(/^\$/, '')
-  return /^\d{0,3}(\.\d{0,2})?$/.test(value) ? value : null
-}
-
 export function nameError(value: string): string | null {
   return value.trim() ? null : MESSAGES.nameRequired
-}
-
-export function priceError(value: string): string | null {
-  if (!value.trim()) return MESSAGES.priceRequired
-  const cents = parsePriceCents(value)
-  if (cents === null) return MESSAGES.priceFormat
-  if (cents < 1) return MESSAGES.priceZero
-  if (cents > LIMITS.priceMaxCents) return MESSAGES.priceTooHigh
-  return null
-}
-
-// An empty box means 0; the stepper puts the minimum back when the field is left.
-export function quantityError(value: string, sold: number): string | null {
-  const quantity = Number(value || '0')
-  if (quantity > LIMITS.quantityMax) return MESSAGES.quantityTooHigh
-  if (quantity < sold) return `Can’t go below ${sold}: that many are already sold or held`
-  return null
 }
 
 // Stored as digits so every number looks the same; the form shows (425) 515-4457.

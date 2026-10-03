@@ -52,6 +52,7 @@ This week
   qty <flavor> <count>                     how many to bake
   slots:add <sat|sun> <from> [to]          one slot, or every half hour up to "to"
   slots:rm <sat|sun> <time>                remove a slot
+  orders                                   every order for this week, with status and total
 
 Pickup day
   admin:add <email>                        let this account open /pickup

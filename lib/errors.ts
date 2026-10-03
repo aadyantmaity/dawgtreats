@@ -24,3 +24,10 @@ export function errorResponse(error: unknown, context: string): Response {
   console.error(`[${context}]`, error)
   return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
 }
+
+// Pulls the message out of a parsed API error body without trusting its shape.
+export function messageFromBody(data: unknown, fallback: string): string {
+  return data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+    ? data.error
+    : fallback
+}

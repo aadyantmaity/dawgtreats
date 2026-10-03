@@ -8,8 +8,6 @@ import {
   nameError,
   phoneError,
   phoneSchema,
-  priceError,
-  quantityError,
 } from '@/lib/validation'
 import { ptToUtc, upcomingWeekend } from '@/lib/weeks'
 
@@ -38,19 +36,6 @@ describe('input rules', () => {
   it('requires a name that is not just spaces', () => {
     expect(nameError('  ')).toBe('Name is required')
     expect(nameError('Snickerdoodle')).toBeNull()
-  })
-
-  it('keeps prices between a cent and $100', () => {
-    expect(priceError('0')).toBe('Price must be more than $0')
-    expect(priceError('100.01')).toBe('Price must be $100.00 or less')
-    expect(priceError('3.50')).toBeNull()
-  })
-
-  it('will not let a quantity drop below what is already sold', () => {
-    expect(quantityError('4', 5)).toMatch(/below 5/)
-    expect(quantityError('5', 5)).toBeNull()
-    expect(quantityError('', 0)).toBeNull()
-    expect(quantityError('1001', 0)).toMatch(/1000 or fewer/)
   })
 
   it('wants an email that could exist', () => {

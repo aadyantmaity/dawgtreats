@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, type SelectOption } from "@/components/ui/select";
+import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { LIMITS, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
@@ -88,11 +89,7 @@ export function CheckoutForm({
       });
       const data: unknown = await response.json().catch(() => null);
       if (!response.ok) {
-        const message =
-          data && typeof data === "object" && "error" in data && typeof data.error === "string"
-            ? data.error
-            : `Checkout failed (${response.status})`;
-        setError(message);
+        setError(messageFromBody(data, `Checkout failed (${response.status})`));
         return;
       }
       if (data && typeof data === "object" && "url" in data && typeof data.url === "string") {

@@ -20,7 +20,7 @@ npm run lint
 
 ## Architecture rules
 
-- Monolith, organized as modules under `lib/`: `inventory`, `orders`, `payments`, `weeks`, `flavors`, `email`, `auth`. Shared: `lib/errors.ts` and `lib/money.ts` (client-safe).
+- Monolith, organized as modules under `lib/`: `inventory`, `orders`, `payments`, `weeks`, `flavors`, `email`, `auth`, `feedback`, `limits`. Shared: `lib/errors.ts` and `lib/money.ts` (client-safe).
 - API routes stay thin: parse → authorize → call `lib/` → respond. No SQL in routes.
 - All stock and slot changes go through `lib/inventory`. Never inline.
 - Server-only modules start with `import 'server-only'`.
@@ -75,8 +75,10 @@ npm run lint
 
 ## Secrets
 
-Server-only env vars: `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `CRON_SECRET`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`.
+Server-only env vars: `DATABASE_URL`, `DIRECT_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `CRON_SECRET`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`.
+`DIRECT_URL` is the unpooled connection, used only by migrations (`scripts/migrate.ts`).
 Public: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`.
+`TEST_DATABASE_URL` is local/test-only, read by Vitest (`tests/setup/migrate.ts`, `vitest.config.ts`); never a Vercel secret.
 Never add `NEXT_PUBLIC_` to anything else.
 
 ## Workflow

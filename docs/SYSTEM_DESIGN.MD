@@ -48,12 +48,13 @@ Postgres. Money in integer cents, timestamps in UTC, displayed in PT.
 | `order_items` | Cookies in an order | `order_id`, `flavor_id`, `quantity`, `unit_price_cents` |
 | `payments` | Stripe charge record | `order_id`, `stripe_payment_intent_id`, `amount_cents`, `status` |
 | `stripe_events` | Webhook idempotency | `stripe_event_id`, `type`, `processed_at` |
+| `feedback` | What anyone said about the cookies | `id`, `rating?`, `message`, `name?`, `created_at` |
 
 **Order status**: `pending` → `paid` → `ready` → `picked_up`, plus `expired`.
 
 Constraints:
 
-- Check: `quantity_remaining >= 0`, `booked_count <= capacity`.
+- Check: `quantity_remaining >= 0`, `booked_count <= capacity`, `rating is null or rating between 1 and 5`.
 - Unique: `order_code`, `stripe_session_id`, `stripe_payment_intent_id`, `stripe_event_id`, `(week_id, flavor_id)`, `pickup_weekend_start`.
 - `unit_price_cents` freezes price at purchase; flavors are deactivated, never deleted.
 - `order_code` is random and non-sequential: it is the only thing guarding a guest's order page.
@@ -119,9 +120,10 @@ flowchart TD
 | `/` | Menu of active flavors; ordering enabled only when a week is open |
 | `/cart` | Quantities and total |
 | `/checkout` | Pickup slot, contact details, fine print, pay button |
-| `/order/success` | Polls until paid, then shows the order code |
-| `/order/lookup` | Enter an order code to see status |
+| `/order/[code]` | Polls until paid, then shows status; also where `/order/lookup` sends you |
+| `/order/lookup` | Enter an order code |
 | `/account` | Order history and saved contact info |
+| `/feedback` | Star rating, message, optional name |
 
 **Admin is a CLI, not pages.** `scripts/admin.ts` (`npm run admin -- <command>`) creates and opens weeks, sets quantities, adds and removes slots, and manages flavors. It calls the same `lib/` modules the site uses, so quantities still can't drop below what is sold, slots with orders still can't be removed, and only one week is open at a time. It runs on the owner's machine with the database URL from `.env.local`, so there is no admin role to protect and no admin surface on the public site.
 
@@ -131,14 +133,19 @@ The one admin screen is the pickup-day view at `/pickup`: a slot-by-slot list of
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /api/menu` | Active flavors plus availability for the open week |
-| `GET /api/weeks/current/slots` | Slots and remaining capacity |
 | `POST /api/checkout` | Reserve, create the order, return the Stripe URL |
 | `GET /api/orders/[code]` | Order status; rate-limited, no contact details returned |
+| `PATCH /api/me` | Update the signed-in account's own saved contact info |
 | `POST /api/webhooks/stripe` | Handles `session.completed` and `session.expired` |
 | `GET /api/cron/sweep` | Hourly backup sweep; requires the cron secret |
-| `GET /api/me/orders` | Order history for the signed-in user |
-| `PATCH /api/admin/orders/[id]` | Mark ready or picked up; the only admin endpoint, for the slice 10 pickup page |
+| `GET /auth/callback` | Google sign-in redirect; exchanges a code via Supabase |
+| `POST /auth/signout` | Signs the current account out |
+
+There is no menu or slots endpoint: `/` and `/checkout` read flavors, stock and slots directly
+in server components via `lib/inventory`. There is no admin endpoint either: `/pickup`
+mutates orders through server actions in `app/pickup/actions.ts`, each re-checking
+`currentAdmin()` itself, not through an API route. See `docs/AUDIT.md` for who is allowed to
+call what.
 
 Week setup has no endpoints: it runs through the CLI. Quantity edits cannot drop below what is already sold or held by a pending checkout, and a slot with orders cannot be deleted; `lib/` enforces both wherever the call comes from.
 

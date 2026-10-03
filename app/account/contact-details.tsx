@@ -6,6 +6,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { messageFromBody } from "@/lib/errors";
 import { LIMITS, formatPhoneInput, phoneError } from "@/lib/validation";
 
 export function ContactDetails({
@@ -44,11 +45,7 @@ export function ContactDetails({
       });
       const data: unknown = await response.json().catch(() => null);
       if (!response.ok) {
-        setError(
-          data && typeof data === "object" && "error" in data && typeof data.error === "string"
-            ? data.error
-            : "Couldn’t save that.",
-        );
+        setError(messageFromBody(data, "Couldn’t save that."));
         return;
       }
       setSaved(true);

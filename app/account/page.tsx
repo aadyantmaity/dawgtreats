@@ -5,19 +5,12 @@ import { SignInWithGoogle } from "@/components/sign-in";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { currentAccount } from "@/lib/auth";
+import { ORDER_STATUS_TONE } from "@/lib/orders/status";
 import { formatCents } from "@/lib/money";
 import { listOrdersForAccount } from "@/lib/orders";
 import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
-
-const tone = {
-  pending: "neutral",
-  paid: "success",
-  ready: "success",
-  picked_up: "success",
-  expired: "warning",
-} as const;
 
 export default async function AccountPage() {
   const account = await currentAccount();
@@ -62,7 +55,7 @@ export default async function AccountPage() {
                   <div className="min-w-0 flex-1 basis-48">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold tabular-nums">{order.orderCode}</span>
-                      <Badge tone={tone[order.status]} className="capitalize">
+                      <Badge tone={ORDER_STATUS_TONE[order.status]} className="capitalize">
                         {order.status.replace("_", " ")}
                       </Badge>
                     </div>

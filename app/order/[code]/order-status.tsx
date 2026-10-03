@@ -3,16 +3,9 @@
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { ORDER_STATUS_TONE } from "@/lib/orders/status";
 
 type Status = "pending" | "paid" | "ready" | "picked_up" | "expired";
-
-const tone = {
-  pending: "neutral",
-  paid: "success",
-  ready: "success",
-  picked_up: "success",
-  expired: "warning",
-} as const;
 
 const headline = {
   pending: "Waiting on payment",
@@ -64,7 +57,7 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
     <>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-4xl font-semibold">{headline[status]}</h1>
-        <Badge tone={tone[status]} className="capitalize">
+        <Badge tone={ORDER_STATUS_TONE[status]} className="capitalize">
           {status.replace("_", " ")}
         </Badge>
       </div>
