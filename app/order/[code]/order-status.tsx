@@ -74,25 +74,23 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
 
       {status === "pending" && waiting && (
         <p className="mt-6 text-secondary" role="status">
-          Waiting for Stripe to confirm. If you didn&apos;t finish paying, the cookies go back on the
-          menu shortly.
+          Waiting for Stripe. If you didn&apos;t finish paying, the cookies go back on the menu.
         </p>
       )}
       {status === "pending" && !waiting && (
         <p className="mt-6 text-secondary" role="status">
-          Still not confirmed. If you paid, it will land shortly — refresh in a minute. If you didn&apos;t,
-          the cookies go back on the menu when the hold runs out.
+          Still not confirmed. If you paid, refresh in a minute. If you didn&apos;t, the cookies go back
+          on the menu.
         </p>
       )}
       {(status === "paid" || status === "ready") && (
         <p className="mt-6 text-secondary">
-          A confirmation with this code is on its way to your email — check your spam folder if it
-          isn&apos;t there in a few minutes.
+          Check your email for this code. Look in spam if it&apos;s not there.
         </p>
       )}
       {status === "expired" && (
         <p className="mt-6 text-secondary">
-          The hold ran out before payment arrived, so the cookies went back on the menu.
+          The hold ran out. Those cookies are back on the menu.
         </p>
       )}
     </>

@@ -26,7 +26,7 @@ const MESSAGES = {
   emailFormat: 'That email address does not look right',
   phoneRequired: 'Phone number is required',
   phoneFormat: 'Enter a 10-digit phone number',
-  messageRequired: 'Tell us what you think',
+  messageRequired: 'Say something first',
   messageTooLong: `Keep it to ${LIMITS.messageMax} characters or fewer`,
 } as const
 

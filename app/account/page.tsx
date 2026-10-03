@@ -27,8 +27,7 @@ export default async function AccountPage() {
       <main className="mx-auto w-full max-w-md flex-1 px-6 py-12">
         <h1 className="text-4xl font-semibold">Your account</h1>
         <p className="mt-3 mb-8 text-secondary">
-          Sign in to see past orders and save your details. Ordering never needs an account — you can
-          always find an order with its code.
+          Sign in to see past orders and save your details. You never need an account to order.
         </p>
         <SignInWithGoogle />
       </main>
@@ -48,7 +47,7 @@ export default async function AccountPage() {
       {orders.length === 0 ? (
         <Card>
           <p className="text-secondary">
-            No orders yet. Orders you placed with {account.email} show up here automatically.
+            No orders yet. Anything you order with {account.email} shows up here.
           </p>
         </Card>
       ) : (

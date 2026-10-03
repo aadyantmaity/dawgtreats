@@ -17,7 +17,7 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: "Dawg Treats",
-  description: "Weekly cookie drops, picked up on the weekend.",
+  description: "Homemade cookies, picked up on the weekend.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -47,17 +47,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </header>
         {children}
-        <footer className="mt-16 border-t border-default">
-          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-4 px-6 py-6 pb-fab-clearance text-sm text-secondary sm:pb-6">
-            <Link href="/feedback" className="hover:text-primary">
-              Feedback
-            </Link>
-            <Link href="/order/lookup" className="hover:text-primary">
-              Find my order
-            </Link>
-            <span className="text-tertiary">Pickup only · all sales final</span>
-          </div>
-        </footer>
         <FeedbackFab />
       </body>
     </html>

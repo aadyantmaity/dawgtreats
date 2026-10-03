@@ -42,7 +42,7 @@ export function FeedbackFab() {
         >
           <h2 className="font-serif text-xl font-semibold">Tell me what you think</h2>
           <p className="mt-1 text-sm text-secondary">
-            How they were, or what to bake next. I read every one.
+            How they were, or what to bake next.
           </p>
           <FeedbackForm className="mt-4" onDone={() => setOpen(false)} />
         </div>

@@ -13,7 +13,7 @@ export async function submitFeedback(form: unknown): Promise<ActionResult> {
     // Server actions get no Request object, so the address comes from the incoming headers.
     const ip = callerIp(new Request('http://localhost', { headers: await headers() }))
     const { ok } = await checkLimit('feedback', ip)
-    if (!ok) return { ok: false, error: 'Thanks — that is plenty for now. Try again later.' }
+    if (!ok) return { ok: false, error: 'Thanks, that is plenty for now. Try again later.' }
 
     const parsed = feedbackSchema.safeParse(form)
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }

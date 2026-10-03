@@ -59,7 +59,7 @@ export default async function MenuPage() {
           <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>
         </div>
       ) : (
-        <p className="mt-3 text-secondary">Orders are closed right now. A new batch goes up most weeks.</p>
+        <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
       )}
 
       {menu.length === 0 ? (
@@ -73,7 +73,7 @@ export default async function MenuPage() {
       )}
 
       <p className="mt-12 text-sm text-tertiary">
-        Pickup only, Saturday and Sunday. All sales are final — no refunds or cancellations.
+        Pickup only, Saturday or Sunday. No refunds or cancellations.
       </p>
     </main>
   );

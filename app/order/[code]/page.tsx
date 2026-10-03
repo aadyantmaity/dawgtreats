@@ -23,7 +23,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
 
       <Card title="Pickup" className="mt-8">
         <p>{pickup}</p>
-        <p className="mt-1 text-sm text-secondary">Bring your order code.</p>
+        <p className="mt-1 text-sm text-secondary">Bring this code.</p>
       </Card>
 
       <Card title="Your cookies" className="mt-6">

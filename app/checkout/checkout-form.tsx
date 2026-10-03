@@ -200,7 +200,7 @@ export function CheckoutForm({
             error={shown("email")}
             autoComplete="email"
             maxLength={120}
-            hint="Your order code goes here."
+            hint="We&apos;ll send your order code here."
           />
           <Input
             label="Phone"
@@ -240,8 +240,7 @@ export function CheckoutForm({
       </Button>
 
       <p className="text-sm text-tertiary">
-        Cookies are held for 30 minutes. Pickup only, Saturday or Sunday. All sales are final — no refunds
-        or cancellations. {LIMITS.perOrderMax} cookies per order.
+        Cookies are held 30 minutes. Max {LIMITS.perOrderMax} per order. No refunds or cancellations.
       </p>
     </form>
   );

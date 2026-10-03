@@ -40,7 +40,7 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
   const items = lines.map((l) => `  ${l.quantity} x ${l.name}  ${formatCents(l.unitPriceCents * l.quantity)}`)
 
   return [
-    `Thanks ${o.name}! Your cookies are paid for.`,
+    `Thanks ${o.name}. Your cookies are paid for.`,
     '',
     `Order code: ${o.orderCode}`,
     '',
@@ -52,7 +52,7 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     '',
     `Track it: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/order/${o.orderCode}`,
     '',
-    'Reply to this email if something comes up.',
+    'Reply here if something comes up.',
     'All sales are final. Pickup only.',
   ].join('\n')
 }

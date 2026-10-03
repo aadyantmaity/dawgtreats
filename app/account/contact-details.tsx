@@ -63,7 +63,7 @@ export function ContactDetails({
   return (
     <Card title="Your details" className={className}>
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-        <p className="text-sm text-secondary">These fill in your next checkout.</p>
+        <p className="text-sm text-secondary">Saved for next time.</p>
         <Input
           label="Name"
           value={name}
