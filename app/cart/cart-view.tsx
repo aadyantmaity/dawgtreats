@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
-import { reconcile, useCart } from "@/components/cart";
+import { CartNotices, reconcile, useCart } from "@/components/cart";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 
@@ -14,7 +14,7 @@ import { formatCents } from "@/lib/money";
 import { LIMITS } from "@/lib/validation";
 
 export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: boolean }) {
-  const { lines, notices, count, setQuantity } = useCart();
+  const { lines, count, setQuantity } = useCart();
 
   useEffect(() => reconcile(menu), [menu]);
 
@@ -27,20 +27,11 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
   const total = rows.reduce((sum, row) => sum + row.priceCents * row.quantity, 0);
 
   // Rendered in both states: an emptied cart is exactly when someone needs telling why.
-  const changed = notices.length > 0 && (
-    <div className="mt-6 flex flex-col gap-1" role="status">
-      {notices.map((note) => (
-        <p key={note} className="text-urgent">
-          {note}
-        </p>
-      ))}
-    </div>
-  );
 
   if (rows.length === 0) {
     return (
       <>
-        {changed}
+        <CartNotices className="mt-6" />
         <p className="mt-3 text-secondary">Your cart is empty.</p>
         <Link href="/" className="mt-6 inline-block underline">
           Back to the menu
@@ -51,7 +42,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
 
   return (
     <div className="mt-8 flex flex-col gap-6">
-      {changed}
+      <CartNotices className="mt-6" />
       <Card className="p-0">
         <ul className="divide-y divide-default">
           {rows.map((row) => (

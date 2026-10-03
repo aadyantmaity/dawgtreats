@@ -117,6 +117,23 @@ export function useCart() {
   };
 }
 
+// Shown wherever a cart is rendered, including when reconcile emptied it: that is
+// exactly the moment someone needs telling what happened to their cookies.
+export function CartNotices({ className = "" }: { className?: string }) {
+  const { notices } = useCart();
+  if (notices.length === 0) return null;
+
+  return (
+    <div className={`flex flex-col gap-1 ${className}`} role="status">
+      {notices.map((note) => (
+        <p key={note} className="text-urgent">
+          {note}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 export function CartLink() {
   const { count } = useCart();
 

@@ -50,8 +50,10 @@ describe('looking an order up by its code', () => {
     const order = await anOrder()
 
     const response = await lookup(order.orderCode.toLowerCase(), '203.0.113.2')
+    const body = await response.json()
 
     expect(response.status).toBe(200)
+    expect(body.orderCode).toBe(order.orderCode)
   })
 
   it('says no for a code that does not exist', async () => {

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { useCart } from "@/components/cart";
+import { CartNotices, reconcile, useCart } from "@/components/cart";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,11 @@ export function CheckoutForm({
   contact: { name: string; email: string; phone: string };
 }) {
   const { lines, count, clear } = useCart();
+  const submitting = useRef(false);
+  const leaving = useRef(false);
+
+  useEffect(() => reconcile(menu), [menu]);
+
   const [slotId, setSlotId] = useState(slots[0]?.id ?? "");
   const [name, setName] = useState(contact.name);
   const [email, setEmail] = useState(contact.email);
@@ -71,8 +76,15 @@ export function CheckoutForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // State updates aren't synchronous, so two fast clicks can both pass the
+    // `pending` check before React re-renders the disabled button.
+    if (submitting.current) return;
+    submitting.current = true;
     setTouched({ name: true, email: true, phone: true });
-    if (incomplete) return;
+    if (incomplete) {
+      submitting.current = false;
+      return;
+    }
     setError(null);
     setPending(true);
     try {
@@ -94,6 +106,9 @@ export function CheckoutForm({
       }
       if (data && typeof data === "object" && "url" in data && typeof data.url === "string") {
         clear();
+        // Stay locked: assigning location does not stop this component, and releasing
+        // in `finally` would re-enable the button while Stripe's page is still loading.
+        leaving.current = true;
         window.location.assign(data.url);
         return;
       }
@@ -104,7 +119,10 @@ export function CheckoutForm({
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
-      setPending(false);
+      if (!leaving.current) {
+        setPending(false);
+        submitting.current = false;
+      }
     }
   }
 
@@ -131,10 +149,13 @@ export function CheckoutForm({
     );
   }
 
+  // Rendered in both states: an emptied cart is exactly when someone needs telling why.
+
   if (rows.length === 0) {
     return (
       <>
-        <p className="mt-8 text-secondary">Your cart is empty.</p>
+        <CartNotices className="mt-8" />
+        <p className="mt-3 text-secondary">Your cart is empty.</p>
         <Link href="/" className="mt-6 inline-block underline">
           Back to the menu
         </Link>
@@ -144,6 +165,7 @@ export function CheckoutForm({
 
   return (
     <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-6">
+      <CartNotices className="mt-8" />
       <Card title="Your order">
         <ul className="flex flex-col gap-2">
           {rows.map((row) => (
