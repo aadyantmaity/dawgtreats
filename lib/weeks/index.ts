@@ -132,7 +132,9 @@ export async function openWeek(id: string): Promise<Week> {
   return db.transaction(async (tx) => {
     const [week] = await tx.select().from(weeks).where(eq(weeks.id, id)).for('update')
     if (!week) throw new DomainError('Week not found', 404)
-    if (week.status !== 'draft') throw new DomainError(`This week is already ${week.status}`)
+    // A week closed by hand can be reopened while its cutoff is still ahead: closing
+    // early is a judgement call, and there was no way back from a mistaken one.
+    if (week.status === 'open') throw new DomainError('This week is already open')
     if (week.ordersCloseAt.getTime() <= Date.now()) {
       throw new DomainError('The Thursday cutoff for this week has passed')
     }
@@ -157,7 +159,7 @@ export async function openWeek(id: string): Promise<Week> {
     const [opened] = await tx
       .update(weeks)
       .set({ status: 'open' })
-      .where(and(eq(weeks.id, id), eq(weeks.status, 'draft')))
+      .where(and(eq(weeks.id, id), sql`${weeks.status} <> 'open'`))
       .returning()
     return opened
   })

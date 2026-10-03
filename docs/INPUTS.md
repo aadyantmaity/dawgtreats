@@ -35,7 +35,7 @@ Every rule lives in `lib/validation.ts` and is shared by whatever takes the inpu
 | Quantity | `qty` | Whole number, 0 to 1000, never below what's sold or held | "Quantities must be 1000 or fewer", "Can't go below N: that many are already sold or held" |
 | Slot day | `slots:add`, `slots:rm` | Saturday or Sunday | "Pickup is Saturday or Sunday only" |
 | Slot time | `slots:add`, `slots:rm` | On the hour or half hour, not already taken, not in the past, week not closed | "Slots start on the hour or half hour", "That slot already exists", "That time has already passed", "This week is closed" |
-| Opening a week | `week:open` | Needs at least one quantity and one slot; only one week open at a time; cutoff not passed | "Set at least one flavor quantity before opening", "Add at least one pickup slot before opening", "Another week is open. Close it first." |
+| Opening a week | `week:open` | Needs at least one quantity and one slot; only one week open at a time; cutoff not passed. A closed week reopens while its cutoff is ahead | "Set at least one flavor quantity before opening", "Add at least one pickup slot before opening", "Another week is open. Close it first.", "This week is already open" |
 | Creating a week | `week:new` | The server picks the weekend; one week per weekend | "The week of … already exists" |
 | Your name | Checkout | Required after trimming, 60 characters or fewer | "Name is required" |
 | Email | Checkout | Required, has to look like an address, 120 characters or fewer | "Email is required", "That email address does not look right" |
