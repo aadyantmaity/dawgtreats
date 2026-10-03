@@ -35,6 +35,12 @@ export function LookupForm() {
         setError("Too many tries. Wait a minute and try again.");
         return;
       }
+      // Anything else failing means we cannot say whether the order exists, so sending
+      // them to its page would show a confusing empty one instead of saying so.
+      if (!response.ok) {
+        setError("Something went wrong. Try again in a moment.");
+        return;
+      }
       startTransition(() => router.push(`/order/${clean}`));
     } catch {
       setError("Couldn’t reach the server. Check your connection and try again.");

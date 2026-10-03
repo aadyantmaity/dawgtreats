@@ -88,6 +88,27 @@ RLS stays on with no policies as a second layer. Neither is now load-bearing alo
 **If the browser ever needs to query Supabase directly,** these grants have to be restored
 deliberately, with RLS policies written first. Do not re-grant to get something working.
 
+## Response headers
+
+Set in `next.config.ts` for every path:
+
+| Header | Value | What it stops |
+| --- | --- | --- |
+| `Content-Security-Policy` | see below | A script from somewhere else loading, and data leaving to an origin we did not name |
+| `X-Frame-Options` | `DENY` | The site being framed, for browsers predating `frame-ancestors` |
+| `X-Content-Type-Options` | `nosniff` | A browser guessing a file is a script when it is not |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Order codes in a URL reaching another site in the referrer |
+| `Permissions-Policy` | camera, microphone, geolocation, payment off | Hardware this site never uses |
+
+The CSP names sources rather than using nonces. Nonces are stricter, but Next can only
+inject them into dynamically rendered pages, and the menu, lookup and 404 pages are static,
+so a nonce policy would break their JavaScript. `'unsafe-eval'` is added in development
+only, where React uses `eval` to rebuild stack traces; production never has it.
+
+What this does **not** do: `'unsafe-inline'` means an injected inline script would still
+run. The policy limits where scripts come from and where data can go, not what inline code
+may do. Tightening that needs nonces, which needs every page dynamic.
+
 ## Still open
 
 - **PostgREST is returning 503** (`no exposed schemas`). Harmless today — it is the API we do

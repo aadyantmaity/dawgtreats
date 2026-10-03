@@ -17,6 +17,7 @@ export function FeedbackForm({
   onDone?: () => void;
 }) {
   const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
   const [tried, setTried] = useState(false);
@@ -54,16 +55,20 @@ export function FeedbackForm({
     <form onSubmit={submit} noValidate className={`flex flex-col gap-4 ${className}`}>
       <div className="flex flex-col gap-1.5">
         <span className="text-sm text-secondary">Rate the cookies (optional)</span>
-        <div className="flex gap-1">
+        {/* Hovering previews the whole run up to that star, the way every rating widget does. */}
+        <div className="flex gap-1" onMouseLeave={() => setHovered(0)}>
           {STARS.map((star) => (
             <button
               key={star}
               type="button"
               onClick={() => setRating(star === rating ? 0 : star)}
+              onMouseEnter={() => setHovered(star)}
+              onFocus={() => setHovered(star)}
+              onBlur={() => setHovered(0)}
               aria-label={`${star} out of 5`}
               aria-pressed={star === rating}
               className={`h-control-sm w-control-sm rounded-control-sm text-2xl leading-none transition-colors ${
-                star <= rating ? "text-rating" : "text-tertiary hover:text-secondary"
+                star <= (hovered || rating) ? "text-rating" : "text-tertiary"
               }`}
             >
               ★
