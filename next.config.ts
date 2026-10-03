@@ -22,6 +22,11 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  images: {
+    // Without this the optimiser serves max-age=0, so every visitor re-downloads every
+    // photo. The files only change on a deploy, and a new photo needs a new filename.
+    minimumCacheTTL: 2678400,
+  },
   async headers() {
     return [
       {
