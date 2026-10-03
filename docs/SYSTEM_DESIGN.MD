@@ -215,6 +215,7 @@ Each slice ends with something that works. Slice 5 stays as a permanent test.
 - [x] 12\. Security audit of every request path, before any real money moves
 - [ ] 13\. Switch Stripe to live mode, place a real test order, open the first week
 - [x] 14\. Feedback: one form for how the cookies were and what to bake next
+- [ ] 15\. A held cart with a visible countdown, the way seats are held for a ticket
 
 ### Slice 12: the security audit
 
@@ -252,3 +253,35 @@ customers rather than read by the owner.
 
 Read with `npm run admin -- feedback`, which prints each message with its stars and the
 average of the ones that carried a rating.
+
+### Slice 15: a held cart with a countdown
+
+Today cookies are taken at the moment someone presses Pay, and the 30 minute hold is
+invisible: the only sign of it is the order page saying the cookies go back on the menu if
+payment never lands. Someone can fill the whole form and be told at the last step that a
+flavour sold out underneath them.
+
+The idea is the one ticket sites use: hold the cookies when the slot is chosen, show the
+time remaining, and release them when it runs out.
+
+**The decision this rests on.** Holding earlier means holding for people who have shown less
+intent, so more stock sits locked for people who were never going to buy. Checkout is already
+rate limited because a reservation is expensive; a hold that starts earlier is cheaper to
+trigger and so worth more to an abuser. The current design trades a rare late disappointment
+for stock that is only ever held by someone with their card out.
+
+**Questions to settle before building:**
+
+- **What starts the clock.** Choosing a slot, or landing on checkout. Whichever it is, it has
+  to be an explicit act, not a page view, or every visitor holds stock.
+- **What happens when it runs out mid-checkout.** Silently releasing while someone types a
+  card number is worse than the problem being fixed. It probably has to offer to extend, and
+  say plainly if the cookies went in the meantime.
+- **Whether the hold survives a reload.** It must, or a refresh loses someone's cookies. That
+  means the hold belongs to the order row, not to a timer in the browser.
+- **What the rate limit becomes.** Five checkouts per ten minutes assumes a reservation needs
+  a filled form. If a hold is one click, that number is wrong.
+
+Already done, and not part of this slice: the cart persists in `localStorage` across visits
+and tabs, and `reconcile` drops sold-out lines and clamps over-asks when the cart is opened,
+telling the customer what changed.
