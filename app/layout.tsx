@@ -3,6 +3,7 @@ import { DM_Sans, Fraunces } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
 import { FeedbackFab } from "@/components/feedback-fab";
+import { viewerIsAdmin } from "@/lib/auth";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
   description: "Homemade cookies, picked up on the weekend.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const admin = await viewerIsAdmin();
   return (
     <html
       lang="en"
@@ -48,6 +50,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/account" className="text-sm whitespace-nowrap text-secondary hover:text-primary">
                 Account
               </Link>
+              {admin && (
+                <Link
+                  href="/pickup"
+                  className="text-sm whitespace-nowrap text-primary underline hover:text-primary"
+                >
+                  Pickup
+                </Link>
+              )}
               <CartLink />
             </nav>
           </div>

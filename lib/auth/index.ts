@@ -93,6 +93,18 @@ export async function currentAccount(): Promise<Account | null> {
 
 // The pickup page is the only admin screen. A non-admin gets nothing back, and the
 // page 404s rather than saying "forbidden": no reason to advertise that it exists.
+// The header asks this on every page load, so it reads the role and writes nothing:
+// an account is created when someone signs in, not when they look at the menu.
+export async function viewerIsAdmin(): Promise<boolean> {
+  const supabase = await supabaseServer()
+  const { data } = await supabase.auth.getUser()
+  const uid = data.user?.id
+  if (!uid) return false
+
+  const [row] = await db.select({ role: users.role }).from(users).where(eq(users.supabaseUid, uid))
+  return row?.role === 'admin'
+}
+
 export async function currentAdmin(): Promise<Account | null> {
   const account = await currentAccount()
   return account?.role === 'admin' ? account : null
