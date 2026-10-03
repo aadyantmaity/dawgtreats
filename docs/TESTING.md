@@ -32,3 +32,15 @@ Afterwards `docker start dawgtreats-test` is enough. Migrations are applied auto
 - Call the `lib/` function directly rather than the HTTP route: that is where the rules live.
 - For anything about stock or slots, assert the **database state afterwards**, not just the thrown error. A refusal that quietly ate stock would still pass an error-only test.
 - Prove a safety test can fail: delete the guard it protects, watch it go red, then put it back. A green test that cannot fail is worse than no test.
+
+## Continuous integration
+
+`.github/workflows/checks.yml` runs on every push to `main` and every pull request: types,
+lint, the suite, a production build, and `npm audit` for high or critical advisories.
+
+It stands up its own Postgres 17 as a service container rather than mocking the database,
+for the same reason the local suite uses Docker: the reservation is conditional SQL, and a
+mock would prove nothing about whether it holds under concurrency.
+
+The build step needs `DATABASE_URL` only because `lib/db` throws at import without one.
+Nothing is queried while building, so the throwaway container satisfies it.
