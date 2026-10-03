@@ -14,5 +14,5 @@ jobs:
         run: |
           response=$(curl -sS --fail-with-body -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://dawgtreats.vercel.app/api/cron/sweep)
+            https://dawgtreats.shop/api/cron/sweep)
           echo "$response"
