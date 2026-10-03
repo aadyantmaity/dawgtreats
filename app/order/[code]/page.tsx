@@ -5,7 +5,7 @@ import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
-import { formatPt } from "@/lib/weeks";
+import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,8 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
 
       <Card title="Pickup" className="mt-8">
         <p>{pickup}</p>
-        <p className="mt-1 text-sm text-secondary">Bring this code.</p>
+        <p className="mt-1">{PICKUP_PLACE}</p>
+        <p className="mt-2 text-sm text-secondary">Bring this code.</p>
       </Card>
 
       <Card title="Your cookies" className="mt-6">

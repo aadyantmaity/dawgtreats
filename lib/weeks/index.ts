@@ -8,6 +8,9 @@ import { DomainError } from '@/lib/errors'
 
 const PT = 'America/Los_Angeles'
 
+// One address, said the same way wherever a customer reads it.
+export const PICKUP_PLACE = 'The Standard at Seattle, Midrise lobby'
+
 export type Week = typeof weeks.$inferSelect
 
 export type WeekSummary = Week & {

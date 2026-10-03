@@ -2,7 +2,7 @@ import 'server-only'
 
 import { formatCents } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
-import { formatPt } from '@/lib/weeks'
+import { PICKUP_PLACE, formatPt } from '@/lib/weeks'
 
 const FROM = 'Dawg Treats <orders@dawgtreats.shop>'
 
@@ -48,6 +48,7 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     `  Total: ${formatCents(o.totalCents)}`,
     '',
     `Pick up ${day}, ${from}-${to}.`,
+    PICKUP_PLACE + '.',
     'Show this code when you arrive.',
     '',
     `Track it: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/order/${o.orderCode}`,
