@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { FeedbackForm } from "@/components/feedback-form";
 
-export const metadata = { title: "Feedback · Dawg Treats" };
+export const metadata = { title: "Feedback" };
 
 export default function FeedbackPage() {
   return (

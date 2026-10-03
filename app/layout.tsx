@@ -16,7 +16,10 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Dawg Treats",
+  title: {
+    default: "Dawg Treats",
+    template: "%s · Dawg Treats",
+  },
   description: "Homemade cookies, picked up on the weekend.",
 };
 

@@ -11,6 +11,7 @@ import { listOrdersForAccount } from "@/lib/orders";
 import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Your account" };
 
 export default async function AccountPage() {
   const account = await currentAccount();

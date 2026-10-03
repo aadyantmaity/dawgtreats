@@ -9,6 +9,12 @@ import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 
+// The code in the tab title, so several open orders stay tellable apart.
+export async function generateMetadata({ params }: PageProps<"/order/[code]">) {
+  const { code } = await params;
+  return { title: `Order ${code.toUpperCase()}` };
+}
+
 export default async function OrderPage({ params }: PageProps<"/order/[code]">) {
   const { code } = await params;
   const found = await getOrderByCode(code.toUpperCase());

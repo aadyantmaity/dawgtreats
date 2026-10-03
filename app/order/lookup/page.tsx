@@ -1,6 +1,6 @@
 import { LookupForm } from "@/app/order/lookup/lookup-form";
 
-export const metadata = { title: "Find my order · Dawg Treats" };
+export const metadata = { title: "Find my order" };
 
 export default function LookupPage() {
   return (

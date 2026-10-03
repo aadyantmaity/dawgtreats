@@ -8,7 +8,7 @@ import { listPickupDay } from "@/lib/orders";
 import { formatPt, formatPickupWeekend, listWeeks } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Pickup day · Dawg Treats" };
+export const metadata = { title: "Pickup day" };
 
 export default async function PickupPage() {
   if (!(await currentAdmin())) notFound();

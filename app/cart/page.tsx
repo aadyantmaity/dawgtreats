@@ -4,6 +4,8 @@ import { getOrderableWeek } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Your cart" };
+
 export default async function CartPage() {
   const week = await getOrderableWeek();
   const menu = await getMenu(week?.id ?? null);

@@ -6,6 +6,7 @@ import { getMenu, listSlots } from "@/lib/inventory";
 import { formatClosesAt, formatPickupWeekend, formatPt, getOrderableWeek } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Checkout" };
 
 export default async function CheckoutPage() {
   const week = await getOrderableWeek();
