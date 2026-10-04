@@ -38,7 +38,7 @@ export const flavors = pgTable('flavors', {
   description: text('description'),
   priceCents: integer('price_cents').notNull(),
   imageUrl: text('image_url'),
-  toppings: text('toppings'),
+  allergens: text('allergens'),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

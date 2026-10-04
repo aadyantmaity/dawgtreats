@@ -40,7 +40,7 @@ export const flavorSchema = z.object({
     .int(MESSAGES.priceFormat)
     .min(1, MESSAGES.priceZero)
     .max(LIMITS.priceMaxCents, MESSAGES.priceTooHigh),
-  toppings: z
+  allergens: z
     .string()
     .trim()
     .max(LIMITS.descriptionMax, MESSAGES.descriptionTooLong)
