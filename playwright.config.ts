@@ -39,6 +39,11 @@ export default defineConfig({
       NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`,
       DATABASE_URL: TEST_DATABASE_URL,
       DIRECT_URL: TEST_DATABASE_URL,
+      // Pages read the signed-in account to decide what the header shows, and that
+      // throws with no Supabase address at all. A port nothing listens on refuses at
+      // once, so every page renders the way a signed-out visitor sees it.
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:1",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "layout-tests-have-no-account",
     },
   },
 });
