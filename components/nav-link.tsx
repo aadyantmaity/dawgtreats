@@ -13,7 +13,7 @@ export function NavLink({ href, children }: { href: string; children: string }) 
     <Link
       href={href}
       aria-current={here ? "page" : undefined}
-      className={`shrink-0 text-sm whitespace-nowrap transition-colors duration-motion ease-spring ${
+      className={`shrink-0 text-sm whitespace-nowrap transition-colors ease-spring ${
         here ? "text-primary underline underline-offset-4" : "text-secondary hover:text-primary"
       }`}
     >

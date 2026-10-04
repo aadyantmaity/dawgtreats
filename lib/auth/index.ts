@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { timingSafeEqual } from 'node:crypto'
+
 import { createServerClient } from '@supabase/ssr'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { cookies } from 'next/headers'
@@ -15,6 +17,17 @@ function config() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) throw new Error('Supabase is not configured')
   return { url, key }
+}
+
+// The scheduled jobs carry a shared secret rather than a session. Compared in constant
+// time so a wrong token cannot be found one character at a time.
+export function authorizedCron(request: Request): boolean {
+  const secret = process.env.CRON_SECRET
+  const offered = request.headers.get('authorization')?.replace(/^Bearer /, '')
+  if (!secret || !offered) return false
+  const a = Buffer.from(secret)
+  const b = Buffer.from(offered)
+  return a.length === b.length && timingSafeEqual(a, b)
 }
 
 export async function supabaseServer() {

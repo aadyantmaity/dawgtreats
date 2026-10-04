@@ -17,7 +17,7 @@ import { LIMITS } from "@/lib/validation";
 
 type Row = MenuItem & { quantity: number };
 
-// How long a leaving row's animation takes to finish; must cover animate-leave (duration-motion).
+// How long a leaving row's animation takes to finish; must cover animate-leave.
 const LEAVE_MS = 400;
 
 export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: boolean }) {
@@ -80,7 +80,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
       <>
         <CartNotices className="mt-6" />
         <p className="mt-3 text-secondary">Your cart is empty.</p>
-        <Link href="/" className="mt-6 inline-block underline">
+        <Link href="/" className="mt-4 inline-block py-2 underline">
           Back to the menu
         </Link>
       </>

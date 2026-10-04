@@ -30,6 +30,7 @@ export type FunnelStep = { step: string; people: number }
 export async function funnelForWeek(weekId: string): Promise<{
   steps: FunnelStep[]
   byFlavor: { flavor: string; adds: number }[]
+  byWanted: { flavor: string; wanted: number }[]
   orders: { status: string; count: number }[]
 }> {
   const counted = await db
@@ -52,6 +53,18 @@ export async function funnelForWeek(weekId: string): Promise<{
     )
     .groupBy(events.detail)
 
+  const byWanted = await db
+    .select({ flavor: sql<string>`coalesce(${events.detail}, 'unknown')`, wanted: countDistinct(events.visitorId) })
+    .from(events)
+    .where(
+      and(
+        eq(events.weekId, weekId),
+        eq(events.name, 'sold_out_wanted'),
+        gte(events.createdAt, COUNTING_SINCE),
+      ),
+    )
+    .groupBy(events.detail)
+
   const byStatus = await db
     .select({ status: orders.status, count: sql<number>`count(*)::int` })
     .from(orders)
@@ -66,6 +79,7 @@ export async function funnelForWeek(weekId: string): Promise<{
       { step: 'Reached checkout', people: peopleAt('checkout_reached') },
     ],
     byFlavor: byFlavor.sort((a, b) => b.adds - a.adds),
+    byWanted: byWanted.sort((a, b) => b.wanted - a.wanted),
     orders: byStatus,
   }
 }

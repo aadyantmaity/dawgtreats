@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "knip": "knip --no-progress",
-    "duplication": "jscpd app components lib scripts"
+    "duplication": "jscpd app components lib scripts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.4.0",
@@ -32,6 +33,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.0",
     "@types/react": "^19",

@@ -10,11 +10,11 @@ export default function NotFound() {
         That page doesn&apos;t exist. Looking for an order? Find it with its code.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href="/" className="underline">
+        <Link href="/" className="inline-block py-2 underline">
           The menu
         </Link>
         <span className="text-tertiary">·</span>
-        <Link href="/order/lookup" className="underline">
+        <Link href="/order/lookup" className="inline-block py-2 underline">
           Find my order
         </Link>
       </div>

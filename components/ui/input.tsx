@@ -23,7 +23,7 @@ export function Input({ label, error, hint, id, className = "", ...props }: Inpu
         id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? messageId : undefined}
-        className={`h-control w-full rounded-control border border-default bg-surface text-base text-primary placeholder:text-tertiary transition-colors ease-spring duration-motion focus:border-focus focus:outline-none disabled:bg-disabled disabled:text-disabled disabled:transition-none aria-invalid:border-error aria-invalid:transition-none px-4 ${className}`}
+        className={`h-control w-full rounded-control border border-default bg-surface text-base text-primary placeholder:text-tertiary transition-colors ease-spring focus:border-focus focus:outline-none disabled:bg-disabled disabled:text-disabled disabled:transition-none aria-invalid:border-error aria-invalid:transition-none px-4 ${className}`}
         {...props}
       />
       {message && (

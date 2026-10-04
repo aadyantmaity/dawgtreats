@@ -1,18 +1,8 @@
-import { timingSafeEqual } from 'node:crypto'
-
+import { authorizedCron } from '@/lib/auth'
 import { announcePaidOrder } from '@/lib/email'
 import { errorResponse } from '@/lib/errors'
 import { listStuckOrders, markPaid, releaseOrder } from '@/lib/orders'
 import { getSession } from '@/lib/payments'
-
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET
-  const offered = request.headers.get('authorization')?.replace(/^Bearer /, '')
-  if (!secret || !offered) return false
-  const a = Buffer.from(secret)
-  const b = Buffer.from(offered)
-  return a.length === b.length && timingSafeEqual(a, b)
-}
 
 function isMissingSession(error: unknown): boolean {
   return (
@@ -25,7 +15,7 @@ function isMissingSession(error: unknown): boolean {
 
 // Hourly backstop: without it, one missed webhook holds stock until the week ends.
 export async function GET(request: Request) {
-  if (!authorized(request)) return Response.json({ error: 'Not found' }, { status: 404 })
+  if (!authorizedCron(request)) return Response.json({ error: 'Not found' }, { status: 404 })
 
   try {
     const stuck = await listStuckOrders()

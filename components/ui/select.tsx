@@ -145,7 +145,7 @@ export function Select<T extends string>({
           disabled={disabled}
           onClick={() => (open ? setOpen(false) : openList())}
           onKeyDown={onKeyDown}
-          className={`flex h-control w-full items-center rounded-control border bg-surface pr-10 pl-4 text-left text-base text-primary transition-colors ease-spring duration-motion focus:outline-none disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled disabled:transition-none ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
+          className={`flex h-control w-full items-center rounded-control border bg-surface pr-10 pl-4 text-left text-base text-primary transition-colors ease-spring focus:outline-none disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled disabled:transition-none ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
         >
           <span className="truncate">{options[selectedIndex]?.label}</span>
         </button>

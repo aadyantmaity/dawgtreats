@@ -115,6 +115,8 @@ export const orders = pgTable('orders', {
   stripeSessionId: text('stripe_session_id').unique(),
   reservedUntil: timestamp('reserved_until', { withTimezone: true }),
   paidAt: timestamp('paid_at', { withTimezone: true }),
+  // Set when the pickup-day reminder goes out, so a retry cannot send it twice.
+  reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

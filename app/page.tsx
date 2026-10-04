@@ -53,13 +53,25 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
         </div>
         {flavor.description && <p className="text-sm text-secondary">{flavor.description}</p>}
       </div>
-      <div className="flex items-center justify-between gap-3">
+      {/* Fixed height: an Add button and a stepper are different sizes, and a card
+          must not grow just because its cookie is in the cart. */}
+      <div className="flex min-h-control items-center justify-between gap-3">
         <Stock remaining={flavor.remaining} />
         <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
       </div>
-      <details className="border-t border-default pt-3">
-        <summary className="cursor-pointer text-sm text-secondary transition-colors duration-motion ease-spring hover:text-primary">
+      <details className="group border-t border-default pt-3">
+        <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
           Allergens
+          <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            aria-hidden
+            className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
+          >
+            <path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </summary>
         <p className="mt-2 text-sm text-tertiary">{allergenLine(flavor.allergens)}</p>
         {mayContainLine(flavor.mayContain) && (
@@ -92,7 +104,7 @@ export default async function MenuPage() {
         Questions about ingredients or allergens? Email{" "}
         <a
           href="mailto:orders@dawgtreats.shop"
-          className="underline transition-colors duration-motion ease-spring hover:text-primary"
+          className="underline transition-colors ease-spring hover:text-primary"
         >
           orders@dawgtreats.shop
         </a>

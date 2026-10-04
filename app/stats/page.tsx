@@ -31,7 +31,7 @@ export default async function StatsPage() {
     );
   }
 
-  const { steps, byFlavor, orders } = await funnelForWeek(week.id);
+  const { steps, byFlavor, byWanted, orders } = await funnelForWeek(week.id);
   const top = steps[0].people;
   const bought = orders
     .filter((row) => row.status !== "pending" && row.status !== "expired")
@@ -88,6 +88,21 @@ export default async function StatsPage() {
         )}
       </Card>
 
+      <Card title="Wanted while sold out" className="mt-6">
+        {byWanted.length === 0 ? (
+          <p className="text-secondary">Nobody has asked for a sold-out flavor yet.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {byWanted.map((row) => (
+              <li key={row.flavor} className="flex justify-between gap-4 text-sm">
+                <span>{row.flavor}</span>
+                <span className="tabular-nums text-secondary">{row.wanted}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <Card title="Orders" className="mt-6">
         {orders.length === 0 ? (
           <p className="text-secondary">No orders this week.</p>
@@ -109,7 +124,7 @@ export default async function StatsPage() {
         began, so earlier orders are left out.
       </p>
 
-      <Link href="/pickup" className="mt-8 inline-block underline">
+      <Link href="/pickup" className="mt-6 inline-block py-2 underline">
         Pickup day
       </Link>
     </main>

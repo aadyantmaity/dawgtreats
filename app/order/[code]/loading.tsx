@@ -26,7 +26,7 @@ export default function Loading() {
           <Bone className="h-6 w-full" />
         </div>
       </Card>
-      <Bone className="mt-8 h-6 w-1/3" />
+      <Bone className="mt-6 h-10 w-1/3" />
     </main>
   );
 }

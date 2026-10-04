@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents } from '@/lib/db/schema'
 import { DomainError } from '@/lib/errors'
 import type { CheckoutInput } from '@/lib/validation'
-import { getOrderableWeek } from '@/lib/weeks'
+import { addDays, getOrderableWeek, ptToUtc } from '@/lib/weeks'
 
 // Matches Stripe's minimum Checkout session expiry, so stock is released only once Stripe says the session is dead.
 const HOLD_MINUTES = 30
@@ -303,6 +303,47 @@ export async function listStuckOrders(olderThanMinutes = 35) {
       ),
     )
     .orderBy(asc(orders.createdAt))
+}
+
+// Paid or ready orders picking up today, Pacific, that have not had a reminder sent.
+// A day boundary rather than "from now" catches a slot already passed today, so a
+// job that starts late still reminds everyone with cookies waiting.
+export async function listRemindersDue(now = new Date()) {
+  const todayPt = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(now)
+  const startOfDay = ptToUtc(todayPt, '00:00')
+  // Not 24 hours: the day a clock changes is 23 or 25, and both fall on a pickup Sunday.
+  const endOfDay = ptToUtc(addDays(todayPt, 1), '00:00')
+
+  return db
+    .select({ id: orders.id, orderCode: orders.orderCode })
+    .from(orders)
+    .innerJoin(pickupSlots, eq(pickupSlots.id, orders.pickupSlotId))
+    .where(
+      and(
+        inArray(orders.status, ['paid', 'ready']),
+        sql`${orders.reminderSentAt} is null`,
+        gte(pickupSlots.startsAt, startOfDay),
+        lt(pickupSlots.startsAt, endOfDay),
+      ),
+    )
+    .orderBy(asc(orders.createdAt))
+}
+
+// Claims the order before the mail goes out, so a crash between sending and this write
+// can never repeat a reminder; the cost is that the same crash can occasionally miss one.
+// Claiming before sending stops two runs mailing the same person. If the mail then
+// fails, the claim goes back so the next run can try again instead of losing it.
+export async function releaseReminder(orderId: string): Promise<void> {
+  await db.update(orders).set({ reminderSentAt: null }).where(eq(orders.id, orderId))
+}
+
+export async function markReminderSent(orderId: string): Promise<boolean> {
+  const [marked] = await db
+    .update(orders)
+    .set({ reminderSentAt: new Date() })
+    .where(and(eq(orders.id, orderId), sql`${orders.reminderSentAt} is null`))
+    .returning({ id: orders.id })
+  return Boolean(marked)
 }
 
 export async function listOrdersForAccount(accountId: string) {

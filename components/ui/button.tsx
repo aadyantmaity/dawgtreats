@@ -16,7 +16,7 @@ type ButtonProps = ComponentProps<"button"> & {
 };
 
 const base =
-  "inline-flex items-center justify-center font-medium transition ease-spring duration-motion hover:-translate-y-0.5 active:duration-press active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:border disabled:border-default disabled:bg-disabled disabled:text-disabled disabled:transition-none";
+  "inline-flex items-center justify-center font-medium transition ease-spring hover:-translate-y-0.5 active:duration-100 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:border disabled:border-default disabled:bg-disabled disabled:text-disabled disabled:transition-none";
 
 // A link that acts as a button needs these same classes, and a <Link> cannot be a
 // <button>. Exporting the string keeps one source rather than a copy that drifts.

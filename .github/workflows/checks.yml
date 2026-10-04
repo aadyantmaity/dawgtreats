@@ -51,6 +51,19 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://postgres:dawgtreats@localhost:5433/dawgtreats_test
 
+      # Only Chromium: this catches layout breakage, not cross-browser rendering bugs.
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      # Seeds its own menu and opens a week against the same throwaway Postgres the
+      # suite uses, then builds and starts the app (playwright.config.ts) before
+      # checking every route for sideways scroll, off-screen elements, a reachable
+      # cart link and tap targets, at phone widths. See e2e/layout.spec.ts.
+      - name: Layout
+        run: npm run e2e
+        env:
+          TEST_DATABASE_URL: postgres://postgres:dawgtreats@localhost:5433/dawgtreats_test
+
       # knip's drizzle plugin loads drizzle.config.ts, which needs a database URL
       # this job has no reason to hold. The plugin is off and the config ignored.
       - name: Dead code

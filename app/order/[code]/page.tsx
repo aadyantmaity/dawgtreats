@@ -51,7 +51,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
         </div>
       </Card>
 
-      <Link href="/" className="mt-8 inline-block underline">
+      <Link href="/" className="mt-6 inline-block py-2 underline">
         Back to the menu
       </Link>
     </main>

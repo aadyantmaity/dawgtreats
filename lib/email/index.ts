@@ -35,7 +35,7 @@ async function send(message: {
   return (await response.json()) as Sent
 }
 
-// Both messages name the same pickup window, so they read it from one place.
+// All three messages name the same pickup window, so they read it from one place.
 function pickupWindow(slot: { startsAt: Date; endsAt: Date }): string {
   const day = formatPt(slot.startsAt, { weekday: 'long', month: 'long', day: 'numeric' })
   const from = formatPt(slot.startsAt, { hour: 'numeric', minute: '2-digit' })
@@ -129,4 +129,43 @@ async function sendOwnerAlert(orderCode: string): Promise<boolean> {
 export async function announcePaidOrder(orderCode: string): Promise<void> {
   await sendConfirmation(orderCode)
   await sendOwnerAlert(orderCode)
+}
+
+function reminderText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
+  const { order: o, lines, slot } = order
+
+  return [
+    `Hey ${o.name}, today's the day. Pick up ${pickupWindow(slot)}.`,
+    PICKUP_PLACE + '.',
+    '',
+    `Order code: ${o.orderCode}`,
+    ...lines.map((l) => `  ${l.quantity} x ${l.name}`),
+    '',
+    'Show this code when you arrive.',
+  ].join('\n')
+}
+
+// The caller already confirmed the order is paid or ready; this only guards against
+// calling it on anything else. A failed send is logged and never thrown, so one bad
+// address cannot stop the rest of the morning's reminders.
+export async function sendReminder(orderCode: string): Promise<boolean> {
+  try {
+    const order = await getOrderByCode(orderCode)
+    if (!order || (order.order.status !== 'paid' && order.order.status !== 'ready')) {
+      console.error('reminder_failed', { orderCode, reason: 'not a paid order' })
+      return false
+    }
+
+    const sent = await send({
+      to: order.order.email,
+      subject: `Dawg Treats pickup today - ${order.order.orderCode}`,
+      text: reminderText(order),
+    })
+
+    console.log('reminder_sent', { orderCode, messageId: sent?.id ?? null })
+    return sent !== null
+  } catch (error) {
+    console.error('reminder_failed', { orderCode, error })
+    return false
+  }
 }

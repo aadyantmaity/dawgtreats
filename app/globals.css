@@ -89,8 +89,10 @@
 
   /* Spring: a hand-drawn overshoot, not a mechanical ease. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --duration-press: 120ms;
+  /* Tailwind has no duration namespace, so a `duration-motion` class would compile to
+     nothing. This sets the duration every `transition` gets, and the animations reuse it. */
   --duration-motion: 260ms;
+  --default-transition-duration: var(--duration-motion);
 
   --animate-bump: bump var(--duration-motion) var(--ease-spring);
   --animate-rise: rise var(--duration-motion) var(--ease-spring);
@@ -206,6 +208,21 @@
     border-top-color: currentColor;
     border-radius: var(--radius-pill);
     animation: var(--animate-spin);
+  }
+
+  /* A disclosure reads as a row. Only the marker needs CSS: the default one is a
+     triangle that no utility can move or restyle. */
+  .disclosure {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .disclosure::-webkit-details-marker {
+    display: none;
   }
 
   /* With motion off these would freeze mid-sweep, which says nothing. They go

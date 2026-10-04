@@ -168,6 +168,27 @@ export function CartLink() {
   );
 }
 
+// Visually distinct from a buyable button: nothing here is for sale, and there is
+// no mechanism to tell anyone when the flavor comes back.
+function SoldOutInterest({ name }: { name: string }) {
+  const [sent, setSent] = useState(false);
+
+  if (sent) return <p className="text-sm text-secondary">Noted that you wanted this</p>;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setSent(true);
+        track("sold_out_wanted", name);
+      }}
+      className="inline-block py-2 text-sm text-secondary underline hover:text-primary"
+    >
+      Sold out — I wanted this
+    </button>
+  );
+}
+
 export function AddToCart({
   flavorId,
   name,
@@ -182,7 +203,7 @@ export function AddToCart({
   const quantity = quantityOf(flavorId);
 
   if (remaining === null) return null;
-  if (remaining === 0) return <Button disabled>Sold out</Button>;
+  if (remaining === 0) return <SoldOutInterest name={name} />;
 
   const max = Math.min(
     remaining,

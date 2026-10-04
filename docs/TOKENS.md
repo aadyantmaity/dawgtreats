@@ -131,9 +131,12 @@ mechanical. Same idea as the other scales, defined once in `app/globals.css`.
 
 | Token | Value | Used by |
 | --- | --- | --- |
-| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Every animation below |
-| `duration-press` | 120ms | A quick, no-overshoot press feedback |
-| `duration-motion` | 260ms | The three animations below |
+| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Every transition and animation |
+| `--duration-motion` | 260ms | The animations below, and the duration every `transition` gets |
+
+Tailwind has no duration namespace, so a class named after a duration token compiles to
+nothing. `--duration-motion` is wired to `--default-transition-duration` instead: write
+`transition` and it lasts 260ms. A press wants to feel quicker, so those use `duration-100`.
 
 ## Animations
 

@@ -56,7 +56,13 @@ export const flavorSchema = z.object({
 
 // Every event the site may count. The browser sends one of these names; the route
 // accepts nothing else, so a spoofed body cannot invent a metric.
-export const EVENTS = ['menu_viewed', 'add_to_cart', 'cart_viewed', 'checkout_reached'] as const
+export const EVENTS = [
+  'menu_viewed',
+  'add_to_cart',
+  'cart_viewed',
+  'checkout_reached',
+  'sold_out_wanted',
+] as const
 
 export type EventName = (typeof EVENTS)[number]
 

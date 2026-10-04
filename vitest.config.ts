@@ -14,6 +14,8 @@ export default defineConfig({
     },
   },
   test: {
+    // Playwright owns e2e/. Vitest loading those specs fails on Playwright's own hooks.
+    exclude: ['**/node_modules/**', '**/.next/**', 'e2e/**'],
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       TEST_DATABASE_URL,

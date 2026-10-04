@@ -71,6 +71,13 @@
       "when": 1791151034984,
       "tag": "0009_solid_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791153440375,
+      "tag": "0010_tired_ma_gnuci",
+      "breakpoints": true
     }
   ]
 }

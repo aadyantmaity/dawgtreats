@@ -1,0 +1,20 @@
+name: Pickup day reminders
+
+# Pickups only happen Saturday and Sunday. GitHub cron is UTC and ignores daylight
+# saving, so 15:00 UTC lands at 8am PDT in summer and 7am PST in winter - early
+# enough on either side of the switch to reach everyone before the first slot.
+on:
+  schedule:
+    - cron: "0 15 * * 6,0"
+  workflow_dispatch:
+
+jobs:
+  reminders:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Send pickup day reminders
+        run: |
+          response=$(curl -sS --fail-with-body -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://dawgtreats.shop/api/cron/reminders)
+          echo "$response"
