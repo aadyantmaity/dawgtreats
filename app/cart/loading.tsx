@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { Bone, LoadingNote } from "@/components/ui/loading";
 
 export default function Loading() {
@@ -6,7 +7,7 @@ export default function Loading() {
       <LoadingNote>Loading your cart</LoadingNote>
       <Bone className="h-10 w-1/2" />
       <div className="mt-8 flex flex-col gap-6">
-        <div className="rounded-card border border-default bg-surface">
+        <Card className="p-0">
           <ul className="divide-y divide-default">
             {[0, 1].map((row) => (
               <li key={row} className="flex flex-wrap items-center gap-4 p-5">
@@ -20,7 +21,7 @@ export default function Loading() {
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
         <div className="flex items-center justify-between">
           <Bone className="h-6 w-24" />
           <Bone className="h-6 w-16" />

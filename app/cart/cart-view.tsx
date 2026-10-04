@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { CartNotices, reconcile, useCart } from "@/components/cart";
-import { track } from "@/lib/analytics/track";
+import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { track } from "@/lib/analytics/track";
 import Image from "next/image";
 
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
@@ -146,7 +147,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
       {ordersOpen ? (
         <Link
           href="/checkout"
-          className="inline-flex h-control items-center justify-center rounded-control bg-action px-5 font-medium text-on-action hover:bg-action/90"
+          className={buttonClass({ size: "md" })}
         >
           Pick a pickup time
         </Link>

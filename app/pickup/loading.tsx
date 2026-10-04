@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { Bone, LoadingNote } from "@/components/ui/loading";
 
 export default function Loading() {
@@ -11,7 +12,7 @@ export default function Loading() {
       </div>
       <div className="mt-8 flex flex-col gap-6">
         {[0, 1].map((group) => (
-          <div key={group} className="rounded-card border border-default bg-surface p-5">
+          <Card key={group}>
             <Bone className="mb-4 h-6 w-2/3" />
             <div className="flex flex-col gap-4">
               {[0, 1].map((order) => (
@@ -24,7 +25,7 @@ export default function Loading() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </main>

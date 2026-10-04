@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { Bone, LoadingNote } from "@/components/ui/loading";
 
 export default function Loading() {
@@ -6,7 +7,7 @@ export default function Loading() {
       <LoadingNote>Loading the feedback form</LoadingNote>
       <Bone className="h-10 w-full" />
       <Bone className="mt-3 h-6 w-3/4" />
-      <div className="mt-8 rounded-card border border-default bg-surface p-5">
+      <Card className="mt-8">
         <div className="flex flex-col gap-2">
           <Bone className="h-5 w-1/3" />
           <div className="flex gap-2">
@@ -25,7 +26,7 @@ export default function Loading() {
           <Bone className="h-control w-full rounded-control" />
         </div>
         <Bone className="mt-6 h-control-sm w-24 rounded-control-sm" />
-      </div>
+      </Card>
     </main>
   );
 }
