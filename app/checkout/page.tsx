@@ -13,7 +13,7 @@ export default async function CheckoutPage() {
 
   if (!week) {
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
         <h1 className="text-4xl font-semibold">Checkout</h1>
         <p className="mt-3 text-secondary">Orders are closed right now.</p>
         <Link href="/" className="mt-6 inline-block underline">
@@ -26,14 +26,20 @@ export default async function CheckoutPage() {
   const [menu, slots, account] = await Promise.all([getMenu(week.id), listSlots(week.id), currentAccount()]);
   const choices: SlotChoice[] = slots
     .filter((slot) => slot.bookedCount < slot.capacity)
-    .map((slot) => ({
-      id: slot.id,
-      label: `${formatPt(slot.startsAt, { weekday: "short" })} ${formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(slot.endsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`,
-      spotsLeft: slot.capacity - slot.bookedCount,
-    }));
+    .map((slot) => {
+      const start = formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" });
+      const end = formatPt(slot.endsAt, { hour: "numeric", minute: "2-digit" });
+      // A phone truncates this label, so AM/PM is said once and the zone sits under the field.
+      const sameHalf = start.slice(-2) === end.slice(-2);
+      return {
+        id: slot.id,
+        label: `${formatPt(slot.startsAt, { weekday: "short" })} ${sameHalf ? start.slice(0, -3) : start}–${end}`,
+        spotsLeft: slot.capacity - slot.bookedCount,
+      };
+    });
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
       <h1 className="text-4xl font-semibold">Checkout</h1>
       <div className="mt-3 flex flex-col gap-1 text-secondary">
         <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>

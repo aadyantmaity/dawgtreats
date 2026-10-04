@@ -24,7 +24,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   const pickup = `${formatPt(slot.startsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(slot.endsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
       <OrderStatus orderCode={order.orderCode} initial={order.status} />
 
       <Card title="Pickup" className="mt-8">

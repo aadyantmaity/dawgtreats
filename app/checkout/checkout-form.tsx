@@ -197,6 +197,7 @@ export function CheckoutForm({
             onChange={setSlotId}
           />
         )}
+        {slots.length > 0 && <p className="mt-2 text-sm text-tertiary">All times Pacific.</p>}
       </Card>
 
       <Card title="Where to find you">
