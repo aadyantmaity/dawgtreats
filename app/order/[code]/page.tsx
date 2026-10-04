@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
-import { getOrderByCode } from "@/lib/orders";
+import { getPublicOrder } from "@/lib/orders";
 import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +17,12 @@ export async function generateMetadata({ params }: PageProps<"/order/[code]">) {
 
 export default async function OrderPage({ params }: PageProps<"/order/[code]">) {
   const { code } = await params;
-  const found = await getOrderByCode(code.toUpperCase());
-  if (!found) notFound();
+  // The public shape, so a name or phone number cannot reach this page by accident.
+  const order = await getPublicOrder(code.toUpperCase());
+  if (!order) notFound();
 
-  const { order, lines, slot } = found;
-  const pickup = `${formatPt(slot.startsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(slot.endsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
+  const { lines } = order;
+  const pickup = `${formatPt(order.pickupStartsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(order.pickupStartsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(order.pickupEndsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
