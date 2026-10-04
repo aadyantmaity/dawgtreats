@@ -40,7 +40,7 @@ export function FeedbackFab() {
           aria-label="Send feedback"
           className="max-h-panel-max-h w-panel max-w-full overflow-y-auto rounded-card border border-default bg-surface p-5 shadow-lg"
         >
-          <h2 className="font-serif text-xl font-semibold">Tell me what you think</h2>
+          <h2 className="font-display text-xl font-semibold">Tell me what you think</h2>
           <p className="mt-1 text-sm text-secondary">
             How they were, or what to bake next.
           </p>

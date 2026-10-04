@@ -14,34 +14,44 @@ Colours are named by the job they do, never by how they look. Components use rol
 | Class | Its job | Palette |
 | --- | --- | --- |
 | **Text** | | |
-| `text-primary` | Titles, body, values | ink `#1b1a17` |
-| `text-secondary` | Subtext, labels, descriptions, nav | taupe `#6b665c` |
-| `text-tertiary` | Placeholders, hints, empty states, de-emphasised items | pebble `#a8a298` |
-| `text-on-action` | Text on a primary button | ivory `#fbfaf7` |
-| `text-disabled` | Text of a disabled control | pebble `#a8a298` |
-| `text-error` | Error messages | rust `#b4561f` |
-| `text-urgent` | Low stock ("7 left"); same colour as errors for now | rust `#b4561f` |
+| `text-primary` | Titles, body, values | ink `#15130f` |
+| `text-secondary` | Subtext, labels, descriptions, nav | taupe `#5d564a` |
+| `text-tertiary` | Placeholders, hints, empty states, de-emphasised items | pebble `#6e675c` |
+| `text-on-action` | Text on a primary button | ivory `#f3f1ec` |
+| `text-disabled` | Text of a disabled control | pebble `#6e675c` |
+| `text-error` | Error messages | rust `#9c4a21` |
+| `text-urgent` | Low stock ("7 left"); same colour as errors for now | rust `#9c4a21` |
 | `text-success` | Success text, "Saved", Picked up badge | sage-700 `#2f6b3a` |
 | `text-warning` | Warning text, Ready badge | honey-700 `#7a5a1e` |
 | `text-rating` | A filled star in a review | honey-700 `#7a5a1e` |
 | **Backgrounds** | | |
-| `bg-page` | The page itself | ivory `#fbfaf7` |
-| `bg-surface` | Cards, inputs, popups | white `#ffffff` |
-| `bg-subtle` | Neutral badge | ivory `#fbfaf7` |
-| `bg-hover` | Hovered rows, highlighted option | ivory `#fbfaf7` |
-| `bg-placeholder` | Photo placeholder | sand `#efe8dc` |
-| `bg-action` | Primary button (the primary colour) | ink `#1b1a17` |
-| `bg-disabled` | Disabled control | oat `#f1ece3` |
+| `bg-page` | The page itself | ivory `#f3f1ec` |
+| `bg-surface` | Cards, inputs, popups | white `#fcfbf8` |
+| `bg-subtle` | Neutral badge | ivory `#f3f1ec` |
+| `bg-hover` | Hovered rows, highlighted option | ivory `#f3f1ec` |
+| `bg-placeholder` | Photo placeholder | sand `#e6e0d2` |
+| `bg-action` | Primary button (the primary colour) | ink `#15130f` |
+| `bg-disabled` | Disabled control | oat `#e9e3d6` |
 | `bg-success` | Success badge | sage-100 `#e3efe2` |
 | `bg-warning` | Warning badge | honey-100 `#f3e8d2` |
 | **Borders** (also `divide-*`) | | |
-| `border-default` | Hairlines, card and input edges | linen `#e8e3d8` |
-| `border-focus` | Focused, open or selected field | ink `#1b1a17` |
-| `border-error` | Invalid field | rust `#b4561f` |
+| `border-default` | Hairlines, card and input edges | linen `#ded8cb` |
+| `border-focus` | Focused, open or selected field | ink `#15130f` |
+| `border-error` | Invalid field | rust `#9c4a21` |
 | **Outlines** | | |
-| `outline-focus` | Keyboard focus ring | ink `#1b1a17` |
+| `outline-focus` | Keyboard focus ring | ink `#15130f` |
+
+Pebble sits darker than its plain palette-scaled value (`#948c7d`) so that `text-tertiary`
+clears 4.5:1 on `bg-page`; see the contrast note below.
 
 Opacity modifiers work on any token (`hover:bg-action/90`, `text-primary/80`).
+
+## Contrast
+
+Every text token must reach 4.5:1 against the background it sits on (3:1 at 24px and up).
+Primary, secondary and error text clear this with room to spare on both `bg-page` and
+`bg-surface`; tertiary is the tight one, which is why pebble sits darker than a plain scaled-down
+reading of the palette table would give.
 
 ## Adding or changing a colour
 
@@ -77,9 +87,18 @@ For values that repeat with a meaning, so they can change in one place.
 | Token | Value | Used by |
 | --- | --- | --- |
 | `rounded-control-sm` | 8px | Small buttons, chips |
-| `rounded-control` | 12px | Inputs, selects, steppers, medium buttons, popups |
-| `rounded-card` | 16px | Cards |
+| `rounded-control` | 9999px | Inputs, selects, steppers, medium buttons, popups |
+| `rounded-card` | 18px | Cards |
 | `rounded-pill` | 9999px | Badges |
+
+`rounded-control` and `rounded-pill` share the same 9999px value but stay separate tokens: a
+control's shape and a badge's shape can diverge again without a rename. Popups ride along with
+the other controls since they share the one token.
+
+`rounded-control` is the pill. It fits buttons and single-line controls, where the whole shape
+reads as one row. A multi-line or stacked surface, such as a textarea or a dropdown's option
+list, takes `rounded-card` instead; a 9999px radius on a tall box looks like a broken corner, not
+a pill.
 
 Tailwind's own `rounded-lg`, `rounded-xl` and friends are removed.
 
@@ -104,3 +123,10 @@ The 404 is the one page that centres its text, because it has nowhere to send th
 1. Round to an existing step first; that is almost always right.
 2. If a value repeats with a meaning (a second control height, say), add a **named** token, not a number.
 3. Only widen the numeric scale when a real gap shows up, and add the row here.
+
+# Fonts
+
+| Token | Font | Used by |
+| --- | --- | --- |
+| `font-sans` | DM Sans | Body text (the default) |
+| `font-display` | Shantell Sans, weights 500 and 700 | `h1`, `h2`, `h3`, and anywhere a heading sits in markup that isn't one of those tags |

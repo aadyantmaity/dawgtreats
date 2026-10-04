@@ -88,7 +88,7 @@ export function FeedbackForm({
           maxLength={LIMITS.messageMax}
           rows={3}
           aria-invalid={tried && messageProblem ? true : undefined}
-          className="w-full rounded-control border border-default bg-surface px-4 py-3 text-base text-primary placeholder:text-tertiary focus:border-focus focus:outline-none aria-invalid:border-error"
+          className="w-full rounded-card border border-default bg-surface px-4 py-3 text-base text-primary placeholder:text-tertiary focus:border-focus focus:outline-none aria-invalid:border-error"
           placeholder="Matcha white chocolate"
         />
         {tried && messageProblem ? (

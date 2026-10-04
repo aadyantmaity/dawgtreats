@@ -166,7 +166,7 @@ export function Select<T extends string>({
           role="listbox"
           aria-labelledby={labelId}
           hidden={!open}
-          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-control border border-default bg-surface py-1 shadow-lg"
+          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-card border border-default bg-surface py-1 shadow-lg"
         >
           {options.map((option, index) => {
             const selected = index === selectedIndex;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces } from "next/font/google";
+import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
 import { FeedbackFab } from "@/components/feedback-fab";
@@ -11,8 +11,9 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Loaded as a variable font so headings get the weight they ask for, including 600.
+const shantellSans = Shantell_Sans({
+  variable: "--font-shantell-sans",
   subsets: ["latin"],
 });
 
@@ -29,12 +30,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${shantellSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <header className="border-b border-default">
           <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-4 px-4 sm:px-6">
-            <Link href="/" className="font-serif text-lg font-semibold whitespace-nowrap sm:text-xl">
+            <Link href="/" className="font-display text-lg font-semibold whitespace-nowrap sm:text-xl">
               Dawg Treats
             </Link>
             <nav className="flex items-center gap-3 sm:gap-4">

@@ -2,15 +2,17 @@
 
 /* Palette: the only place hex values live. Components never use these directly; see docs/TOKENS.md. */
 :root {
-  --palette-ivory: #fbfaf7;
-  --palette-white: #ffffff;
-  --palette-ink: #1b1a17;
-  --palette-linen: #e8e3d8;
-  --palette-taupe: #6b665c;
-  --palette-pebble: #a8a298;
-  --palette-sand: #efe8dc;
-  --palette-oat: #f1ece3;
-  --palette-rust: #b4561f;
+  --palette-ivory: #f3f1ec;
+  --palette-white: #fcfbf8;
+  --palette-ink: #15130f;
+  --palette-linen: #ded8cb;
+  --palette-taupe: #5d564a;
+  /* The deeper palette's own grey failed contrast on this ground.
+     This darker grey keeps tertiary text above 4.5:1. */
+  --palette-pebble: #6e675c;
+  --palette-sand: #e6e0d2;
+  --palette-oat: #e9e3d6;
+  --palette-rust: #9c4a21;
   --palette-sage-100: #e3efe2;
   --palette-sage-700: #2f6b3a;
   --palette-honey-100: #f3e8d2;
@@ -76,14 +78,14 @@
 
   --radius-*: initial;
   --radius-control-sm: 0.5rem;
-  --radius-control: 0.75rem;
-  --radius-card: 1rem;
+  --radius-control: 9999px;
+  --radius-card: 1.125rem;
   --radius-pill: 9999px;
 
   --aspect-photo: 4 / 3;
 
   --font-sans: var(--font-dm-sans);
-  --font-serif: var(--font-fraunces);
+  --font-display: var(--font-shantell-sans);
 }
 
 /* In @layer base so a font-sans utility can still override it. */
@@ -97,6 +99,6 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
   }
 }
