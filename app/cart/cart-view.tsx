@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { CartNotices, reconcile, useCart } from "@/components/cart";
+import { track } from "@/lib/analytics/track";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 
@@ -22,6 +23,9 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
   const { lines, count, setQuantity } = useCart();
 
   useEffect(() => reconcile(menu), [menu]);
+
+  // Once per visit to the page, not once per quantity change.
+  useEffect(() => track("cart_viewed"), []);
 
   // Rows the cart no longer holds but whose leave animation hasn't finished. Snapshotted so
   // they keep rendering with their last known data after the real line is already gone.

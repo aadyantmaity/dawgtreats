@@ -36,6 +36,8 @@ const limiters = {
   lookup: limiter('lookup', 20, '1 m'),
   // An unauthenticated public write, so a spam box without a limit.
   feedback: limiter('feedback', 5, '10 m'),
+  // One visit fires four of these at most. The ceiling only stops a flood.
+  events: limiter('events', 40, '10 m'),
 } as const
 
 export type LimitName = keyof typeof limiters

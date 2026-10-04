@@ -19,6 +19,7 @@
     "@supabase/supabase-js": "^2.117.2",
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.39.0",
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "next": "^16.3.8",
     "postgres": "^3.4.9",

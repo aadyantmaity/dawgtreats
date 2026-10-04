@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { CartNotices, reconcile, useCart } from "@/components/cart";
+import { track } from "@/lib/analytics/track";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,13 @@ export function CheckoutForm({
   const leaving = useRef(false);
 
   useEffect(() => reconcile(menu), [menu]);
+
+  useEffect(() => {
+    // "No slot worked for me" and "I changed my mind" look identical without this.
+    track("checkout_reached", slots.length === 0 ? "no slots" : undefined);
+    // Once per visit to the page, not on every edit to the form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [slotId, setSlotId] = useState(slots[0]?.id ?? "");
   const [name, setName] = useState(contact.name);

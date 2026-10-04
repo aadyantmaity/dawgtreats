@@ -64,6 +64,13 @@
       "when": 1791149053058,
       "tag": "0008_flimsy_gorgon",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791151034984,
+      "tag": "0009_solid_wendell_rand",
+      "breakpoints": true
     }
   ]
 }

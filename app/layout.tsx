@@ -1,7 +1,9 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
+import { NavLink } from "@/components/nav-link";
 import { FeedbackFab } from "@/components/feedback-fab";
 import { viewerIsAdmin } from "@/lib/auth";
 import "./globals.css";
@@ -41,25 +43,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <nav className="flex min-w-0 items-center gap-2 sm:gap-4">
               {/* Links scroll if they must; the cart never leaves the screen. */}
               <div className="flex min-w-0 items-center gap-2 overflow-x-auto sm:gap-4">
-                <Link
-                  href="/order/lookup"
-                  className="shrink-0 text-sm whitespace-nowrap text-secondary hover:text-primary"
-                >
-                  My order
-                </Link>
-                <Link href="/feedback" className="hidden shrink-0 text-sm whitespace-nowrap text-secondary hover:text-primary sm:inline">
-                  Feedback
-                </Link>
-                <Link href="/account" className="shrink-0 text-sm whitespace-nowrap text-secondary hover:text-primary">
-                  Account
-                </Link>
+                <NavLink href="/order/lookup">My order</NavLink>
+                <span className="hidden sm:inline">
+                  <NavLink href="/feedback">Feedback</NavLink>
+                </span>
+                <NavLink href="/account">Account</NavLink>
                 {admin && (
-                  <Link
-                    href="/pickup"
-                    className="shrink-0 text-sm whitespace-nowrap text-secondary hover:text-primary"
-                  >
-                    Pickup
-                  </Link>
+                  <>
+                    <NavLink href="/pickup">Pickup</NavLink>
+                    <NavLink href="/stats">Stats</NavLink>
+                  </>
                 )}
               </div>
               <CartLink />
@@ -68,6 +61,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         {children}
         <FeedbackFab />
+        <Analytics />
       </body>
     </html>
   );

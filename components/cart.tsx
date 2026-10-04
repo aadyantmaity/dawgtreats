@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
+import { track } from "@/lib/analytics/track";
 import { LIMITS } from "@/lib/validation";
 
 export type CartLine = { flavorId: string; quantity: number };
@@ -193,9 +194,12 @@ export function AddToCart({
     return (
       <div className="flex flex-col items-end gap-1">
         <Button
-          onClick={() =>
-            max > 0 ? setQuantity(flavorId, 1) : setNote(`${LIMITS.perOrderMax} cookies per order`)
-          }
+          onClick={() => {
+            if (max === 0) return setNote(`${LIMITS.perOrderMax} cookies per order`);
+            setQuantity(flavorId, 1);
+            // The flavor name carries no personal detail; nothing here identifies anyone.
+            track("add_to_cart", name);
+          }}
         >
           Add
         </Button>

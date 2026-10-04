@@ -54,6 +54,18 @@ export const flavorSchema = z.object({
     .optional(),
 })
 
+// Every event the site may count. The browser sends one of these names; the route
+// accepts nothing else, so a spoofed body cannot invent a metric.
+export const EVENTS = ['menu_viewed', 'add_to_cart', 'cart_viewed', 'checkout_reached'] as const
+
+export type EventName = (typeof EVENTS)[number]
+
+export const eventSchema = z.object({
+  name: z.enum(EVENTS),
+  visitorId: z.string().trim().min(8).max(64),
+  detail: z.string().trim().max(60).optional(),
+})
+
 export const quantitySchema = z
   .int(MESSAGES.quantityWhole)
   .min(0, 'Quantities can’t be negative')

@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
+import { TrackView } from "@/lib/analytics/track";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
@@ -75,6 +76,7 @@ export default async function MenuPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 sm:px-6 py-12">
+      <TrackView name="menu_viewed" />
       <h1 className="text-4xl font-semibold">
         {week ? "This week's bake" : "The menu"}
       </h1>

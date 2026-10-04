@@ -44,6 +44,17 @@ export const flavors = pgTable('flavors', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// What visitors do before an order exists. A visitor id is a random string held for
+// one browser session, so steps can be counted per person without naming anyone.
+export const events = pgTable('events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  visitorId: text('visitor_id').notNull(),
+  weekId: uuid('week_id'),
+  detail: text('detail'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const weeks = pgTable('weeks', {
   id: uuid('id').primaryKey().defaultRandom(),
   pickupWeekendStart: date('pickup_weekend_start').notNull().unique(),
