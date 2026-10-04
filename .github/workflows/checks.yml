@@ -51,6 +51,8 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://postgres:dawgtreats@localhost:5433/dawgtreats_test
 
+      # knip's drizzle plugin loads drizzle.config.ts, which needs a database URL
+      # this job has no reason to hold. The plugin is off and the config ignored.
       - name: Dead code
         run: npm run knip
 
