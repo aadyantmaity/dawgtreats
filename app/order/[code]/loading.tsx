@@ -4,17 +4,28 @@ export default function Loading() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6">
       <LoadingNote>Loading your order</LoadingNote>
-      <Bone className="h-10 w-56" />
-      <Bone className="mt-3 h-5 w-64 max-w-full" />
-      {[0, 1].map((card) => (
-        <div key={card} className="mt-8 rounded-card border border-default bg-surface p-5">
-          <Bone className="h-6 w-32" />
-          <div className="mt-4 flex flex-col gap-3">
-            <Bone className="h-5 w-full" />
-            <Bone className="h-5 w-3/4" />
-          </div>
+      <div className="flex items-center justify-between gap-4">
+        <Bone className="h-10 w-1/2" />
+        <Bone className="h-6 w-20 rounded-pill" />
+      </div>
+      <Bone className="mt-3 h-6 w-1/3" />
+      <div className="mt-8 rounded-card border border-default bg-surface p-5">
+        <Bone className="mb-4 h-6 w-1/4" />
+        <Bone className="h-6 w-2/3" />
+        <Bone className="mt-1 h-6 w-3/4" />
+        <Bone className="mt-2 h-5 w-1/3" />
+      </div>
+      <div className="mt-6 rounded-card border border-default bg-surface p-5">
+        <Bone className="mb-4 h-6 w-1/3" />
+        <div className="flex flex-col gap-2">
+          <Bone className="h-6 w-full" />
+          <Bone className="h-6 w-full" />
         </div>
-      ))}
+        <div className="mt-3 border-t border-default pt-3">
+          <Bone className="h-6 w-full" />
+        </div>
+      </div>
+      <Bone className="mt-8 h-6 w-1/3" />
     </main>
   );
 }

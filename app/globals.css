@@ -96,7 +96,7 @@
   --animate-rise: rise var(--duration-motion) var(--ease-spring);
   /* Holds its collapsed end state, so the row never snaps back before it is removed. */
   --animate-leave: leave var(--duration-motion) var(--ease-spring) forwards;
-  --animate-shimmer: shimmer 1.5s linear infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
 }
 
 /* A count that just changed, overshooting past its resting size. */
