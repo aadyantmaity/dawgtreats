@@ -4,7 +4,7 @@ import { AddToCart } from "@/components/cart";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
-import { allergensFor } from "@/lib/recipe";
+import { allergenLine, mayContainLine } from "@/lib/recipe";
 import { formatClosesAt, formatPickupWeekend, getOrderableWeek } from "@/lib/weeks";
 
 // Stock changes with every checkout, so the menu is never prerendered.
@@ -60,7 +60,10 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
         <summary className="cursor-pointer text-sm text-secondary transition-colors duration-motion ease-spring hover:text-primary">
           Allergens
         </summary>
-        <p className="mt-2 text-sm text-tertiary">{allergensFor(flavor.allergens)}</p>
+        <p className="mt-2 text-sm text-tertiary">{allergenLine(flavor.allergens)}</p>
+        {mayContainLine(flavor.mayContain) && (
+          <p className="mt-1 text-sm text-tertiary">{mayContainLine(flavor.mayContain)}</p>
+        )}
       </details>
     </article>
   );

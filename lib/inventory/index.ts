@@ -179,6 +179,7 @@ export type MenuItem = {
   priceCents: number
   imageUrl: string | null
   allergens: string | null
+  mayContain: string | null
   remaining: number | null
 }
 
@@ -193,6 +194,7 @@ export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
         priceCents: flavors.priceCents,
         imageUrl: flavors.imageUrl,
       allergens: flavors.allergens,
+      mayContain: flavors.mayContain,
       })
       .from(flavors)
       .where(eq(flavors.active, true))
@@ -208,6 +210,7 @@ export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
       priceCents: flavors.priceCents,
       imageUrl: flavors.imageUrl,
       allergens: flavors.allergens,
+      mayContain: flavors.mayContain,
       quantityRemaining: batchItems.quantityRemaining,
     })
     .from(flavors)

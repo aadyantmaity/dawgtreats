@@ -46,6 +46,12 @@ export const flavorSchema = z.object({
     .max(LIMITS.descriptionMax, MESSAGES.descriptionTooLong)
     .transform((t) => t || null)
     .optional(),
+  mayContain: z
+    .string()
+    .trim()
+    .max(LIMITS.descriptionMax, MESSAGES.descriptionTooLong)
+    .transform((t) => t || null)
+    .optional(),
 })
 
 export const quantitySchema = z

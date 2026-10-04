@@ -46,9 +46,10 @@ Weeks
 Flavors
   flavors                                  the whole menu
   flavor:add <name> <price> [description]  add a flavor, price in dollars
-  flavor:edit <name> [--name=] [--price=] [--description=] [--image=] [--allergens=]
+  flavor:edit <name> [--name=] [--price=] [--description=] [--image=] [--allergens=] [--may-contain=]
                                            --image is a file in public/, e.g. flavors/chocolate-chip.jpg
                                            --allergens adds to wheat, eggs, milk and honey, e.g. "soy"
+                                           --may-contain is what a packet warns about, e.g. "peanuts"
   flavor:off <name>                        hide from the menu
   flavor:on <name>                         show again
 
@@ -230,7 +231,7 @@ const commands: Record<string, () => Promise<void>> = {
   },
 
   async 'flavor:edit'() {
-    const flavor = await findFlavor(positional[0] ?? fail('Usage: flavor:edit <name> [--name=] [--price=] [--description=] [--image=] [--allergens=]'))
+    const flavor = await findFlavor(positional[0] ?? fail('Usage: flavor:edit <name> [--name=] [--price=] [--description=] [--image=] [--allergens=] [--may-contain=]'))
     const price = flag('price')
     const patch = {
       ...(flag('name') ? { name: flag('name')! } : {}),
@@ -238,9 +239,10 @@ const commands: Record<string, () => Promise<void>> = {
       ...(price ? { priceCents: requirePrice(price) } : {}),
       ...(flag('image') !== undefined ? { imageUrl: imagePath(flag('image')!) } : {}),
       ...(flag('allergens') !== undefined ? { allergens: flag('allergens') || null } : {}),
+      ...(flag('may-contain') !== undefined ? { mayContain: flag('may-contain') || null } : {}),
     }
     if (Object.keys(patch).length === 0) {
-      fail('Nothing to change. Pass --name=, --price=, --description=, --image= or --allergens=')
+      fail('Nothing to change. Pass --name=, --price=, --description=, --image=, --allergens= or --may-contain=')
     }
     const updated = await updateFlavor(flavor.id, patch)
     console.log(`Updated ${updated.name}: ${formatCents(updated.priceCents)}${updated.description ? ` — ${updated.description}` : ''}`)
