@@ -7,7 +7,9 @@ import { flavors, orders, weeks } from '@/lib/db/schema'
 import { setRole } from '@/lib/auth'
 import { listFeedback } from '@/lib/feedback'
 import { DomainError } from '@/lib/errors'
+import { sendOpenNotice } from '@/lib/email'
 import { createFlavor, listFlavors, updateFlavor, type Flavor } from '@/lib/flavors'
+import { countWaiting, listWaiting, markNotified } from '@/lib/notify'
 import {
   addSlot,
   deleteSlot,
@@ -25,6 +27,7 @@ import {
   formatClosesAt,
   formatPickupWeekend,
   formatPt,
+  getOrderableWeek,
   listWeeks,
   openWeek,
   upcomingWeekend,
@@ -65,6 +68,10 @@ Pickup day
 
 Feedback
   feedback                                 what people said and what they want baked
+
+Waiting list
+  notify                                   who asked to be told when a batch opens
+  notify:send                              tell them the open week is open, once each
 
 Test data
   seed                                     flavors, quantities and slots for the upcoming week
@@ -210,6 +217,28 @@ const commands: Record<string, () => Promise<void>> = {
   async 'week:delete'() {
     const week = await deleteWeek((await targetWeek()).id)
     console.log(`Deleted ${formatPickupWeekend(week.pickupWeekendStart)}.`)
+  },
+
+  async notify() {
+    const waiting = await listWaiting()
+    console.log(`${waiting.length} waiting, of ${await countWaiting()} never told.`)
+    for (const row of waiting) console.log(`  ${row.email}`)
+  },
+
+  async 'notify:send'() {
+    const week = await getOrderableWeek()
+    if (!week) fail('No week is open. Run: npm run admin -- week:open')
+
+    const waiting = await listWaiting()
+    if (waiting.length === 0) return console.log('Nobody is waiting.')
+
+    const told: string[] = []
+    for (const row of waiting) {
+      // One address at a time, so a refused one cannot cost the rest their email.
+      if (await sendOpenNotice(row.email, week)) told.push(row.id)
+    }
+    await markNotified(told)
+    console.log(`Told ${told.length} of ${waiting.length}.`)
   },
 
   async flavors() {

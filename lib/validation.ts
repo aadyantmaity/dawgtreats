@@ -72,6 +72,10 @@ export const eventSchema = z.object({
   detail: z.string().trim().max(60).optional(),
 })
 
+export const notifySchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email(MESSAGES.emailFormat)),
+})
+
 export const quantitySchema = z
   .int(MESSAGES.quantityWhole)
   .min(0, 'Quantities can’t be negative')

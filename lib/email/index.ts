@@ -2,7 +2,7 @@ import 'server-only'
 
 import { formatCents } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
-import { PICKUP_PLACE, formatPt } from '@/lib/weeks'
+import { PICKUP_PLACE, formatPickupWeekend, formatPt } from '@/lib/weeks'
 
 const INBOX = 'orders@dawgtreats.shop'
 const FROM = `Dawg Treats <${INBOX}>`
@@ -166,6 +166,31 @@ export async function sendReminder(orderCode: string): Promise<boolean> {
     return sent !== null
   } catch (error) {
     console.error('reminder_failed', { orderCode, error })
+    return false
+  }
+}
+
+// Sent once, to someone who asked to be told. Never throws: one bad address must not
+// stop the rest of the list.
+export async function sendOpenNotice(email: string, week: { pickupWeekendStart: string }): Promise<boolean> {
+  try {
+    const sent = await send({
+      to: email,
+      subject: 'Dawg Treats is taking orders',
+      text: [
+        'Ordering is open again.',
+        '',
+        `Pickup is ${formatPickupWeekend(week.pickupWeekendStart)}, at ${PICKUP_PLACE}.`,
+        '',
+        `Order here: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}`,
+        '',
+        'You asked to be told when a batch opened. This is the only reason I have your address.',
+      ].join('\n'),
+    })
+    console.log('open_notice_sent', { messageId: sent?.id ?? null })
+    return sent !== null
+  } catch (error) {
+    console.error('open_notice_failed', { error })
     return false
   }
 }

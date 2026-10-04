@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
+import { NotifyForm } from "@/components/notify-form";
 import { TrackView } from "@/lib/analytics/track";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { getMenu, type MenuItem } from "@/lib/inventory";
@@ -98,7 +99,10 @@ export default async function MenuPage() {
           <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>
         </div>
       ) : (
-        <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
+        <>
+          <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
+          <NotifyForm />
+        </>
       )}
       <p className="mt-3 text-sm text-tertiary">
         Questions about ingredients or allergens? Email{" "}

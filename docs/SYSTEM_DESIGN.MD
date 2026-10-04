@@ -40,15 +40,17 @@ Postgres. Money in integer cents, timestamps in UTC, displayed in PT.
 | Table | Holds | Key fields |
 | --- | --- | --- |
 | `users` | People with Google accounts | `id`, `supabase_uid`, `email`, `name`, `phone`, `role` (customer \| admin) |
-| `flavors` | The menu | `id`, `name`, `description`, `price_cents`, `image_url`, `active` |
+| `flavors` | The menu | `id`, `name`, `description`, `price_cents`, `image_url`, `allergens?`, `may_contain?`, `active` |
 | `weeks` | One round of baking | `id`, `pickup_weekend_start`, `orders_close_at`, `status` (draft \| open \| closed) |
 | `batch_items` | Per-flavor stock for a week | `week_id`, `flavor_id`, `quantity_total`, `quantity_remaining` |
 | `pickup_slots` | 30-minute windows | `week_id`, `starts_at`, `ends_at`, `capacity`, `booked_count` |
-| `orders` | One checkout | `id`, `order_code`, `week_id`, `pickup_slot_id`, `user_id?`, `name`, `email`, `phone`, `status`, `total_cents`, `stripe_session_id`, `reserved_until`, `paid_at` |
+| `orders` | One checkout | `id`, `order_code`, `week_id`, `pickup_slot_id`, `user_id?`, `name`, `email`, `phone`, `status`, `total_cents`, `stripe_session_id`, `reserved_until`, `paid_at`, `reminder_sent_at` |
 | `order_items` | Cookies in an order | `order_id`, `flavor_id`, `quantity`, `unit_price_cents` |
 | `payments` | Stripe charge record | `order_id`, `stripe_payment_intent_id`, `amount_cents`, `status` |
 | `stripe_events` | Webhook idempotency | `stripe_event_id`, `type`, `processed_at` |
 | `feedback` | What anyone said about the cookies | `id`, `rating?`, `message`, `name?`, `created_at` |
+| `events` | What visitors do before an order exists | `id`, `name`, `visitor_id`, `week_id?`, `detail?`, `created_at` |
+| `notify_requests` | Asked to be told when a batch opens | `id`, `email` (unique), `created_at`, `notified_at?` |
 
 **Order status**: `pending` → `paid` → `ready` → `picked_up`, plus `expired`.
 

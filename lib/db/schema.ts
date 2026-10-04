@@ -55,6 +55,15 @@ export const events = pgTable('events', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// People who arrived while ordering was shut. Held until a week opens and they are
+// told, which is the only thing this address is ever used for.
+export const notifyRequests = pgTable('notify_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  notifiedAt: timestamp('notified_at', { withTimezone: true }),
+})
+
 export const weeks = pgTable('weeks', {
   id: uuid('id').primaryKey().defaultRandom(),
   pickupWeekendStart: date('pickup_weekend_start').notNull().unique(),

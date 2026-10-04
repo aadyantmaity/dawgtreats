@@ -1,6 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": ["tests/setup/server-only-stub.ts", "drizzle.config.ts"],
+  "ignore": [
+    "drizzle.config.ts",
+    "scripts/reset-test-db.ts",
+    "tests/setup/server-only-stub.ts"
+  ],
   "ignoreExportsUsedInFile": true,
   "drizzle": false
 }

@@ -38,6 +38,8 @@ const limiters = {
   feedback: limiter('feedback', 5, '10 m'),
   // One visit fires four of these at most. The ceiling only stops a flood.
   events: limiter('events', 40, '10 m'),
+  // An unauthenticated public write, the same shape as feedback.
+  notify: limiter('notify', 5, '10 m'),
 } as const
 
 export type LimitName = keyof typeof limiters

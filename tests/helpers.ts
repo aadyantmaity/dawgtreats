@@ -3,10 +3,24 @@ import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { batchItems, flavors, pickupSlots, weeks } from '@/lib/db/schema'
 
+// Every table the schema has, read at run time. A written list goes stale the day
+// someone adds a table, and the rows it leaves behind surface as a puzzling failure
+// in a test that never mentions them.
 export async function resetDatabase() {
-  await db.execute(
-    sql`truncate feedback, stripe_events, payments, order_items, orders, pickup_slots, batch_items, weeks, flavors, users restart identity cascade`,
-  )
+  await db.execute(sql`
+    do $$
+    declare tables text;
+    begin
+      select string_agg(format('%I.%I', schemaname, tablename), ', ')
+        into tables
+        from pg_tables
+       where schemaname = 'public'
+         and tablename <> '__drizzle_migrations';
+      if tables is not null then
+        execute 'truncate ' || tables || ' restart identity cascade';
+      end if;
+    end $$;
+  `)
 }
 
 type WeekSpec = {

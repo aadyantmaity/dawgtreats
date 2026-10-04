@@ -27,7 +27,7 @@ export default defineConfig({
     // they share one Postgres in CI), seed and week:open before the build.
     command:
       "npm run db:migrate && " +
-      "npx tsx --conditions=react-server scripts/admin.ts reset --yes && " +
+      "npx tsx scripts/reset-test-db.ts && " +
       "npx tsx --conditions=react-server scripts/admin.ts seed && " +
       "npx tsx --conditions=react-server scripts/admin.ts week:open && " +
       "npm run build && npm run start -- -p " +
