@@ -87,7 +87,7 @@ export default async function MenuPage() {
       {menu.length === 0 ? (
         <p className="mt-10 text-secondary">Nothing on the menu yet. Check back soon.</p>
       ) : (
-        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+        <div className="mt-10 grid items-start gap-5 sm:grid-cols-2">
           {menu.map((flavor) => (
             <FlavorCard key={flavor.id} flavor={flavor} />
           ))}
