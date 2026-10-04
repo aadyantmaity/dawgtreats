@@ -35,11 +35,16 @@ async function send(message: {
   return (await response.json()) as Sent
 }
 
-function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
-  const { order: o, lines, slot } = order
+// Both messages name the same pickup window, so they read it from one place.
+function pickupWindow(slot: { startsAt: Date; endsAt: Date }): string {
   const day = formatPt(slot.startsAt, { weekday: 'long', month: 'long', day: 'numeric' })
   const from = formatPt(slot.startsAt, { hour: 'numeric', minute: '2-digit' })
   const to = formatPt(slot.endsAt, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
+  return `${day}, ${from}-${to}`
+}
+
+function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
+  const { order: o, lines, slot } = order
   const items = lines.map((l) => `  ${l.quantity} x ${l.name}  ${formatCents(l.unitPriceCents * l.quantity)}`)
 
   return [
@@ -50,7 +55,7 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     ...items,
     `  Total: ${formatCents(o.totalCents)}`,
     '',
-    `Pick up ${day}, ${from}-${to}.`,
+    `Pick up ${pickupWindow(slot)}.`,
     PICKUP_PLACE + '.',
     'Show this code when you arrive.',
     '',
@@ -87,9 +92,6 @@ export async function sendConfirmation(orderCode: string): Promise<boolean> {
 
 function ownerText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
   const { order: o, lines, slot } = order
-  const day = formatPt(slot.startsAt, { weekday: 'long', month: 'long', day: 'numeric' })
-  const from = formatPt(slot.startsAt, { hour: 'numeric', minute: '2-digit' })
-  const to = formatPt(slot.endsAt, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
 
   return [
     `${o.name} just ordered.`,
@@ -98,7 +100,7 @@ function ownerText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>
     ...lines.map((l) => `  ${l.quantity} x ${l.name}`),
     `  Total: ${formatCents(o.totalCents)}`,
     '',
-    `Picking up ${day}, ${from}-${to}.`,
+    `Picking up ${pickupWindow(slot)}.`,
     o.phone ? `Phone: ${o.phone}` : `Email: ${o.email}`,
   ].join('\n')
 }

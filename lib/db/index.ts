@@ -15,4 +15,3 @@ if (!connectionString) {
 const client = postgres(connectionString, { prepare: false })
 
 export const db = drizzle(client, { schema })
-export { schema }

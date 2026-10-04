@@ -11,7 +11,9 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "admin": "tsx --conditions=react-server --env-file=.env.local scripts/admin.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "knip": "knip --no-progress",
+    "duplication": "jscpd app components lib scripts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.4.0",
@@ -38,6 +40,8 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
+    "jscpd": "^5.4.0",
+    "knip": "^6.39.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",

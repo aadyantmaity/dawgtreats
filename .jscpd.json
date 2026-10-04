@@ -1,0 +1,8 @@
+{
+  "threshold": 1,
+  "minTokens": 60,
+  "reporters": ["consoleFull"],
+  "absolute": true,
+  "gitignore": true,
+  "ignore": ["**/node_modules/**", "**/.next/**", "drizzle/**", "**/*.json", "**/*.sql"]
+}

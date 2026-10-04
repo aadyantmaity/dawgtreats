@@ -51,6 +51,12 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://postgres:dawgtreats@localhost:5433/dawgtreats_test
 
+      - name: Dead code
+        run: npm run knip
+
+      - name: Duplication
+        run: npm run duplication
+
       - name: Build
         run: npm run build
         env:
