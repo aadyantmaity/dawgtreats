@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/loading";
 import { ORDER_STATUS_TONE } from "@/lib/orders/status";
 
 type Status = "pending" | "paid" | "ready" | "picked_up" | "expired";
@@ -66,8 +67,11 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
       </p>
 
       {status === "pending" && waiting && (
-        <p className="mt-6 text-secondary" role="status">
-          Waiting for Stripe. If you didn&apos;t finish paying, the cookies go back on the menu.
+        <p className="mt-6 flex items-start gap-3 text-secondary" role="status">
+          <Spinner className="mt-1 size-4 shrink-0" />
+          <span>
+            Waiting for Stripe. If you didn&apos;t finish paying, the cookies go back on the menu.
+          </span>
         </p>
       )}
       {status === "pending" && !waiting && (

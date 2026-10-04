@@ -5,6 +5,7 @@ import { useState, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading";
 
 // Codes are four characters now; the older eight-character ones still have to work.
 const CODE = /^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4,8}$/;
@@ -66,7 +67,14 @@ export function LookupForm() {
         className="font-mono tracking-widest tabular-nums"
       />
       <Button type="submit" size="md" disabled={checking || navigating}>
-        {checking || navigating ? "Looking…" : "Find my order"}
+        {checking || navigating ? (
+          <span className="inline-flex items-center gap-2">
+            <Spinner className="size-4" />
+            Looking…
+          </span>
+        ) : (
+          "Find my order"
+        )}
       </Button>
     </form>
   );

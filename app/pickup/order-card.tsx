@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { pickedUpAction, readyAction, undoAction } from "@/app/pickup/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/loading";
 import { formatPhone } from "@/lib/validation";
 
 type Order = {
@@ -22,10 +23,15 @@ const label = { paid: "to bag", ready: "ready", picked_up: "picked up" } as cons
 
 export function OrderCard({ order }: { order: Order }) {
   const [pending, startTransition] = useTransition();
-  const run = (action: (id: string) => Promise<void>) => () =>
+  // Remembers which button was pressed, so only that one shows the wait.
+  const [running, setRunning] = useState<string | null>(null);
+  const run = (name: string, action: (id: string) => Promise<void>) => () => {
+    setRunning(name);
     startTransition(async () => {
       await action(order.id);
+      setRunning(null);
     });
+  };
 
   return (
     <li
@@ -51,18 +57,39 @@ export function OrderCard({ order }: { order: Order }) {
 
       <div className="flex shrink-0 flex-wrap gap-2">
         {order.status === "paid" && (
-          <Button variant="secondary" onClick={run(readyAction)} disabled={pending}>
-            Bagged
+          <Button variant="secondary" onClick={run("ready", readyAction)} disabled={pending}>
+            {running === "ready" ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Bagged
+              </span>
+            ) : (
+              "Bagged"
+            )}
           </Button>
         )}
         {order.status !== "picked_up" && (
-          <Button onClick={run(pickedUpAction)} disabled={pending}>
-            Picked up
+          <Button onClick={run("pickedUp", pickedUpAction)} disabled={pending}>
+            {running === "pickedUp" ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Picked up
+              </span>
+            ) : (
+              "Picked up"
+            )}
           </Button>
         )}
         {order.status !== "paid" && (
-          <Button variant="secondary" onClick={run(undoAction)} disabled={pending}>
-            Undo
+          <Button variant="secondary" onClick={run("undo", undoAction)} disabled={pending}>
+            {running === "undo" ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Undo
+              </span>
+            ) : (
+              "Undo"
+            )}
           </Button>
         )}
       </div>

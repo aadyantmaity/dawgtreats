@@ -96,6 +96,7 @@
   --animate-rise: rise var(--duration-motion) var(--ease-spring);
   /* Holds its collapsed end state, so the row never snaps back before it is removed. */
   --animate-leave: leave var(--duration-motion) var(--ease-spring) forwards;
+  --animate-shimmer: shimmer 1.5s linear infinite;
 }
 
 /* A count that just changed, overshooting past its resting size. */
@@ -124,6 +125,16 @@
 }
 
 
+
+/* A placeholder sweeping while its real content loads. */
+@keyframes shimmer {
+  from {
+    background-position: 180% 0;
+  }
+  to {
+    background-position: -80% 0;
+  }
+}
 
 /* A list row leaving: fades out to the right, then its own space closes
    so the rows below settle up. The 0% max-height stands in for "open"
@@ -171,6 +182,42 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* A placeholder block. Reads as loading rather than as a disabled control. */
+  .shimmer {
+    background-image: linear-gradient(
+      90deg,
+      var(--palette-sand) 0%,
+      var(--palette-white) 42%,
+      var(--palette-sand) 84%
+    );
+    background-size: 280% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  .spinner {
+    /* Inline would drop the width and height it is given. */
+    display: inline-block;
+    border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+    border-top-color: currentColor;
+    border-radius: var(--radius-pill);
+    animation: var(--animate-spin);
+  }
+
+  /* With motion off these would freeze mid-sweep, which says nothing. They go
+     flat or hide, and the words beside them carry the message instead. */
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer {
+      background-image: none;
+      background-color: var(--palette-sand);
+    }
+
+    .spinner {
+      display: none;
     }
   }
 }

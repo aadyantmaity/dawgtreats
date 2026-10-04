@@ -7,6 +7,7 @@ import { CartNotices, reconcile, useCart } from "@/components/cart";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
@@ -256,7 +257,14 @@ export function CheckoutForm({
         size="md"
         disabled={pending || slots.length === 0 || shortfalls.length > 0}
       >
-        {pending ? "Taking you to payment…" : `Pay for ${count} cookies`}
+        {pending ? (
+          <span className="inline-flex items-center gap-2">
+            <Spinner className="size-4" />
+            Taking you to payment…
+          </span>
+        ) : (
+          `Pay for ${count} cookies`
+        )}
       </Button>
 
       <p className="text-sm text-tertiary">

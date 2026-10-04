@@ -143,11 +143,26 @@ mechanical. Same idea as the other scales, defined once in `app/globals.css`.
 | `animate-rise` | A panel or menu opening, such as the select dropdown: rises from below as it fades in |
 | `animate-leave` | A list row leaving: fades out to the right and collapses its own height, so the rows below close the gap. The token holds its end state, so the row stays gone until the code removes it. Give the row `overflow-hidden` or the collapse shrinks in place instead of closing the space |
 
+## Loading
+
+| Class | Its job |
+| --- | --- |
+| `shimmer` | A placeholder block sweeping while its real content loads. Give it the size and radius of the thing it stands in for |
+| `spinner` | A wait with no known shape, such as a button that has gone off to Stripe. Takes its colour from the text around it, so it reads on a dark button and on the page |
+
+A skeleton must match what replaces it, or it trades a blank screen for a jumping
+one. Route skeletons live in a `loading.tsx` beside the page they cover and reuse the
+same width, padding and spacing classes as that page.
+
 ## Reduced motion
 
 A global `prefers-reduced-motion: reduce` rule cuts every animation and transition to near-zero
 duration. Animations still run and land on their end state instead of being removed, so nothing
 on the site depends on motion to become visible or usable.
+
+That rule would leave a loader frozen part-way, which tells the reader nothing. So `shimmer`
+goes flat and `spinner` hides itself, and every place that uses them also says in words that
+it is working.
 
 # Fonts
 
