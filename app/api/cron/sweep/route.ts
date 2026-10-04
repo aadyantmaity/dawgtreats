@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto'
 
+import { announcePaidOrder } from '@/lib/email'
 import { errorResponse } from '@/lib/errors'
 import { listStuckOrders, markPaid, releaseOrder } from '@/lib/orders'
 import { getSession } from '@/lib/payments'
@@ -46,7 +47,11 @@ export async function GET(request: Request) {
         if (session.payment_status === 'paid') {
           const intent = session.payment_intent
           const paymentIntentId = typeof intent === 'string' ? intent : (intent?.id ?? session.id)
-          if (await markPaid(order.id, { paymentIntentId, amountCents: session.amount_total ?? 0 })) paid++
+          if (await markPaid(order.id, { paymentIntentId, amountCents: session.amount_total ?? 0 })) {
+            paid++
+            // The webhook never arrived, so this is the only chance to tell anyone.
+            await announcePaidOrder(order.orderCode)
+          }
         } else if (session.status === 'expired') {
           if (await releaseOrder(order.id)) released++
         } else {

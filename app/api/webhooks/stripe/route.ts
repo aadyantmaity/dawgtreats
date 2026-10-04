@@ -1,4 +1,4 @@
-import { sendConfirmation } from '@/lib/email'
+import { announcePaidOrder } from '@/lib/email'
 import { errorResponse } from '@/lib/errors'
 import { markPaid, recordEvent, releaseOrder } from '@/lib/orders'
 import { verifyWebhook } from '@/lib/payments'
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         // Only the webhook that actually flipped the order sends mail, so a Stripe
         // retry cannot send the confirmation twice.
         const orderCode = session.metadata?.orderCode
-        if (acted && orderCode) await sendConfirmation(orderCode)
+        if (acted && orderCode) await announcePaidOrder(orderCode)
         return Response.json({ received: true, acted })
       }
 

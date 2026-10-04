@@ -120,6 +120,35 @@ describe('the sweep endpoint', () => {
     })
   })
 
+  describe('a payment the webhook never reported', () => {
+    it('marks it paid and still tells the buyer, because nothing else will', async () => {
+      // Without a key the mailer returns early, which would hide the very call under test.
+      process.env.RESEND_API_KEY = 'test_key'
+      const order = await aStuckOrder('cs_paid')
+      getSessionMock.mockResolvedValue({
+        status: 'complete',
+        payment_status: 'paid',
+        payment_intent: 'pi_swept',
+        amount_total: 300,
+      } as never)
+      const posts = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ id: 'msg_1' }), { status: 200 }),
+      )
+
+      const response = await sweepRequest(`Bearer ${process.env.CRON_SECRET}`)
+
+      expect(await response.json()).toMatchObject({ paid: 1, released: 0 })
+      expect(await statusOf(order.orderId)).toBe('paid')
+
+      const sentTo = posts.mock.calls
+        .filter(([url]) => String(url) === 'https://api.resend.com/emails')
+        .map(([, init]) => JSON.parse(String(init?.body)).to)
+      expect(sentTo).toContain(buyer.email)
+      posts.mockRestore()
+      delete process.env.RESEND_API_KEY
+    })
+  })
+
   describe('a session Stripe can no longer find', () => {
     it('releases the cookies and expires the order', async () => {
       const order = await aStuckOrder('cs_gone')

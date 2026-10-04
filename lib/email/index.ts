@@ -4,7 +4,10 @@ import { formatCents } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
 import { PICKUP_PLACE, formatPt } from '@/lib/weeks'
 
-const FROM = 'Dawg Treats <orders@dawgtreats.shop>'
+const INBOX = 'orders@dawgtreats.shop'
+const FROM = `Dawg Treats <${INBOX}>`
+// Mail to the inbox forwards to a real person, so alerts need no extra address.
+const OWNER = process.env.OWNER_EMAIL ?? INBOX
 
 type Sent = { id: string }
 
@@ -80,4 +83,48 @@ export async function sendConfirmation(orderCode: string): Promise<boolean> {
     console.error('email_failed', { orderCode, error })
     return false
   }
+}
+
+function ownerText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
+  const { order: o, lines, slot } = order
+  const day = formatPt(slot.startsAt, { weekday: 'long', month: 'long', day: 'numeric' })
+  const from = formatPt(slot.startsAt, { hour: 'numeric', minute: '2-digit' })
+  const to = formatPt(slot.endsAt, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
+
+  return [
+    `${o.name} just ordered.`,
+    '',
+    `Code: ${o.orderCode}`,
+    ...lines.map((l) => `  ${l.quantity} x ${l.name}`),
+    `  Total: ${formatCents(o.totalCents)}`,
+    '',
+    `Picking up ${day}, ${from}-${to}.`,
+    o.phone ? `Phone: ${o.phone}` : `Email: ${o.email}`,
+  ].join('\n')
+}
+
+// A missed alert is an inconvenience, never a reason to fail a paid order.
+async function sendOwnerAlert(orderCode: string): Promise<boolean> {
+  try {
+    const order = await getOrderByCode(orderCode)
+    if (!order) return false
+
+    const cookies = order.lines.reduce((sum, l) => sum + l.quantity, 0)
+    const sent = await send({
+      to: OWNER,
+      subject: `New order ${order.order.orderCode} - ${cookies} cookies`,
+      text: ownerText(order),
+    })
+    console.log('owner_alert_sent', { orderCode, messageId: sent?.id ?? null })
+    return sent !== null
+  } catch (error) {
+    console.error('owner_alert_failed', { orderCode, error })
+    return false
+  }
+}
+
+// Both paths to a paid order end here, so neither can forget to tell someone.
+export async function announcePaidOrder(orderCode: string): Promise<void> {
+  await sendConfirmation(orderCode)
+  await sendOwnerAlert(orderCode)
 }

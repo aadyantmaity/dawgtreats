@@ -8,7 +8,7 @@ on:
 
 jobs:
   sweep:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Reconcile stuck orders against Stripe
         run: |
