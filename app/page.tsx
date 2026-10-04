@@ -4,6 +4,7 @@ import { AddToCart } from "@/components/cart";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
+import { ingredientsFor } from "@/lib/recipe";
 import { formatClosesAt, formatPickupWeekend, getOrderableWeek } from "@/lib/weeks";
 
 // Stock changes with every checkout, so the menu is never prerendered.
@@ -55,6 +56,16 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
         <Stock remaining={flavor.remaining} />
         <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
       </div>
+      <details className="border-t border-default pt-3">
+        <summary className="cursor-pointer text-sm text-secondary transition-colors duration-motion ease-spring hover:text-primary">
+          What&apos;s in it
+        </summary>
+        <ul className="mt-2 flex flex-col gap-1 text-sm text-tertiary">
+          {ingredientsFor(flavor.toppings).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </details>
     </article>
   );
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "flavors" ADD COLUMN "toppings" text;
