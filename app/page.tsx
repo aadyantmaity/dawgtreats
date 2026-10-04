@@ -60,11 +60,7 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
         <summary className="cursor-pointer text-sm text-secondary transition-colors duration-motion ease-spring hover:text-primary">
           What&apos;s in it
         </summary>
-        <ul className="mt-2 flex flex-col gap-1 text-sm text-tertiary">
-          {ingredientsFor(flavor.toppings).map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <p className="mt-2 text-sm text-tertiary">{ingredientsFor(flavor.toppings)}</p>
       </details>
     </article>
   );
