@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
@@ -137,6 +137,15 @@ export function CartNotices({ className = "" }: { className?: string }) {
 export function CartLink() {
   const { count } = useCart();
 
+  // Keying the count by a bump counter forces a remount on every increment, so the
+  // animation replays even though the class string itself never changes.
+  const prevCount = useRef(count);
+  const [bump, setBump] = useState(0);
+  useEffect(() => {
+    if (count > prevCount.current) setBump((n) => n + 1);
+    prevCount.current = count;
+  }, [count]);
+
   return (
     <Link
       href="/cart"
@@ -149,7 +158,11 @@ export function CartLink() {
         <circle cx="16.5" cy="19" r="1.3" />
       </svg>
       Cart
-      {count > 0 && <span className="tabular-nums">{count}</span>}
+      {count > 0 && (
+        <span key={bump} className={bump > 0 ? "tabular-nums animate-bump" : "tabular-nums"}>
+          {count}
+        </span>
+      )}
     </Link>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CartNotices, reconcile, useCart } from "@/components/cart";
 import { Card } from "@/components/ui/card";
@@ -13,22 +13,64 @@ import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { LIMITS } from "@/lib/validation";
 
+type Row = MenuItem & { quantity: number };
+
+// How long a leaving row's animation takes to finish; must cover animate-leave (duration-motion).
+const LEAVE_MS = 400;
+
 export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: boolean }) {
   const { lines, count, setQuantity } = useCart();
 
   useEffect(() => reconcile(menu), [menu]);
 
+  // Rows the cart no longer holds but whose leave animation hasn't finished. Snapshotted so
+  // they keep rendering with their last known data after the real line is already gone.
+  const [leaving, setLeaving] = useState<Map<string, Row>>(new Map());
+  const timeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  function finishLeaving(id: string) {
+    const timeout = timeouts.current.get(id);
+    if (timeout) clearTimeout(timeout);
+    timeouts.current.delete(id);
+    setLeaving((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    // Clear every pending timeout on unmount so a navigated-away cart can't finish removing later.
+    const pending = timeouts.current;
+    return () => pending.forEach(clearTimeout);
+  }, []);
+
+  function handleQuantityChange(row: Row, next: number) {
+    setQuantity(row.id, next); // totals and stock update immediately; the row just lingers visually
+    if (next === 0) {
+      setLeaving((prev) => new Map(prev).set(row.id, row));
+      const existing = timeouts.current.get(row.id);
+      if (existing) clearTimeout(existing);
+      timeouts.current.set(row.id, setTimeout(() => finishLeaving(row.id), LEAVE_MS));
+    } else {
+      finishLeaving(row.id);
+    }
+  }
+
   const onMenu = new Map(menu.map((item) => [item.id, item]));
-  const rows = lines.flatMap((line) => {
+  const rows: Row[] = lines.flatMap((line) => {
     const item = onMenu.get(line.flavorId);
     return item ? [{ ...item, quantity: line.quantity }] : [];
   });
+  const rowIds = new Set(rows.map((row) => row.id));
+  const displayRows = [...rows, ...[...leaving.values()].filter((row) => !rowIds.has(row.id))];
 
   const total = rows.reduce((sum, row) => sum + row.priceCents * row.quantity, 0);
 
   // Rendered in both states: an emptied cart is exactly when someone needs telling why.
 
-  if (rows.length === 0) {
+  if (displayRows.length === 0) {
     return (
       <>
         <CartNotices className="mt-6" />
@@ -45,39 +87,48 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
       <CartNotices className="mt-6" />
       <Card className="p-0">
         <ul className="divide-y divide-default">
-          {rows.map((row) => (
-            <li key={row.id} className="flex flex-wrap items-center gap-4 p-5">
-              {row.imageUrl ? (
-                <Image
-                  src={row.imageUrl}
-                  alt={row.name}
-                  width={48}
-                  height={48}
-                  className="size-12 rounded-control-sm object-cover"
-                />
-              ) : (
-                <PhotoPlaceholder className="size-12" />
-              )}
-              <div className="min-w-0 flex-1 basis-40">
-                <p className="font-semibold">{row.name}</p>
-                <p className="text-sm text-secondary">{formatCents(row.priceCents)} each</p>
-              </div>
-              <Stepper
-                label={row.name}
-                value={String(row.quantity)}
-                min={0}
-                max={Math.min(
-                  row.remaining ?? LIMITS.perFlavorMax,
-                  LIMITS.perFlavorMax,
-                  row.quantity + Math.max(0, LIMITS.perOrderMax - count),
+          {displayRows.map((row) => {
+            const isLeaving = leaving.has(row.id) && !rowIds.has(row.id);
+            return (
+              <li
+                key={row.id}
+                onAnimationEnd={(e) => {
+                  if (isLeaving && e.target === e.currentTarget) finishLeaving(row.id);
+                }}
+                className={`flex flex-wrap items-center gap-4 p-5 ${isLeaving ? "overflow-hidden animate-leave" : ""}`}
+              >
+                {row.imageUrl ? (
+                  <Image
+                    src={row.imageUrl}
+                    alt={row.name}
+                    width={48}
+                    height={48}
+                    className="size-12 rounded-control-sm object-cover"
+                  />
+                ) : (
+                  <PhotoPlaceholder className="size-12" />
                 )}
-                onChange={(next) => setQuantity(row.id, Number(next || "0"))}
-              />
-              <span className="w-20 text-right tabular-nums">
-                {formatCents(row.priceCents * row.quantity)}
-              </span>
-            </li>
-          ))}
+                <div className="min-w-0 flex-1 basis-40">
+                  <p className="font-semibold">{row.name}</p>
+                  <p className="text-sm text-secondary">{formatCents(row.priceCents)} each</p>
+                </div>
+                <Stepper
+                  label={row.name}
+                  value={String(row.quantity)}
+                  min={0}
+                  max={Math.min(
+                    row.remaining ?? LIMITS.perFlavorMax,
+                    LIMITS.perFlavorMax,
+                    row.quantity + Math.max(0, LIMITS.perOrderMax - count),
+                  )}
+                  onChange={(next) => handleQuantityChange(row, Number(next || "0"))}
+                />
+                <span className="w-20 text-right tabular-nums">
+                  {formatCents(row.priceCents * row.quantity)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </Card>
 

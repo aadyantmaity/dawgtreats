@@ -124,6 +124,31 @@ The 404 is the one page that centres its text, because it has nowhere to send th
 2. If a value repeats with a meaning (a second control height, say), add a **named** token, not a number.
 3. Only widen the numeric scale when a real gap shows up, and add the row here.
 
+# Motion
+
+The site's motion personality is **Spring**: a 260ms overshoot that feels hand-drawn rather than
+mechanical. Same idea as the other scales, defined once in `app/globals.css`.
+
+| Token | Value | Used by |
+| --- | --- | --- |
+| `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Every animation below |
+| `duration-press` | 120ms | A quick, no-overshoot press feedback |
+| `duration-motion` | 260ms | The three animations below |
+
+## Animations
+
+| Class | Its job |
+| --- | --- |
+| `animate-bump` | A quantity or count that just changed, such as the cart count: scales up past rest and settles back |
+| `animate-rise` | A panel or menu opening, such as the select dropdown: rises from below as it fades in |
+| `animate-leave` | A list row leaving: fades out to the right and collapses its own height, so the rows below close the gap. The token holds its end state, so the row stays gone until the code removes it. Give the row `overflow-hidden` or the collapse shrinks in place instead of closing the space |
+
+## Reduced motion
+
+A global `prefers-reduced-motion: reduce` rule cuts every animation and transition to near-zero
+duration. Animations still run and land on their end state instead of being removed, so nothing
+on the site depends on motion to become visible or usable.
+
 # Fonts
 
 | Token | Font | Used by |

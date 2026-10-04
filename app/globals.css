@@ -86,6 +86,65 @@
 
   --font-sans: var(--font-dm-sans);
   --font-display: var(--font-shantell-sans);
+
+  /* Spring: a hand-drawn overshoot, not a mechanical ease. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-press: 120ms;
+  --duration-motion: 260ms;
+
+  --animate-bump: bump var(--duration-motion) var(--ease-spring);
+  --animate-rise: rise var(--duration-motion) var(--ease-spring);
+  /* Holds its collapsed end state, so the row never snaps back before it is removed. */
+  --animate-leave: leave var(--duration-motion) var(--ease-spring) forwards;
+}
+
+/* A count that just changed, overshooting past its resting size. */
+@keyframes bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* A stepper value increasing: rises up from below as it fades in. */
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* A list row leaving: fades out to the right, then its own space closes
+   so the rows below settle up. The 0% max-height stands in for "open"
+   since the token layer never knows a row's real height. */
+@keyframes leave {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 100vh;
+  }
+  60% {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(1rem);
+    max-height: 0;
+    margin-block: 0;
+    padding-block: 0;
+  }
 }
 
 /* In @layer base so a font-sans utility can still override it. */
@@ -100,5 +159,18 @@
   h2,
   h3 {
     font-family: var(--font-display);
+  }
+
+  /* Motion off means instant, not absent: animations still run and land
+     on their end state, so nothing stays hidden waiting on a transition. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

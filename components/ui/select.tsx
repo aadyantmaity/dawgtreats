@@ -145,7 +145,7 @@ export function Select<T extends string>({
           disabled={disabled}
           onClick={() => (open ? setOpen(false) : openList())}
           onKeyDown={onKeyDown}
-          className={`flex h-control w-full items-center rounded-control border bg-surface pr-10 pl-4 text-left text-base text-primary focus:outline-none disabled:bg-disabled disabled:text-disabled ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
+          className={`flex h-control w-full items-center rounded-control border bg-surface pr-10 pl-4 text-left text-base text-primary transition-colors ease-spring duration-motion focus:outline-none disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled disabled:transition-none ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
         >
           <span className="truncate">{options[selectedIndex]?.label}</span>
         </button>
@@ -166,7 +166,7 @@ export function Select<T extends string>({
           role="listbox"
           aria-labelledby={labelId}
           hidden={!open}
-          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-card border border-default bg-surface py-1 shadow-lg"
+          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-card border border-default bg-surface py-1 shadow-lg animate-rise"
         >
           {options.map((option, index) => {
             const selected = index === selectedIndex;
