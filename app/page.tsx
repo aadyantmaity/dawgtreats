@@ -83,6 +83,15 @@ export default async function MenuPage() {
       ) : (
         <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
       )}
+      <p className="mt-3 text-sm text-tertiary">
+        Questions about ingredients or allergens? Email{" "}
+        <a
+          href="mailto:orders@dawgtreats.shop"
+          className="underline transition-colors duration-motion ease-spring hover:text-primary"
+        >
+          orders@dawgtreats.shop
+        </a>
+      </p>
 
       {menu.length === 0 ? (
         <p className="mt-10 text-secondary">Nothing on the menu yet. Check back soon.</p>
