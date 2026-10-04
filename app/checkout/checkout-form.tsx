@@ -192,7 +192,7 @@ export function CheckoutForm({
             value={slotId}
             options={slots.map<SelectOption<string>>((slot) => ({
               value: slot.id,
-              label: `${slot.label} · ${slot.spotsLeft} left`,
+              label: `${slot.label} · ${slot.spotsLeft} ${slot.spotsLeft === 1 ? "spot" : "spots"} left`,
             }))}
             onChange={setSlotId}
           />
@@ -259,7 +259,8 @@ export function CheckoutForm({
       </Button>
 
       <p className="text-sm text-tertiary">
-        Cookies are held 30 minutes. Max {LIMITS.perOrderMax} per order. No refunds or cancellations.
+        Your cookies are held for 30 minutes once you press Pay. Max {LIMITS.perOrderMax} per order. No
+        refunds or cancellations.
       </p>
     </form>
   );
