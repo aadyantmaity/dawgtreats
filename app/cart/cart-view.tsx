@@ -121,7 +121,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
                 ) : (
                   <PhotoPlaceholder className="size-12" />
                 )}
-                <div className="min-w-0 flex-1 basis-40">
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold">{row.name}</p>
                   <p className="text-sm text-secondary">{formatCents(row.priceCents)} each</p>
                 </div>

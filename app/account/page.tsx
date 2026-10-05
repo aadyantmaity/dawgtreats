@@ -53,7 +53,7 @@ export default async function AccountPage() {
                   href={`/order/${order.orderCode}`}
                   className="flex flex-wrap items-center gap-3 p-5 hover:bg-hover"
                 >
-                  <div className="min-w-0 flex-1 basis-48">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold tabular-nums">{order.orderCode}</span>
                       <Badge tone={ORDER_STATUS_TONE[order.status]} className="capitalize">

@@ -12,7 +12,7 @@ export default function Loading() {
             {[0, 1].map((row) => (
               <li key={row} className="flex flex-wrap items-center gap-4 p-5">
                 <Bone className="size-12 shrink-0" />
-                <div className="flex min-w-0 flex-1 basis-40 flex-col gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <Bone className="h-6 w-3/4" />
                   <Bone className="h-5 w-1/2" />
                 </div>
