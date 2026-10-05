@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
-import { COUNTING_SINCE, funnelForWeek } from "@/lib/analytics";
+import { COUNTING_SINCE, funnel } from "@/lib/analytics";
 import { currentAdmin } from "@/lib/auth";
-import { formatPickupWeekend, formatPt, listWeeks } from "@/lib/weeks";
+import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Stats" };
@@ -20,18 +20,7 @@ const ORDER_WORDS: Record<string, string> = {
 export default async function StatsPage() {
   if (!(await currentAdmin())) notFound();
 
-  const weeks = await listWeeks();
-  const week = weeks.find((w) => w.status === "open") ?? weeks[0];
-  if (!week) {
-    return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6">
-        <h1 className="text-4xl font-semibold">Stats</h1>
-        <p className="mt-3 text-secondary">No weeks yet.</p>
-      </main>
-    );
-  }
-
-  const { steps, byFlavor, byWanted, orders } = await funnelForWeek(week.id);
+  const { steps, byFlavor, byWanted, orders } = await funnel();
   const top = steps[0].people;
   const bought = orders
     .filter((row) => row.status !== "pending" && row.status !== "expired")
@@ -40,7 +29,9 @@ export default async function StatsPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6">
       <h1 className="text-4xl font-semibold">Stats</h1>
-      <p className="mt-3 text-secondary">{formatPickupWeekend(week.pickupWeekendStart)}</p>
+      <p className="mt-3 text-secondary">
+        Everything since {formatPt(COUNTING_SINCE, { month: "long", day: "numeric" })}
+      </p>
 
       <Card title="How far people got" className="mt-8">
         {top === 0 ? (
@@ -119,9 +110,8 @@ export default async function StatsPage() {
       </Card>
 
       <p className="mt-6 text-sm text-tertiary">
-        Counts are people, not clicks: someone who opens the menu twice counts once. Everything
-        here starts {formatPt(COUNTING_SINCE, { month: "long", day: "numeric" })}, when counting
-        began, so earlier orders are left out.
+        Counts are people, not clicks: someone who opens the menu twice counts once. Visits made
+        while ordering was shut count too, so a quiet week still shows who came by.
       </p>
 
       <Link href="/pickup" className="mt-6 inline-block py-2 underline">

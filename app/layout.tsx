@@ -43,6 +43,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <nav className="flex min-w-0 items-center gap-2 sm:gap-4">
               {/* Links scroll if they must; the cart never leaves the screen. */}
               <div className="flex min-w-0 items-center gap-2 overflow-x-auto sm:gap-4">
+                <NavLink href="/">Home</NavLink>
                 <NavLink href="/order/lookup">My order</NavLink>
                 <span className="hidden sm:inline">
                   <NavLink href="/feedback">Feedback</NavLink>
