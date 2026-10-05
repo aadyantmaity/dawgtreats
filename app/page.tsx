@@ -4,6 +4,7 @@ import { AddToCart } from "@/components/cart";
 import { NotifyForm } from "@/components/notify-form";
 import { TrackView } from "@/lib/analytics/track";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
+import { currentAccount } from "@/lib/auth";
 import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { allergenLine, mayContainLine } from "@/lib/recipe";
@@ -86,6 +87,7 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
 export default async function MenuPage() {
   const week = await getOrderableWeek();
   const menu = await getMenu(week?.id ?? null);
+  const account = week ? null : await currentAccount();
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 sm:px-6 py-12">
@@ -101,7 +103,7 @@ export default async function MenuPage() {
       ) : (
         <>
           <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
-          <NotifyForm />
+          <NotifyForm signedInAs={account?.email ?? null} />
         </>
       )}
       <p className="mt-3 text-sm text-tertiary">

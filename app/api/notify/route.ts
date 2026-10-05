@@ -1,6 +1,7 @@
-import { addNotifyRequest } from '@/lib/notify'
+import { currentAccount } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/errors'
 import { callerIp, checkLimit, tooMany } from '@/lib/limits'
+import { addNotifyRequest } from '@/lib/notify'
 import { notifySchema } from '@/lib/validation'
 
 export async function POST(request: Request) {
@@ -8,7 +9,10 @@ export async function POST(request: Request) {
   if (!limit.ok) return tooMany('Too many tries. Wait a few minutes.', limit.retryAfterSeconds)
 
   try {
-    const { email } = await parseBody(request, notifySchema)
+    // Taken from the session when there is one, so a signed-in person cannot add
+    // somebody else's address by editing the request.
+    const account = await currentAccount()
+    const email = account ? account.email : (await parseBody(request, notifySchema)).email
     await addNotifyRequest(email)
     return Response.json({ ok: true }, { status: 201 })
   } catch (error) {

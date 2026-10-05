@@ -8,7 +8,7 @@ import { emailError } from "@/lib/validation";
 
 // Shown only while ordering is shut: the one moment someone wants cookies and
 // cannot have them.
-export function NotifyForm() {
+export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
   const [email, setEmail] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -24,15 +24,17 @@ export function NotifyForm() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const wrong = emailError(email);
-    if (wrong) return setProblem(wrong);
+    if (!signedInAs) {
+      const wrong = emailError(email);
+      if (wrong) return setProblem(wrong);
+    }
 
     setPending(true);
     try {
       const response = await fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(signedInAs ? {} : { email }),
       });
       if (!response.ok) {
         const body: unknown = await response.json().catch(() => null);
@@ -49,6 +51,18 @@ export function NotifyForm() {
     }
   }
 
+  if (signedInAs) {
+    return (
+      <form onSubmit={submit} className="mt-6 flex flex-col items-start gap-2">
+        <Button type="submit" size="md" disabled={pending}>
+          {pending ? "Adding you…" : "Email me when it opens"}
+        </Button>
+        <p className="text-sm text-tertiary">To {signedInAs}.</p>
+        {problem && <p className="text-sm text-error">{problem}</p>}
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={submit} noValidate className="mt-6 flex max-w-md flex-col gap-3">
       <Input
@@ -61,7 +75,7 @@ export function NotifyForm() {
           if (problem) setProblem(null);
         }}
         autoComplete="email"
-        placeholder="you@uw.edu"
+        placeholder="you@email.com"
         error={problem ?? undefined}
       />
       <Button type="submit" size="md" disabled={pending} className="self-start">
