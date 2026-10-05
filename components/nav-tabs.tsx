@@ -6,7 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 import { prefersReducedMotion } from "@/lib/motion";
 
-export type NavTab = { href: string; label: string; hideOnPhone?: boolean };
+export type NavTab = { href: string; label: string };
 
 type Box = { left: number; width: number };
 
@@ -88,7 +88,7 @@ export function NavTabs({ tabs }: { tabs: NavTab[] }) {
           aria-current={here(tab.href) ? "page" : undefined}
           className={`relative shrink-0 rounded-pill px-3 py-1.5 text-sm whitespace-nowrap transition-colors ease-spring ${
             here(tab.href) ? "text-on-action" : "text-secondary hover:text-primary"
-          } ${tab.hideOnPhone ? "hidden sm:block" : ""}`}
+          }`}
         >
           {tab.label}
         </Link>

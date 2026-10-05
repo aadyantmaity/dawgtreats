@@ -43,6 +43,8 @@
   --background-color-disabled: var(--palette-oat);
   --background-color-success: var(--palette-sage-100);
   --background-color-warning: var(--palette-honey-100);
+  /* Dims the page behind the menu. Dark enough to kill the contrast of what is under it. */
+  --background-color-scrim: color-mix(in srgb, var(--palette-ink) 45%, transparent);
 
   --border-color-default: var(--palette-linen);
   --border-color-focus: var(--palette-ink);
@@ -240,6 +242,38 @@
     border-top-color: currentColor;
     border-radius: var(--radius-pill);
     animation: var(--animate-spin);
+  }
+
+  /* Two lines that fold into a cross. The offsets are half the distance between them,
+     which no spacing step lands on, so the numbers live here instead of in utilities. */
+  .nav-toggle-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    border-radius: var(--radius-pill);
+    background: currentColor;
+    transition:
+      translate var(--duration-motion) var(--ease-spring),
+      rotate var(--duration-motion) var(--ease-spring);
+  }
+
+  .nav-toggle-line:first-child {
+    top: 4px;
+  }
+
+  .nav-toggle-line:last-child {
+    bottom: 4px;
+  }
+
+  [aria-expanded='true'] .nav-toggle-line:first-child {
+    translate: 0 3.25px;
+    rotate: 45deg;
+  }
+
+  [aria-expanded='true'] .nav-toggle-line:last-child {
+    translate: 0 -3.25px;
+    rotate: -45deg;
   }
 
   /* A disclosure reads as a row. Only the marker needs CSS: the default one is a

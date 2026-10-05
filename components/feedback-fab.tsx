@@ -32,7 +32,7 @@ export function FeedbackFab() {
   }, [open]);
 
   return (
-    <div className="fixed inset-x-4 bottom-4 z-50 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6 sm:bottom-6">
+    <div className="fixed inset-x-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6 sm:bottom-6">
       {open && (
         <div
           ref={panelRef}

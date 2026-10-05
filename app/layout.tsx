@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
-import { NavTabs } from "@/components/nav-tabs";
+import { NavMenu } from "@/components/nav-menu";
+import { NavTabs, type NavTab } from "@/components/nav-tabs";
 import { FeedbackFab } from "@/components/feedback-fab";
 import { viewerIsAdmin } from "@/lib/auth";
 import "./globals.css";
@@ -29,6 +30,18 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const admin = await viewerIsAdmin();
+  const tabs: NavTab[] = [
+    { href: "/", label: "Home" },
+    { href: "/order/lookup", label: "My order" },
+    { href: "/feedback", label: "Feedback" },
+    { href: "/account", label: "Account" },
+  ];
+  const adminTabs: NavTab[] = admin
+    ? [
+        { href: "/pickup", label: "Pickup" },
+        { href: "/stats", label: "Stats" },
+      ]
+    : [];
   return (
     <html
       lang="en"
@@ -40,23 +53,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="shrink-0 font-display text-base font-semibold whitespace-nowrap sm:text-xl">
               Dawg Treats
             </Link>
+            {/* The cart sits in the bar at every width: a part-finished order must never
+                be behind a menu someone has to open first. */}
             <nav className="flex min-w-0 items-center gap-2 sm:gap-4">
-              {/* Tabs scroll if they must; the cart never leaves the screen. */}
-              <NavTabs
-                tabs={[
-                  { href: "/", label: "Home" },
-                  { href: "/order/lookup", label: "My order" },
-                  { href: "/feedback", label: "Feedback", hideOnPhone: true },
-                  { href: "/account", label: "Account" },
-                  ...(admin
-                    ? [
-                        { href: "/pickup", label: "Pickup" },
-                        { href: "/stats", label: "Stats" },
-                      ]
-                    : []),
-                ]}
-              />
+              <div className="hidden min-w-0 sm:block">
+                <NavTabs tabs={[...tabs, ...adminTabs]} />
+              </div>
               <CartLink />
+              <NavMenu tabs={tabs} adminTabs={adminTabs} />
             </nav>
           </div>
         </header>

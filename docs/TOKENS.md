@@ -34,6 +34,7 @@ Colours are named by the job they do, never by how they look. Components use rol
 | `bg-disabled` | Disabled control | oat `#e9e3d6` |
 | `bg-success` | Success badge | sage-100 `#e3efe2` |
 | `bg-warning` | Warning badge | honey-100 `#f3e8d2` |
+| `bg-scrim` | Behind a panel that covers the page, such as the phone menu | ink at 45% |
 | **Borders** (also `divide-*`) | | |
 | `border-default` | Hairlines, card and input edges | linen `#ded8cb` |
 | `border-focus` | Focused, open or selected field | ink `#15130f` |
