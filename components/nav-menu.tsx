@@ -106,7 +106,7 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
         aria-label="Menu"
         inert={!open}
         onKeyDown={keepFocusIn}
-        className={`fixed top-16 right-0 bottom-0 z-50 flex w-menu max-w-full flex-col gap-1 overflow-y-auto border-l border-default bg-surface p-3 transition-transform ease-spring sm:hidden ${
+        className={`fixed top-16 right-0 bottom-0 z-50 flex w-menu max-w-full flex-col gap-1 overflow-y-auto border-l border-default bg-surface p-3 transition-transform ease-out sm:hidden ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
