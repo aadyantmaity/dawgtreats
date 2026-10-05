@@ -5,7 +5,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { submitFeedback } from "@/app/feedback-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LIMITS, messageError } from "@/lib/validation";
+import { LIMITS, messageError, ratingError } from "@/lib/validation";
 
 const STARS = [1, 2, 3, 4, 5];
 
@@ -28,13 +28,14 @@ export function FeedbackForm({
   const [refused, setRefused] = useState(false);
 
   const messageProblem = messageError(message);
+  const ratingProblem = ratingError(rating);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTried(true);
     setError(null);
-    if (messageProblem) {
-      // The same problem also appears on blur, where a shake would nag. Only a refused
+    if (ratingProblem || messageProblem) {
+      // The message problem also appears on blur, where a shake would nag. Only a refused
       // send reads as a refusal.
       setRefused(true);
       return;
@@ -60,8 +61,14 @@ export function FeedbackForm({
 
   return (
     <form onSubmit={submit} noValidate className={`flex flex-col gap-4 ${className}`}>
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm text-secondary">Rate the cookies (optional)</span>
+      <div
+        className={`flex flex-col gap-1.5 ${refused && ratingProblem ? "animate-shake" : ""}`}
+        // A child's animation must not end this one.
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget) setRefused(false);
+        }}
+      >
+        <span className="text-sm text-secondary">Rate the cookies</span>
         <div className="flex gap-1" onMouseLeave={() => setHovered(0)}>
           {STARS.map((star) => (
             <button
@@ -91,17 +98,18 @@ export function FeedbackForm({
             </button>
           ))}
         </div>
+        {tried && ratingProblem && <p className="text-sm text-error">{ratingProblem}</p>}
       </div>
 
       <div
-        className={`flex flex-col gap-1.5 ${refused ? "animate-shake" : ""}`}
+        className={`flex flex-col gap-1.5 ${refused && messageProblem ? "animate-shake" : ""}`}
         // A child's animation must not end this one.
         onAnimationEnd={(event) => {
           if (event.target === event.currentTarget) setRefused(false);
         }}
       >
         <label htmlFor="feedback-message" className="text-sm text-secondary">
-          What&apos;s on your mind?
+          What&apos;s on your mind? (optional)
         </label>
         <textarea
           id="feedback-message"

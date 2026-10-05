@@ -25,7 +25,8 @@ const MESSAGES = {
   emailFormat: 'That email address does not look right',
   phoneRequired: 'Phone number is required',
   phoneFormat: 'Enter a 10-digit phone number',
-  messageRequired: 'Say something first',
+  ratingRequired: 'Pick a rating first',
+  ratingRange: 'A rating is one to five stars',
   messageTooLong: `Keep it to ${LIMITS.messageMax} characters or fewer`,
 } as const
 
@@ -170,18 +171,17 @@ export const checkoutSchema = z.object({
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
 export const feedbackSchema = z.object({
-  rating: z
-    .union([z.int().min(1).max(5), z.literal(0), z.null()])
-    .transform((r) => (r === 0 ? null : r)),
-  message: z
-    .string()
-    .trim()
-    .min(1, MESSAGES.messageRequired)
-    .max(LIMITS.messageMax, MESSAGES.messageTooLong),
+  rating: z.int().min(1, MESSAGES.ratingRequired).max(5, MESSAGES.ratingRange),
+  message: z.string().trim().max(LIMITS.messageMax, MESSAGES.messageTooLong),
   name: z.string().trim().max(LIMITS.nameMax, MESSAGES.nameTooLong).transform((n) => n || null),
 })
 
 export function messageError(value: string): string | null {
-  if (!value.trim()) return MESSAGES.messageRequired
   return value.trim().length > LIMITS.messageMax ? MESSAGES.messageTooLong : null
+}
+
+// The form holds 0 for no stars picked, which the schema refuses. Naming it here keeps the
+// browser and the server refusing the same thing in the same words.
+export function ratingError(value: number): string | null {
+  return value >= 1 && value <= 5 ? null : MESSAGES.ratingRequired
 }

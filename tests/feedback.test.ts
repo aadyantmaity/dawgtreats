@@ -33,21 +33,23 @@ describe('sending feedback', () => {
 
 describe('what feedback may say', () => {
   const parse = (form: Record<string, unknown>) =>
-    feedbackSchema.safeParse({ rating: 0, message: 'Something', name: '', ...form })
+    feedbackSchema.safeParse({ rating: 4, message: 'Something', name: '', ...form })
 
-  it('needs something actually said', () => {
-    expect(parse({ message: '   ' }).success).toBe(false)
-    expect(parse({ message: 'Lemon' }).success).toBe(true)
+  // A star on its own is a complete answer: most people rate and say nothing.
+  it('takes a rating with nothing said', () => {
+    expect(parse({ message: '   ' }).success).toBe(true)
+    expect(parse({ message: '   ' }).data?.message).toBe('')
   })
 
   it('refuses an essay', () => {
     expect(parse({ message: 'x'.repeat(501) }).success).toBe(false)
   })
 
-  // The form sends 0 for "no stars picked", which has to become null, not a zero rating.
-  it('reads no stars as no rating', () => {
-    expect(parse({ rating: 0 }).data?.rating).toBeNull()
-    expect(parse({ rating: 4 }).data?.rating).toBe(4)
+  // The form holds 0 for "no stars picked", and a rating is the one thing it must have.
+  it('refuses no stars', () => {
+    const refused = parse({ rating: 0 })
+    expect(refused.success).toBe(false)
+    expect(refused.error?.issues[0].message).toBe('Pick a rating first')
   })
 
   it('keeps a rating between one and five', () => {
