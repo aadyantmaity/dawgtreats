@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
-import { NavLink } from "@/components/nav-link";
+import { NavTabs } from "@/components/nav-tabs";
 import { FeedbackFab } from "@/components/feedback-fab";
 import { viewerIsAdmin } from "@/lib/auth";
 import "./globals.css";
@@ -41,21 +41,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               Dawg Treats
             </Link>
             <nav className="flex min-w-0 items-center gap-2 sm:gap-4">
-              {/* Links scroll if they must; the cart never leaves the screen. */}
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto sm:gap-4">
-                <NavLink href="/">Home</NavLink>
-                <NavLink href="/order/lookup">My order</NavLink>
-                <span className="hidden sm:inline">
-                  <NavLink href="/feedback">Feedback</NavLink>
-                </span>
-                <NavLink href="/account">Account</NavLink>
-                {admin && (
-                  <>
-                    <NavLink href="/pickup">Pickup</NavLink>
-                    <NavLink href="/stats">Stats</NavLink>
-                  </>
-                )}
-              </div>
+              {/* Tabs scroll if they must; the cart never leaves the screen. */}
+              <NavTabs
+                tabs={[
+                  { href: "/", label: "Home" },
+                  { href: "/order/lookup", label: "My order" },
+                  { href: "/feedback", label: "Feedback", hideOnPhone: true },
+                  { href: "/account", label: "Account" },
+                  ...(admin
+                    ? [
+                        { href: "/pickup", label: "Pickup" },
+                        { href: "/stats", label: "Stats" },
+                      ]
+                    : []),
+                ]}
+              />
               <CartLink />
             </nav>
           </div>
