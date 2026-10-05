@@ -63,7 +63,7 @@ export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="mt-6 flex max-w-md flex-col gap-3">
+    <form onSubmit={submit} noValidate className="mt-6 flex max-w-md flex-col gap-2">
       <Input
         label="Email me when the next batch opens"
         id="notify-email"

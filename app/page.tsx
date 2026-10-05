@@ -103,7 +103,9 @@ export default async function MenuPage() {
       ) : (
         <>
           <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
-          <NotifyForm signedInAs={account?.email ?? null} />
+          <div className="mb-8">
+            <NotifyForm signedInAs={account?.email ?? null} />
+          </div>
         </>
       )}
       <p className="mt-3 text-sm text-tertiary">
