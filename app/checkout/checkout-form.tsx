@@ -221,6 +221,7 @@ export function CheckoutForm({
             onBlur={touch("name")}
             error={shown("name")}
             attempt={attempt}
+            placeholder="Alex Rivera"
             autoComplete="name"
             maxLength={LIMITS.nameMax}
           />
@@ -246,7 +247,7 @@ export function CheckoutForm({
             attempt={attempt}
             autoComplete="tel"
             inputMode="tel"
-            placeholder="(425) 515-4457"
+            placeholder="(425) 555-0142"
           />
         </div>
       </Card>

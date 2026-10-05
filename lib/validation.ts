@@ -104,7 +104,7 @@ export function nameError(value: string): string | null {
   return value.trim() ? null : MESSAGES.nameRequired
 }
 
-// Stored as digits, so every number looks the same. The form shows (425) 515-4457.
+// Stored as digits, so every number looks the same. The form shows (425) 555-0142.
 export function phoneDigits(value: string): string {
   const digits = value.replace(/\D/g, '')
   return digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits

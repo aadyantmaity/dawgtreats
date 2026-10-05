@@ -8,53 +8,98 @@ import { emailError } from "@/lib/validation";
 
 // Shown only while ordering is shut: the one moment someone wants cookies and
 // cannot have them.
-export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
+export function NotifyForm({
+  signedInAs,
+  alreadyOnList = false,
+}: {
+  signedInAs?: string | null;
+  alreadyOnList?: boolean;
+}) {
   const [email, setEmail] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [done, setDone] = useState(false);
+  const [onList, setOnList] = useState(alreadyOnList);
+  const [justJoined, setJustJoined] = useState(false);
 
-  if (done) {
-    return (
-      <p className="mt-6 text-secondary" role="status">
-        You&apos;re on the list. I&apos;ll email you when the next batch opens.
-      </p>
-    );
+  // The count is what makes the field shake, so a refusal that never increments it
+  // passes in silence.
+  const refuse = (message: string) => {
+    setProblem(message);
+    setAttempt((n) => n + 1);
+  };
+
+  async function ask(method: "POST" | "DELETE", body: unknown) {
+    setPending(true);
+    setProblem(null);
+    try {
+      const response = await fetch("/api/notify", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: method === "POST" ? JSON.stringify(body) : undefined,
+      });
+      if (!response.ok) {
+        const parsed: unknown = await response.json().catch(() => null);
+        const message =
+          parsed && typeof parsed === "object" && "error" in parsed
+            ? String(parsed.error)
+            : null;
+        refuse(message ?? "That didn't send. Try again in a moment.");
+        return false;
+      }
+      return true;
+    } catch {
+      refuse("That didn't send. Check your connection and try again.");
+      return false;
+    } finally {
+      setPending(false);
+    }
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    // The field shakes on the count, so a refusal that never increments it passes in silence.
-    const refuse = (message: string) => {
-      setProblem(message);
-      setAttempt((n) => n + 1);
-    };
     if (!signedInAs) {
       const wrong = emailError(email);
       if (wrong) return refuse(wrong);
     }
-
-    setPending(true);
-    try {
-      const response = await fetch("/api/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signedInAs ? {} : { email }),
-      });
-      if (!response.ok) {
-        const body: unknown = await response.json().catch(() => null);
-        const message =
-          body && typeof body === "object" && "error" in body ? String(body.error) : null;
-        refuse(message ?? "That didn't send. Try again in a moment.");
-        return;
-      }
-      setDone(true);
-    } catch {
-      refuse("That didn't send. Check your connection and try again.");
-    } finally {
-      setPending(false);
+    if (await ask("POST", signedInAs ? {} : { email })) {
+      setOnList(true);
+      setJustJoined(true);
     }
+  }
+
+  async function leave() {
+    if (await ask("DELETE", null)) {
+      setOnList(false);
+      setJustJoined(false);
+    }
+  }
+
+  // Someone not signed in has no address the page can recognise, so they only ever see
+  // the thank-you for this visit. Their way off the list is the link in the email.
+  if (onList) {
+    return (
+      <div className="mt-6 flex flex-col items-start gap-2">
+        <p className={justJoined ? "animate-rise text-secondary" : "text-secondary"} role="status">
+          You&apos;re on the list. I&apos;ll email you when the next batch opens.
+        </p>
+        {signedInAs && (
+          <button
+            type="button"
+            onClick={leave}
+            disabled={pending}
+            className="py-2 text-sm text-secondary underline transition-colors ease-spring hover:text-primary disabled:text-disabled"
+          >
+            {pending ? "Taking you off…" : "Take me off the list"}
+          </button>
+        )}
+        {problem && (
+          <p className="animate-rise text-sm text-error" role="alert">
+            {problem}
+          </p>
+        )}
+      </div>
+    );
   }
 
   if (signedInAs) {

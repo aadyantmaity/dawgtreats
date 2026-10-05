@@ -60,6 +60,12 @@ export const events = pgTable('events', {
 export const notifyRequests = pgTable('notify_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
+  // An unsubscribe link in an email cannot ask the reader to sign in first, so the row
+  // carries its own secret. The database fills it, which also covers the rows already here.
+  token: text('token')
+    .notNull()
+    .unique()
+    .default(sql`gen_random_uuid()::text`),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   notifiedAt: timestamp('notified_at', { withTimezone: true }),
 })

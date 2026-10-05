@@ -7,6 +7,7 @@ import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { currentAccount } from "@/lib/auth";
 import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
+import { isWaiting } from "@/lib/notify";
 import { allergenLine, mayContainLine } from "@/lib/recipe";
 import { formatClosesAt, formatPickupWeekend, getOrderableWeek } from "@/lib/weeks";
 
@@ -88,6 +89,7 @@ export default async function MenuPage() {
   const week = await getOrderableWeek();
   const menu = await getMenu(week?.id ?? null);
   const account = week ? null : await currentAccount();
+  const onList = account ? await isWaiting(account.email) : false;
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 animate-fade px-4 sm:px-6 py-12">
@@ -104,7 +106,10 @@ export default async function MenuPage() {
         <>
           <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>
           <div className="mb-8">
-            <NotifyForm signedInAs={account?.email ?? null} />
+            <NotifyForm
+              signedInAs={account?.email ?? null}
+              alreadyOnList={onList}
+            />
           </div>
         </>
       )}

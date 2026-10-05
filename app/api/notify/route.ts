@@ -1,8 +1,24 @@
 import { currentAccount } from '@/lib/auth'
 import { errorResponse, parseBody } from '@/lib/errors'
 import { callerIp, checkLimit, tooMany } from '@/lib/limits'
-import { addNotifyRequest } from '@/lib/notify'
+import { addNotifyRequest, removeNotifyRequest } from '@/lib/notify'
 import { notifySchema } from '@/lib/validation'
+
+export async function DELETE(request: Request) {
+  const limit = await checkLimit('notify', callerIp(request))
+  if (!limit.ok) return tooMany('Too many tries. Wait a few minutes.', limit.retryAfterSeconds)
+
+  try {
+    // Only a signed-in person can take an address off by name. Everyone else uses the
+    // token in their email, which proves they can read that inbox.
+    const account = await currentAccount()
+    if (!account) return Response.json({ error: 'Sign in first.' }, { status: 401 })
+    await removeNotifyRequest(account.email)
+    return Response.json({ ok: true })
+  } catch (error) {
+    return errorResponse(error, 'DELETE /api/notify')
+  }
+}
 
 export async function POST(request: Request) {
   const limit = await checkLimit('notify', callerIp(request))

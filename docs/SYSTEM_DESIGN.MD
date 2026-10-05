@@ -50,7 +50,7 @@ Postgres. Money in integer cents, timestamps in UTC, displayed in PT.
 | `stripe_events` | Webhook idempotency | `stripe_event_id`, `type`, `processed_at` |
 | `feedback` | What anyone said about the cookies | `id`, `rating?`, `message`, `name?`, `created_at` |
 | `events` | What visitors do before an order exists | `id`, `name`, `visitor_id`, `week_id?`, `detail?`, `created_at` |
-| `notify_requests` | Asked to be told when a batch opens | `id`, `email` (unique), `created_at`, `notified_at?` |
+| `notify_requests` | Asked to be told when a batch opens | `id`, `email` (unique), `token` (unique, unsubscribe link), `created_at`, `notified_at?` |
 
 **Order status**: `pending` → `paid` → `ready` → `picked_up`, plus `expired`.
 

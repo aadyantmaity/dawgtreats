@@ -235,7 +235,7 @@ const commands: Record<string, () => Promise<void>> = {
     const told: string[] = []
     for (const row of waiting) {
       // One address at a time, so a refused one cannot cost the rest their email.
-      if (await sendOpenNotice(row.email, week)) told.push(row.id)
+      if (await sendOpenNotice(row.email, week, row.token)) told.push(row.id)
     }
     await markNotified(told)
     console.log(`Told ${told.length} of ${waiting.length}.`)

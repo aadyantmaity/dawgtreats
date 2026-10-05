@@ -16,6 +16,7 @@ async function send(message: {
   to: string
   subject: string
   text: string
+  headers?: Record<string, string>
 }): Promise<Sent | null> {
   const key = process.env.RESEND_API_KEY
   if (!key) {
@@ -172,19 +173,32 @@ export async function sendReminder(orderCode: string): Promise<boolean> {
 
 // Sent once, to someone who asked to be told. Never throws: one bad address must not
 // stop the rest of the list.
-export async function sendOpenNotice(email: string, week: { pickupWeekendStart: string }): Promise<boolean> {
+export async function sendOpenNotice(
+  email: string,
+  week: { pickupWeekendStart: string },
+  token: string,
+): Promise<boolean> {
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const stop = `${site}/notify/unsubscribe?t=${encodeURIComponent(token)}`
   try {
     const sent = await send({
       to: email,
       subject: 'Dawg Treats is taking orders',
+      // A mail client reads these to offer its own unsubscribe button, which stops
+      // someone reporting the message as spam to get the same result.
+      headers: {
+        'List-Unsubscribe': `<${site}/api/notify/unsubscribe?t=${encodeURIComponent(token)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
       text: [
         'Ordering is open again.',
         '',
         `Pickup is ${formatPickupWeekend(week.pickupWeekendStart)}, at ${PICKUP_PLACE}.`,
         '',
-        `Order here: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}`,
+        `Order here: ${site}`,
         '',
         'You asked to be told when a batch opened. This is the only reason I have your address.',
+        `Stop these: ${stop}`,
       ].join('\n'),
     })
     console.log('open_notice_sent', { messageId: sent?.id ?? null })

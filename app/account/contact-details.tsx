@@ -82,7 +82,7 @@ export function ContactDetails({
           attempt={attempt}
           autoComplete="tel"
           inputMode="tel"
-          placeholder="(425) 515-4457"
+          placeholder="(425) 555-0142"
         />
         {error && <p className="text-sm text-error">{error}</p>}
         {saved && <p className="text-sm text-success">Saved.</p>}

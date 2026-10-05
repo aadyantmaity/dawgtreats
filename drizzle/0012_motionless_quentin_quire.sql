@@ -1,0 +1,2 @@
+ALTER TABLE "notify_requests" ADD COLUMN "token" text DEFAULT gen_random_uuid()::text NOT NULL;--> statement-breakpoint
+ALTER TABLE "notify_requests" ADD CONSTRAINT "notify_requests_token_unique" UNIQUE("token");
