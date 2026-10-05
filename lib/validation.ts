@@ -76,6 +76,24 @@ export const notifySchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email(MESSAGES.emailFormat)),
 })
 
+// Three separate things can stop someone adding another cookie: the stock left, the
+// cap per flavor and the cap per order. Whichever binds has to be the one named.
+export function cartLimit(
+  line: { quantity: number; remaining: number | null },
+  cookiesInCart: number,
+): { max: number; reached: string | null } {
+  const stock = Math.min(line.remaining ?? LIMITS.perFlavorMax, LIMITS.perFlavorMax)
+  const perOrder = line.quantity + Math.max(0, LIMITS.perOrderMax - cookiesInCart)
+  const max = Math.min(stock, perOrder)
+
+  if (line.quantity < max) return { max, reached: null }
+  if (perOrder <= stock) return { max, reached: `${LIMITS.perOrderMax} cookies per order.` }
+  if (line.remaining !== null && line.remaining < LIMITS.perFlavorMax) {
+    return { max, reached: `Only ${line.remaining} left this week.` }
+  }
+  return { max, reached: `${LIMITS.perFlavorMax} of one flavor per order.` }
+}
+
 export const quantitySchema = z
   .int(MESSAGES.quantityWhole)
   .min(0, 'Quantities can’t be negative')

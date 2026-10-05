@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { formatCents, parsePriceCents } from '@/lib/money'
 import {
+  cartLimit,
   checkoutSchema,
   emailError,
   formatPhoneInput,
@@ -152,5 +153,43 @@ describe('which weekend is next', () => {
   it('turns a Pacific wall time into the right instant on both sides of the switch', () => {
     expect(ptToUtc('2026-10-31', '12:00').toISOString()).toBe('2026-10-31T19:00:00.000Z')
     expect(ptToUtc('2026-11-07', '12:00').toISOString()).toBe('2026-11-07T20:00:00.000Z')
+  })
+})
+
+describe('why the plus button stopped', () => {
+  const line = (quantity: number, remaining: number | null) => ({ quantity, remaining })
+
+  it('says nothing while there is room', () => {
+    expect(cartLimit(line(2, 10), 2)).toEqual({ max: 10, reached: null })
+  })
+
+  it('names the stock when the kitchen is what ran out', () => {
+    const limit = cartLimit(line(3, 3), 3)
+    expect(limit.max).toBe(3)
+    expect(limit.reached).toBe('Only 3 left this week.')
+  })
+
+  it('names the order cap when the basket is what ran out', () => {
+    // 24 in the basket already, so nothing may be added whatever the kitchen has.
+    const limit = cartLimit(line(4, 50), 24)
+    expect(limit.max).toBe(4)
+    expect(limit.reached).toBe('24 cookies per order.')
+  })
+
+  it('names the order cap when both caps are the same number', () => {
+    // The caps are both 24 today, so 24 of one flavor trips them together. The order
+    // cap is the one worth saying: it rules out another cookie of any kind.
+    expect(cartLimit(line(24, 100), 24).reached).toBe('24 cookies per order.')
+  })
+
+  it('stays quiet when stock drops but still covers the basket', () => {
+    // The case that started this: ten left becomes three, and two are held.
+    expect(cartLimit(line(2, 3), 2).reached).toBeNull()
+    // One more and the limit is reached, and now it says so.
+    expect(cartLimit(line(3, 3), 3).reached).toBe('Only 3 left this week.')
+  })
+
+  it('treats a week with no stock figure as the flavor cap', () => {
+    expect(cartLimit(line(1, null), 1)).toEqual({ max: 24, reached: null })
   })
 })

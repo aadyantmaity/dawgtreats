@@ -13,7 +13,7 @@ import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { Stepper } from "@/components/ui/stepper";
 import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
-import { LIMITS } from "@/lib/validation";
+import { LIMITS, cartLimit } from "@/lib/validation";
 
 type Row = MenuItem & { quantity: number };
 
@@ -94,6 +94,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
         <ul className="divide-y divide-default">
           {displayRows.map((row) => {
             const isLeaving = leaving.has(row.id) && !rowIds.has(row.id);
+            const limit = cartLimit(row, count);
             return (
               <li
                 key={row.id}
@@ -121,16 +122,15 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
                   label={row.name}
                   value={String(row.quantity)}
                   min={0}
-                  max={Math.min(
-                    row.remaining ?? LIMITS.perFlavorMax,
-                    LIMITS.perFlavorMax,
-                    row.quantity + Math.max(0, LIMITS.perOrderMax - count),
-                  )}
+                  max={limit.max}
                   onChange={(next) => handleQuantityChange(row, Number(next || "0"))}
                 />
                 <span className="w-20 text-right tabular-nums">
                   {formatCents(row.priceCents * row.quantity)}
                 </span>
+                {limit.reached && (
+                  <p className="basis-full text-sm text-tertiary">{limit.reached}</p>
+                )}
               </li>
             );
           })}
