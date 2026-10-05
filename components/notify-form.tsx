@@ -57,7 +57,6 @@ export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
         <Button type="submit" size="md" disabled={pending}>
           {pending ? "Adding you…" : "Email me when it opens"}
         </Button>
-        <p className="text-sm text-tertiary">To {signedInAs}.</p>
         {problem && <p className="text-sm text-error">{problem}</p>}
       </form>
     );
