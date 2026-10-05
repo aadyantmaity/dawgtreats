@@ -90,7 +90,7 @@ export default async function MenuPage() {
   const account = week ? null : await currentAccount();
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 sm:px-6 py-12">
+    <main className="mx-auto w-full max-w-4xl flex-1 animate-fade px-4 sm:px-6 py-12">
       <TrackView name="menu_viewed" />
       <h1 className="text-4xl font-semibold">
         {week ? "This week's bake" : "The menu"}

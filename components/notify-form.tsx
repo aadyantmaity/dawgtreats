@@ -12,6 +12,7 @@ export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
   const [email, setEmail] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [done, setDone] = useState(false);
 
   if (done) {
@@ -24,9 +25,14 @@ export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    // The field shakes on the count, so a refusal that never increments it passes in silence.
+    const refuse = (message: string) => {
+      setProblem(message);
+      setAttempt((n) => n + 1);
+    };
     if (!signedInAs) {
       const wrong = emailError(email);
-      if (wrong) return setProblem(wrong);
+      if (wrong) return refuse(wrong);
     }
 
     setPending(true);
@@ -40,12 +46,12 @@ export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
         const body: unknown = await response.json().catch(() => null);
         const message =
           body && typeof body === "object" && "error" in body ? String(body.error) : null;
-        setProblem(message ?? "That didn't send. Try again in a moment.");
+        refuse(message ?? "That didn't send. Try again in a moment.");
         return;
       }
       setDone(true);
     } catch {
-      setProblem("That didn't send. Check your connection and try again.");
+      refuse("That didn't send. Check your connection and try again.");
     } finally {
       setPending(false);
     }
@@ -76,6 +82,7 @@ export function NotifyForm({ signedInAs }: { signedInAs?: string | null }) {
         autoComplete="email"
         placeholder="you@email.com"
         error={problem ?? undefined}
+        attempt={attempt}
       />
       <Button type="submit" size="md" disabled={pending} className="self-start">
         {pending ? "Adding you…" : "Tell me when it opens"}

@@ -35,7 +35,7 @@ export function OrderCard({ order }: { order: Order }) {
 
   return (
     <li
-      className={`flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:gap-5 ${
+      className={`flex flex-col gap-3 p-5 transition-opacity sm:flex-row sm:items-center sm:gap-5 ${
         order.status === "picked_up" ? "opacity-60" : ""
       }`}
     >

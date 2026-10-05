@@ -25,6 +25,7 @@ export function ContactDetails({
   const [saved, setSaved] = useState(false);
   const [sending, setSending] = useState(false);
   const [touchedPhone, setTouchedPhone] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [refreshing, startTransition] = useTransition();
 
   // Blank is fine here: an account only needs a number once it reaches checkout.
@@ -32,10 +33,13 @@ export function ContactDetails({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setTouchedPhone(true);
-    if (phoneProblem) return;
     setError(null);
     setSaved(false);
+    setTouchedPhone(true);
+    // The phone refusal comes from the value, not from the attempt, so the same refusal
+    // comes back unchanged. The count is what tells the field to shake again.
+    setAttempt((count) => count + 1);
+    if (phoneProblem) return;
     setSending(true);
     try {
       const response = await fetch("/api/me", {
@@ -75,6 +79,7 @@ export function ContactDetails({
           onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
           onBlur={() => setTouchedPhone(true)}
           error={touchedPhone ? (phoneProblem ?? undefined) : undefined}
+          attempt={attempt}
           autoComplete="tel"
           inputMode="tel"
           placeholder="(425) 515-4457"

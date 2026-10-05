@@ -25,7 +25,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   const pickup = `${formatPt(order.pickupStartsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(order.pickupStartsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(order.pickupEndsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
+    <main className="animate-fade mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
       <OrderStatus orderCode={order.orderCode} initial={order.status} />
 
       <Card title="Pickup" className="mt-8">

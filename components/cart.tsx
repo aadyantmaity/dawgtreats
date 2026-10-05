@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
 import { track } from "@/lib/analytics/track";
+import { bump } from "@/lib/motion";
 import { LIMITS } from "@/lib/validation";
 
 export type CartLine = { flavorId: string; quantity: number };
@@ -127,7 +128,7 @@ export function CartNotices({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-col gap-1 ${className}`} role="status">
       {notices.map((note) => (
-        <p key={note} className="text-urgent">
+        <p key={note} className="animate-rise text-urgent">
           {note}
         </p>
       ))}
@@ -138,12 +139,11 @@ export function CartNotices({ className = "" }: { className?: string }) {
 export function CartLink() {
   const { count } = useCart();
 
-  // Keying the count by a bump counter forces a remount on every increment, so the
-  // animation replays even though the class string itself never changes.
+  const countRef = useRef<HTMLSpanElement>(null);
   const prevCount = useRef(count);
-  const [bump, setBump] = useState(0);
   useEffect(() => {
-    if (count > prevCount.current) setBump((n) => n + 1);
+    // Only a rise is worth marking: a cookie removed is not news the badge has to announce.
+    if (count > prevCount.current) bump(countRef.current, 1.5);
     prevCount.current = count;
   }, [count]);
 
@@ -160,7 +160,7 @@ export function CartLink() {
       </svg>
       Cart
       {count > 0 && (
-        <span key={bump} className={bump > 0 ? "tabular-nums animate-bump" : "tabular-nums"}>
+        <span ref={countRef} className="tabular-nums">
           {count}
         </span>
       )}
@@ -168,24 +168,30 @@ export function CartLink() {
   );
 }
 
-// Visually distinct from a buyable button: nothing here is for sale, and there is
-// no mechanism to tell anyone when the flavor comes back.
+// Nothing here is for sale, so this is not styled as a buyable button. The card already
+// says "Sold out", so this control only says "I wanted this".
 function SoldOutInterest({ name }: { name: string }) {
   const [sent, setSent] = useState(false);
 
-  if (sent) return <p className="text-sm text-secondary">Noted that you wanted this</p>;
-
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setSent(true);
-        track("sold_out_wanted", name);
-      }}
-      className="inline-block py-2 text-sm text-secondary underline hover:text-primary"
-    >
-      Sold out — I wanted this
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      {/* The reply must stay on one line. The row is pinned to one control height, so a
+          second line is the one thing that can make a sold-out card taller than its neighbour. */}
+      {sent ? (
+        <p className="animate-fade py-2 text-sm text-secondary">Noted that you wanted this</p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setSent(true);
+            track("sold_out_wanted", name);
+          }}
+          className="inline-block py-2 text-sm text-secondary underline hover:text-primary"
+        >
+          I wanted this
+        </button>
+      )}
+    </div>
   );
 }
 

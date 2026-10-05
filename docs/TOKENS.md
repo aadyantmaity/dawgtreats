@@ -133,6 +133,7 @@ mechanical. Same idea as the other scales, defined once in `app/globals.css`.
 | --- | --- | --- |
 | `ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Every transition and animation |
 | `--duration-motion` | 260ms | The animations below, and the duration every `transition` gets |
+| `--animate-shake` | 160ms | Shorter on purpose, so a refusal reads as one flick rather than a wobble |
 
 Tailwind has no duration namespace, so a class named after a duration token compiles to
 nothing. `--duration-motion` is wired to `--default-transition-duration` instead: write
@@ -144,7 +145,19 @@ nothing. `--duration-motion` is wired to `--default-transition-duration` instead
 | --- | --- |
 | `animate-bump` | A quantity or count that just changed, such as the cart count: scales up past rest and settles back |
 | `animate-rise` | A panel or menu opening, such as the select dropdown: rises from below as it fades in |
+| `animate-fade` | Content arriving, such as a page replacing its skeleton: opacity only. Uses `ease-out`, not the spring, because a spring overshoots and opacity has nothing to overshoot into |
+| `animate-shake` | A field refusing what it was given. Transform only, so the refusal never shifts the words around the field. Needs an event to fire on: see the `attempt` prop on `Input` |
 | `animate-leave` | A list row leaving: fades out to the right and collapses its own height, so the rows below close the gap. The token holds its end state, so the row stays gone until the code removes it. Give the row `overflow-hidden` or the collapse shrinks in place instead of closing the space |
+
+A web animation cannot read a custom property, so motion driven from JavaScript cannot use
+the tokens above. `lib/motion.ts` holds the one copy of the curve and the duration, and its
+`bump()` is the JavaScript counterpart of `animate-bump`. Reach for it when the element can
+hold focus, because replaying a CSS class means remounting the element and taking its focus,
+its selection and the phone keyboard with it. Its `peak` has no default: a larger element
+needs a smaller overshoot, so the cart count takes 1.5 and a bordered control takes less.
+
+`lib/motion.ts` also exports `prefersReducedMotion()`. The stylesheet guard collapses CSS
+animations and transitions on its own, so this is only for motion JavaScript drives.
 
 ## Loading
 

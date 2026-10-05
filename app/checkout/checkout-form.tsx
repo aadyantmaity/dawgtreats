@@ -58,6 +58,7 @@ export function CheckoutForm({
   const [pending, setPending] = useState(false);
   const [reserved, setReserved] = useState<Reserved | null>(null);
   const [touched, setTouched] = useState({ name: false, email: false, phone: false });
+  const [attempt, setAttempt] = useState(0);
 
   const fieldErrors = {
     name: nameError(name),
@@ -89,12 +90,14 @@ export function CheckoutForm({
     // disabled button re-renders. `submitting` is a ref, so it blocks that click right away.
     if (submitting.current) return;
     submitting.current = true;
+    // Cleared before the validation return, so a refused submit also drops the last message.
+    setError(null);
+    setAttempt((was) => was + 1);
     setTouched({ name: true, email: true, phone: true });
     if (incomplete) {
       submitting.current = false;
       return;
     }
-    setError(null);
     setPending(true);
     try {
       const response = await fetch("/api/checkout", {
@@ -217,6 +220,7 @@ export function CheckoutForm({
             onChange={(e) => setName(e.target.value)}
             onBlur={touch("name")}
             error={shown("name")}
+            attempt={attempt}
             autoComplete="name"
             maxLength={LIMITS.nameMax}
           />
@@ -227,6 +231,7 @@ export function CheckoutForm({
             onChange={(e) => setEmail(e.target.value)}
             onBlur={touch("email")}
             error={shown("email")}
+            attempt={attempt}
             autoComplete="email"
             maxLength={120}
             hint="We&apos;ll send your order code here."
@@ -238,6 +243,7 @@ export function CheckoutForm({
             onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
             onBlur={touch("phone")}
             error={shown("phone")}
+            attempt={attempt}
             autoComplete="tel"
             inputMode="tel"
             placeholder="(425) 515-4457"
@@ -258,7 +264,12 @@ export function CheckoutForm({
         </div>
       )}
 
-      {error && <p className="text-error">{error}</p>}
+      {/* A role="alert" already on the page can go unannounced, so the paragraph mounts with the refusal. */}
+      {error && (
+        <p role="alert" className="animate-rise text-error">
+          {error}
+        </p>
+      )}
 
       <Button
         type="submit"

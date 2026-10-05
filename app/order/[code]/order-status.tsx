@@ -23,6 +23,9 @@ const GIVE_UP_AFTER = 40; // about two minutes
 export function OrderStatus({ orderCode, initial }: { orderCode: string; initial: Status }) {
   const [status, setStatus] = useState<Status>(initial);
   const [waiting, setWaiting] = useState(initial === "pending");
+  // Payment landing is only news to someone who watched it land. An order that was already
+  // paid when the page opened gets the page fade and nothing more.
+  const [landed, setLanded] = useState(false);
 
   useEffect(() => {
     if (status !== "pending") return;
@@ -44,6 +47,7 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
         if (next && next !== "pending") {
           setStatus(next);
           setWaiting(false);
+          setLanded(true);
           clearInterval(timer);
         }
       } catch {
@@ -56,9 +60,12 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className={`flex flex-wrap items-center gap-3 ${landed ? "animate-rise" : ""}`}>
         <h1 className="text-4xl font-semibold">{headline[status]}</h1>
-        <Badge tone={ORDER_STATUS_TONE[status]} className="capitalize">
+        <Badge
+          tone={ORDER_STATUS_TONE[status]}
+          className={`capitalize ${landed ? "animate-bump" : ""}`}
+        >
           {status.replace("_", " ")}
         </Badge>
       </div>

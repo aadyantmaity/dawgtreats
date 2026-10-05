@@ -14,38 +14,45 @@ export function LookupForm() {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [checking, setChecking] = useState(false);
   const [navigating, startTransition] = useTransition();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const clean = code.trim().toUpperCase();
+    setError(null);
+    // Each refusal counts, including the ones that land after the fetch. The field shakes
+    // on the count, so a refusal that never increments it passes in silence.
+    const refuse = (message: string) => {
+      setError(message);
+      setAttempt((n) => n + 1);
+    };
     if (!CODE.test(clean)) {
-      setError("That code is letters and numbers, 4 characters.");
+      refuse("That code is letters and numbers, 4 characters.");
       return;
     }
 
-    setError(null);
     setChecking(true);
     try {
       const response = await fetch(`/api/orders/${clean}`);
       if (response.status === 404) {
-        setError("No order with that code. Check it and try again.");
+        refuse("No order with that code. Check it and try again.");
         return;
       }
       if (response.status === 429) {
-        setError("Too many tries. Wait a minute and try again.");
+        refuse("Too many tries. Wait a minute and try again.");
         return;
       }
       // Anything else failing means we cannot say whether the order exists, so sending
       // them to its page would show a confusing empty one instead of saying so.
       if (!response.ok) {
-        setError("Something went wrong. Try again in a moment.");
+        refuse("Something went wrong. Try again in a moment.");
         return;
       }
       startTransition(() => router.push(`/order/${clean}`));
     } catch {
-      setError("Couldn’t reach the server. Check your connection and try again.");
+      refuse("Couldn’t reach the server. Check your connection and try again.");
     } finally {
       setChecking(false);
     }
@@ -64,6 +71,7 @@ export function LookupForm() {
         maxLength={8}
         placeholder="4X7K"
         error={error ?? undefined}
+        attempt={attempt}
         className="font-mono tracking-widest tabular-nums"
       />
       <Button type="submit" size="md" disabled={checking || navigating}>

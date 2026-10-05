@@ -12,6 +12,7 @@ import Image from "next/image";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { Stepper } from "@/components/ui/stepper";
 import type { MenuItem } from "@/lib/inventory";
+import { bump } from "@/lib/motion";
 import { formatCents } from "@/lib/money";
 import { LIMITS, cartLimit } from "@/lib/validation";
 
@@ -51,8 +52,14 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
     return () => pending.forEach(clearTimeout);
   }, []);
 
-  function handleQuantityChange(row: Row, next: number) {
+  const totalRef = useRef<HTMLSpanElement>(null);
+
+  function handleQuantityChange(row: Row, next: number, from: "step" | "type") {
     setQuantity(row.id, next); // totals and stock update immediately; the row just lingers visually
+    // Typing reports a change per digit. A total that bumps per digit claims to have
+    // settled once per keystroke, so only a step bumps it.
+    // Lower than the stepper's peak: this figure is wider, so it travels further.
+    if (from === "step" && next !== row.quantity) bump(totalRef.current, 1.08);
     if (next === 0) {
       setLeaving((prev) => new Map(prev).set(row.id, row));
       const existing = timeouts.current.get(row.id);
@@ -123,7 +130,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
                   value={String(row.quantity)}
                   min={0}
                   max={limit.max}
-                  onChange={(next) => handleQuantityChange(row, Number(next || "0"))}
+                  onChange={(next, from) => handleQuantityChange(row, Number(next || "0"), from)}
                 />
                 <span className="w-20 text-right tabular-nums">
                   {formatCents(row.priceCents * row.quantity)}
@@ -141,7 +148,9 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
         <span className="text-secondary">
           <span className="font-semibold text-primary tabular-nums">{count}</span> cookies
         </span>
-        <span className="text-lg font-semibold tabular-nums">{formatCents(total)}</span>
+        <span ref={totalRef} className="text-lg font-semibold tabular-nums">
+          {formatCents(total)}
+        </span>
       </div>
 
       {ordersOpen ? (

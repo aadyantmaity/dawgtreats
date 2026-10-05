@@ -24,6 +24,8 @@ export function FeedbackForm({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [bumped, setBumped] = useState(0);
+  const [refused, setRefused] = useState(false);
 
   const messageProblem = messageError(message);
 
@@ -31,7 +33,12 @@ export function FeedbackForm({
     event.preventDefault();
     setTried(true);
     setError(null);
-    if (messageProblem) return;
+    if (messageProblem) {
+      // The same problem also appears on blur, where a shake would nag. Only a refused
+      // send reads as a refusal.
+      setRefused(true);
+      return;
+    }
 
     startTransition(async () => {
       const result = await submitFeedback({ rating, message, name });
@@ -44,7 +51,7 @@ export function FeedbackForm({
 
   if (done) {
     return (
-      <div className={className}>
+      <div className={`animate-rise ${className}`}>
         <p className="font-medium">Thanks.</p>
         <p className="mt-1 text-sm text-secondary">I read all of these.</p>
       </div>
@@ -60,15 +67,25 @@ export function FeedbackForm({
             <button
               key={star}
               type="button"
-              onClick={() => setRating(star === rating ? 0 : star)}
+              onClick={() => {
+                const next = star === rating ? 0 : star;
+                setRating(next);
+                // The bump says "this is your rating". Clearing one leaves no rating to
+                // announce, so taking a star back stays quiet.
+                if (next) setBumped(star);
+              }}
+              // The class comes off once it has played, so choosing the same star again
+              // replays it. Nothing remounts, so the star keeps its focus.
+              onAnimationEnd={() => setBumped(0)}
               onMouseEnter={() => setHovered(star)}
               onFocus={() => setHovered(star)}
               onBlur={() => setHovered(0)}
               aria-label={`${star} out of 5`}
               aria-pressed={star === rating}
-              className={`h-control-sm w-control-sm rounded-control-sm text-2xl leading-none transition-colors ${
+              // A press must read as immediate; only the release springs back.
+              className={`h-control-sm w-control-sm rounded-control-sm text-2xl leading-none transition ease-spring hover:-translate-y-0.5 focus-visible:-translate-y-0.5 active:duration-100 active:scale-95 ${
                 star <= (hovered || rating) ? "text-rating" : "text-tertiary"
-              }`}
+              } ${bumped === star ? "animate-bump" : ""}`}
             >
               ★
             </button>
@@ -76,7 +93,13 @@ export function FeedbackForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div
+        className={`flex flex-col gap-1.5 ${refused ? "animate-shake" : ""}`}
+        // A child's animation must not end this one.
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget) setRefused(false);
+        }}
+      >
         <label htmlFor="feedback-message" className="text-sm text-secondary">
           What&apos;s on your mind?
         </label>

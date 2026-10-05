@@ -20,7 +20,7 @@ npm run lint
 
 ## Architecture rules
 
-- Monolith, organized as modules under `lib/`: `inventory`, `orders`, `payments`, `weeks`, `flavors`, `email`, `auth`, `feedback`, `limits`, `analytics`, `notify`. Shared: `lib/errors.ts` and `lib/money.ts` (client-safe).
+- Monolith, organized as modules under `lib/`: `inventory`, `orders`, `payments`, `weeks`, `flavors`, `email`, `auth`, `feedback`, `limits`, `analytics`, `notify`. Shared: `lib/errors.ts`, `lib/money.ts` and `lib/motion.ts` (client-safe).
 - API routes stay thin: parse → authorize → call `lib/` → respond. No SQL in routes.
 - All stock and slot changes go through `lib/inventory`. Never inline.
 - Server-only modules start with `import 'server-only'`.

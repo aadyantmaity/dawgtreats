@@ -1,9 +1,15 @@
-import type { KeyboardEvent } from "react";
+"use client";
+
+import { useRef, type KeyboardEvent } from "react";
+
+import { bump } from "@/lib/motion";
 
 type StepperProps = {
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  // Typing reports a change per digit, so a caller that reacts to a change acts on
+  // `step` only. Arrow keys count as a step: each one moves the number once.
+  onChange: (value: string, from: "step" | "type") => void;
   min?: number;
   max: number;
   invalid?: boolean;
@@ -16,12 +22,19 @@ const buttonClass =
 // Holds a string so the box can be briefly empty while typing; an empty box counts as `min`.
 export function Stepper({ label, value, onChange, min = 0, max, invalid = false, describedBy }: StepperProps) {
   const current = Number(value || String(min));
-  const step = (delta: number) => onChange(String(Math.min(max, Math.max(min, current + delta))));
+  const inputRef = useRef<HTMLInputElement>(null);
   const digitsOnly = (raw: string) =>
     raw
       .replace(/\D/g, "")
       .replace(/^0+(?=\d)/, "")
       .slice(0, String(max).length);
+
+  const step = (delta: number) => {
+    const next = String(Math.min(max, Math.max(min, current + delta)));
+    onChange(next, "step");
+    // A bordered box this wide reaches the buttons beside it well before animate-bump's 1.5.
+    if (next !== String(current)) bump(inputRef.current, 1.12);
+  };
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
@@ -41,6 +54,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
         −
       </button>
       <input
+        ref={inputRef}
         aria-label={label}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
@@ -49,9 +63,9 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
         autoComplete="off"
         value={value}
         onFocus={(e) => e.target.select()}
-        onChange={(e) => onChange(digitsOnly(e.target.value))}
+        onChange={(e) => onChange(digitsOnly(e.target.value), "type")}
         onBlur={() => {
-          if (value === "") onChange(String(min));
+          if (value === "") onChange(String(min), "type");
         }}
         onKeyDown={onKeyDown}
         className="h-control w-16 rounded-control border border-default bg-surface px-2 text-center text-base text-primary tabular-nums focus:border-focus focus:outline-none aria-invalid:border-error"

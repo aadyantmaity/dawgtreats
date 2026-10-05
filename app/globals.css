@@ -96,6 +96,10 @@
 
   --animate-bump: bump var(--duration-motion) var(--ease-spring);
   --animate-rise: rise var(--duration-motion) var(--ease-spring);
+  /* A spring on opacity alone is invisible, so this one eases out instead. */
+  --animate-fade: fade var(--duration-motion) ease-out;
+  /* Shorter than the rest on purpose: a refusal must read as one flick, not a wobble. */
+  --animate-shake: shake 160ms ease-in-out;
   /* Holds its collapsed end state, so the row never snaps back before it is removed. */
   --animate-leave: leave var(--duration-motion) var(--ease-spring) forwards;
   --animate-shimmer: shimmer 2.4s linear infinite;
@@ -114,7 +118,7 @@
   }
 }
 
-/* A stepper value increasing: rises up from below as it fades in. */
+/* Something arriving with intent: it comes up from below as it fades in. */
 @keyframes rise {
   0% {
     opacity: 0;
@@ -126,7 +130,29 @@
   }
 }
 
+/* Content arriving, rather than appearing mid-thought. */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
+/* Transform only, so a refusal never shifts the words around the field. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-0.25rem);
+  }
+  75% {
+    transform: translateX(0.25rem);
+  }
+}
 
 /* A placeholder sweeping while its real content loads. */
 @keyframes shimmer {

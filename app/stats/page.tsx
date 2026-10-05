@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { FunnelBar } from "@/app/stats/funnel-bar";
 import { Card } from "@/components/ui/card";
 import { COUNTING_SINCE, funnel } from "@/lib/analytics";
 import { currentAdmin } from "@/lib/auth";
@@ -27,7 +28,7 @@ export default async function StatsPage() {
     .reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6">
+    <main className="mx-auto w-full max-w-2xl flex-1 animate-fade px-4 py-12 sm:px-6">
       <h1 className="text-4xl font-semibold">Stats</h1>
       <p className="mt-3 text-secondary">
         Everything since {formatPt(COUNTING_SINCE, { month: "long", day: "numeric" })}
@@ -51,12 +52,7 @@ export default async function StatsPage() {
                       {comparable && top > 0 && ` · ${share}%`}
                     </span>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-pill bg-subtle">
-                    <div
-                      className="h-2 rounded-pill bg-action"
-                      style={{ width: `${Math.min(100, share)}%` }}
-                    />
-                  </div>
+                  <FunnelBar share={Math.min(100, share)} />
                 </li>
               );
             })}

@@ -18,7 +18,7 @@ export default async function AccountPage() {
 
   if (!account) {
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
+      <main className="mx-auto w-full max-w-2xl flex-1 animate-fade px-4 sm:px-6 py-12">
         <h1 className="text-4xl font-semibold">Your account</h1>
         <p className="mt-3 mb-8 text-secondary">
           Sign in to see past orders and save your details. You never need an account to order.
@@ -31,7 +31,7 @@ export default async function AccountPage() {
   const orders = await listOrdersForAccount(account.id);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
+    <main className="mx-auto w-full max-w-2xl flex-1 animate-fade px-4 sm:px-6 py-12">
       <h1 className="text-4xl font-semibold">Your account</h1>
       <p className="mt-3 text-secondary">{account.email}</p>
 

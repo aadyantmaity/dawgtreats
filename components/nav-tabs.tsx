@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { prefersReducedMotion } from "@/lib/motion";
+
 export type NavTab = { href: string; label: string; hideOnPhone?: boolean };
 
 type Box = { left: number; width: number };
@@ -41,7 +43,7 @@ export function NavTabs({ tabs }: { tabs: NavTab[] }) {
     previous.current = pill;
     if (!el || !from || !pill) return;
     if (from.left === pill.left && from.width === pill.width) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
 
     // One journey at a time: a second would start from where the first is headed.
     for (const running of el.getAnimations()) running.cancel();
