@@ -37,7 +37,11 @@ export async function GET(request: Request) {
         if (session.payment_status === 'paid') {
           const intent = session.payment_intent
           const paymentIntentId = typeof intent === 'string' ? intent : (intent?.id ?? session.id)
-          if (await markPaid(order.id, { paymentIntentId, amountCents: session.amount_total ?? 0 })) {
+          const result = await markPaid(order.id, {
+            paymentIntentId,
+            amountCents: session.amount_total ?? 0,
+          })
+          if (result === 'paid') {
             paid++
             // The webhook never arrived, so this is the only chance to tell anyone.
             await announcePaidOrder(order.orderCode)

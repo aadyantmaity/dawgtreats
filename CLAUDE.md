@@ -34,6 +34,8 @@ npm run lint
 - The checkout reservation is one transaction with conditional updates. It must be impossible to oversell a flavor or overbook a slot.
 - Stripe webhooks are the source of truth for payment. The browser redirect never marks an order paid.
 - Webhook handlers are idempotent: dedupe on `stripe_event_id`, and only act on `pending` orders.
+- An order is paid only when Stripe reports `payment_status: 'paid'`. A finished checkout is not a
+  payment: a method that settles later reports the session complete and pays days afterwards.
 - Timestamps stored in UTC. Pickup times render in PT with the zone shown.
 - Order codes are random and non-sequential.
 

@@ -226,18 +226,35 @@ export async function recordEvent(stripeEventId: string, type: string): Promise<
   return written.length > 0
 }
 
-// Idempotent: calling this again for an order that is already paid changes nothing.
+// A Stripe retry lands on an order already paid, which is ordinary. An order that is
+// gone is not: the money moved and nothing here is holding cookies for it.
+export type PaidResult = 'paid' | 'already-paid' | 'no-longer-pending'
+
 export async function markPaid(
   orderId: string,
   payment: { paymentIntentId: string; amountCents: number },
-): Promise<boolean> {
+): Promise<PaidResult> {
   return db.transaction(async (tx) => {
     const [order] = await tx
       .update(orders)
       .set({ status: 'paid', paidAt: new Date() })
       .where(and(eq(orders.id, orderId), eq(orders.status, 'pending')))
       .returning({ id: orders.id, orderCode: orders.orderCode })
-    if (!order) return false
+    if (!order) {
+      const [existing] = await tx
+        .select({ status: orders.status, orderCode: orders.orderCode })
+        .from(orders)
+        .where(eq(orders.id, orderId))
+      if (existing?.status === 'paid' || existing?.status === 'ready' || existing?.status === 'picked_up') {
+        return 'already-paid'
+      }
+      console.error('paid_order_not_pending', {
+        orderCode: existing?.orderCode ?? null,
+        status: existing?.status ?? 'missing',
+        paymentIntentId: payment.paymentIntentId,
+      })
+      return 'no-longer-pending'
+    }
 
     await tx
       .insert(payments)
@@ -250,7 +267,7 @@ export async function markPaid(
       .onConflictDoNothing({ target: payments.stripePaymentIntentId })
 
     console.log('order_paid', { orderCode: order.orderCode, amountCents: payment.amountCents })
-    return true
+    return 'paid'
   })
 }
 

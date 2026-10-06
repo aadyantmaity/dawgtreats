@@ -36,7 +36,7 @@ describe('marking an order paid', () => {
   it('records the payment and the time', async () => {
     const order = await anOrder()
 
-    expect(await markPaid(order.orderId, { paymentIntentId: 'pi_1', amountCents: 600 })).toBe(true)
+    expect(await markPaid(order.orderId, { paymentIntentId: 'pi_1', amountCents: 600 })).toBe('paid')
 
     const [saved] = await db.select().from(orders).where(eq(orders.id, order.orderId))
     expect(saved.status).toBe('paid')
@@ -51,7 +51,9 @@ describe('marking an order paid', () => {
     const order = await anOrder()
     await markPaid(order.orderId, { paymentIntentId: 'pi_1', amountCents: 600 })
 
-    expect(await markPaid(order.orderId, { paymentIntentId: 'pi_1', amountCents: 600 })).toBe(false)
+    expect(await markPaid(order.orderId, { paymentIntentId: 'pi_1', amountCents: 600 })).toBe(
+      'already-paid',
+    )
     const rows = await db.select().from(payments)
     expect(rows).toHaveLength(1)
   })

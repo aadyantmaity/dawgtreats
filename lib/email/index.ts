@@ -126,6 +126,37 @@ async function sendOwnerAlert(orderCode: string): Promise<boolean> {
   }
 }
 
+// Stripe took the money and no order is holding cookies for it. Nothing automatic can
+// put that right, because the cookies may already be sold, so a person decides.
+export async function alertStrandedPayment(details: {
+  orderCode: string | null
+  status: string
+  paymentIntentId: string
+  amountCents: number
+}): Promise<boolean> {
+  try {
+    const sent = await send({
+      to: OWNER,
+      subject: `Payment with no order to put it against (${details.orderCode ?? 'unknown'})`,
+      text: [
+        'Stripe reports this payment as taken, and the order is not waiting for it.',
+        '',
+        `Order code: ${details.orderCode ?? 'unknown'}`,
+        `Order status: ${details.status}`,
+        `Amount: ${formatCents(details.amountCents)}`,
+        `Stripe payment: ${details.paymentIntentId}`,
+        '',
+        'Refund it in Stripe, or bake the cookies and mark the order paid by hand.',
+      ].join('\n'),
+    })
+    console.error('stranded_payment', details)
+    return sent !== null
+  } catch (error) {
+    console.error('stranded_payment_alert_failed', { ...details, error })
+    return false
+  }
+}
+
 // Both paths to a paid order end here, so neither can forget to tell someone.
 export async function announcePaidOrder(orderCode: string): Promise<void> {
   await sendConfirmation(orderCode)

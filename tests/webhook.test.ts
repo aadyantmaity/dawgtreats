@@ -23,7 +23,11 @@ function webhookRequest(event: unknown) {
 }
 
 const sessionEvent = (
-  type: 'checkout.session.completed' | 'checkout.session.expired',
+  type:
+    | 'checkout.session.completed'
+    | 'checkout.session.expired'
+    | 'checkout.session.async_payment_succeeded'
+    | 'checkout.session.async_payment_failed',
   orderId: string,
   overrides: Record<string, unknown> = {},
 ) => ({
@@ -37,7 +41,10 @@ const sessionEvent = (
       metadata: { orderId },
       payment_intent: 'pi_test_1',
       amount_total: 600,
-      payment_status: type === 'checkout.session.completed' ? 'paid' : 'unpaid',
+      payment_status:
+        type === 'checkout.session.completed' || type === 'checkout.session.async_payment_succeeded'
+          ? 'paid'
+          : 'unpaid',
       ...overrides,
     },
   },
@@ -61,6 +68,81 @@ const statusOf = async (orderId: string) =>
 const stockLeft = async (flavorId: string) =>
   (await db.select().from(batchItems).where(eq(batchItems.flavorId, flavorId)))[0].quantityRemaining
 
+describe('a payment that settles later', () => {
+  // Klarna and bank debits report the checkout finished before any money moves. Treating
+  // that as paid hands over the cookies for a payment that may never arrive.
+  it('holds the cookies when the session finishes unpaid', async () => {
+    const order = await anOrder()
+    const before = await stockLeft(order.flavorIds.Snickerdoodle)
+
+    const response = await POST(
+      webhookRequest(
+        sessionEvent('checkout.session.completed', order.orderId, { payment_status: 'unpaid' }),
+      ),
+    )
+
+    expect(await response.json()).toMatchObject({ received: true, awaitingPayment: true })
+    expect(await statusOf(order.orderId)).toBe('pending')
+    expect(await stockLeft(order.flavorIds.Snickerdoodle)).toBe(before)
+  })
+
+  it('marks the order paid once the money arrives', async () => {
+    const order = await anOrder()
+    await POST(
+      webhookRequest(
+        sessionEvent('checkout.session.completed', order.orderId, { payment_status: 'unpaid' }),
+      ),
+    )
+
+    const response = await POST(
+      webhookRequest(sessionEvent('checkout.session.async_payment_succeeded', order.orderId)),
+    )
+
+    expect(await response.json()).toMatchObject({ received: true, result: 'paid' })
+    expect(await statusOf(order.orderId)).toBe('paid')
+  })
+
+  it('puts the cookies back when the slow payment fails', async () => {
+    const order = await anOrder()
+    const before = await stockLeft(order.flavorIds.Snickerdoodle)
+    await POST(
+      webhookRequest(
+        sessionEvent('checkout.session.completed', order.orderId, { payment_status: 'unpaid' }),
+      ),
+    )
+
+    await POST(webhookRequest(sessionEvent('checkout.session.async_payment_failed', order.orderId)))
+
+    expect(await statusOf(order.orderId)).toBe('expired')
+    expect(await stockLeft(order.flavorIds.Snickerdoodle)).toBe(before + 2)
+  })
+
+  // The money is taken and nothing is holding cookies for it. A person has to decide.
+  it('says so when the money lands on an order that is gone', async () => {
+    const order = await anOrder()
+    await POST(webhookRequest(sessionEvent('checkout.session.expired', order.orderId)))
+    expect(await statusOf(order.orderId)).toBe('expired')
+
+    const response = await POST(
+      webhookRequest(sessionEvent('checkout.session.completed', order.orderId)),
+    )
+
+    expect(await response.json()).toMatchObject({ received: true, result: 'no-longer-pending' })
+    expect(await statusOf(order.orderId)).toBe('expired')
+  })
+
+  it('reads a retry of a paid order as ordinary, not as a stranded payment', async () => {
+    const order = await anOrder()
+    await POST(webhookRequest(sessionEvent('checkout.session.completed', order.orderId)))
+
+    const response = await POST(
+      webhookRequest(sessionEvent('checkout.session.completed', order.orderId)),
+    )
+
+    expect(await response.json()).toMatchObject({ received: true, result: 'already-paid' })
+  })
+})
+
 describe('the paid webhook', () => {
   it('marks the order paid', async () => {
     const order = await anOrder()
@@ -68,7 +150,7 @@ describe('the paid webhook', () => {
     const response = await POST(webhookRequest(sessionEvent('checkout.session.completed', order.orderId)))
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({ received: true, acted: true })
+    expect(await response.json()).toMatchObject({ received: true, result: 'paid' })
     expect(await statusOf(order.orderId)).toBe('paid')
   })
 
