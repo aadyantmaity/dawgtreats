@@ -47,6 +47,9 @@ export async function createCheckoutSession(order: {
 
   const session = await client().checkout.sessions.create({
     mode: 'payment',
+    // Cards only, whatever the Stripe dashboard turns on. A method that settles later
+    // reports the checkout finished before the money arrives, and the cookies are gone.
+    allowed_payment_method_types: ['card'],
     customer_email: order.email,
     expires_at: Math.floor(Date.now() / 1000) + SESSION_MINUTES * 60,
     // The webhook needs to find the order again, whichever way the session ends.
