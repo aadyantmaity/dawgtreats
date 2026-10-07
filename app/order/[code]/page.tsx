@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ChangeSlot, type SlotChoice } from "@/app/order/[code]/change-slot";
 import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
-import { getPublicOrder } from "@/lib/orders";
+import { getPublicOrder, listSlotsForOrder } from "@/lib/orders";
 import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,13 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   const order = await getPublicOrder(code.toUpperCase());
   if (!order) notFound();
 
+  const choices: SlotChoice[] = (await listSlotsForOrder(order.orderCode)).map((slot) => ({
+    id: slot.id,
+    label: `${formatPt(slot.startsAt, { weekday: "short" })} ${formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" })}`,
+    spotsLeft: slot.spotsLeft,
+    current: slot.current,
+  }));
+
   const { lines } = order;
   const pickup = `${formatPt(order.pickupStartsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(order.pickupStartsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(order.pickupEndsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
@@ -32,6 +40,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
         <p>{pickup}</p>
         <p className="mt-1">{PICKUP_PLACE}</p>
         <p className="mt-2 text-sm text-secondary">Bring this code.</p>
+        <ChangeSlot orderCode={order.orderCode} choices={choices} />
       </Card>
 
       <Card title="Your cookies" className="mt-6">

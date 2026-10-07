@@ -40,6 +40,8 @@ const limiters = {
   events: limiter('events', 40, '10 m'),
   // An unauthenticated public write, the same shape as feedback.
   notify: limiter('notify', 5, '10 m'),
+  // Changing a pickup time is a public write guarded only by the order code.
+  slot: limiter('slot', 10, '10 m'),
 } as const
 
 export type LimitName = keyof typeof limiters

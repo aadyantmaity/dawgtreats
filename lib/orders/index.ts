@@ -308,6 +308,95 @@ export async function releaseOrder(orderId: string): Promise<boolean> {
   })
 }
 
+// Only a paid order has a pickup to move, and only a time still ahead is worth moving to.
+export async function listSlotsForOrder(orderCode: string) {
+  const [order] = await db
+    .select({ weekId: orders.weekId, pickupSlotId: orders.pickupSlotId, status: orders.status })
+    .from(orders)
+    .where(eq(orders.orderCode, orderCode))
+  if (!order || (order.status !== 'paid' && order.status !== 'ready')) return []
+
+  const rows = await db
+    .select({
+      id: pickupSlots.id,
+      startsAt: pickupSlots.startsAt,
+      endsAt: pickupSlots.endsAt,
+      capacity: pickupSlots.capacity,
+      bookedCount: pickupSlots.bookedCount,
+    })
+    .from(pickupSlots)
+    .where(eq(pickupSlots.weekId, order.weekId))
+    .orderBy(asc(pickupSlots.startsAt))
+
+  const now = new Date()
+  return rows
+    .filter((slot) => slot.startsAt > now)
+    .filter((slot) => slot.id === order.pickupSlotId || slot.bookedCount < slot.capacity)
+    .map((slot) => ({
+      id: slot.id,
+      startsAt: slot.startsAt,
+      endsAt: slot.endsAt,
+      spotsLeft: slot.capacity - slot.bookedCount,
+      current: slot.id === order.pickupSlotId,
+    }))
+}
+
+// Moving a booking is not a refund: the cookies and the money stay where they are, and only
+// the time changes. The old slot is given back in the same transaction that takes the new one.
+export async function moveToSlot(orderCode: string, slotId: string) {
+  return db.transaction(async (tx) => {
+    const [order] = await tx
+      .select({
+        id: orders.id,
+        weekId: orders.weekId,
+        pickupSlotId: orders.pickupSlotId,
+        status: orders.status,
+      })
+      .from(orders)
+      .where(eq(orders.orderCode, orderCode))
+    if (!order) throw new DomainError('No order with that code', 404)
+    if (order.status !== 'paid' && order.status !== 'ready') {
+      throw new DomainError('Only an order waiting for pickup can change its time', 409)
+    }
+    if (order.pickupSlotId === slotId) {
+      throw new DomainError('That is already your pickup time', 409)
+    }
+
+    const [wanted] = await tx
+      .select({ startsAt: pickupSlots.startsAt, endsAt: pickupSlots.endsAt })
+      .from(pickupSlots)
+      .where(and(eq(pickupSlots.id, slotId), eq(pickupSlots.weekId, order.weekId)))
+    if (!wanted) throw new DomainError('That pickup time is not on this week', 404)
+    if (wanted.startsAt <= new Date()) {
+      throw new DomainError('That pickup time has already passed', 409)
+    }
+
+    const taken = await tx
+      .update(pickupSlots)
+      .set({ bookedCount: sql`${pickupSlots.bookedCount} + 1` })
+      .where(
+        and(
+          eq(pickupSlots.id, slotId),
+          sql`${pickupSlots.bookedCount} < ${pickupSlots.capacity}`,
+        ),
+      )
+      .returning({ id: pickupSlots.id })
+    if (taken.length === 0) {
+      throw new DomainError('That pickup time just filled up. Pick another one.', 409)
+    }
+
+    await tx
+      .update(pickupSlots)
+      .set({ bookedCount: sql`greatest(${pickupSlots.bookedCount} - 1, 0)` })
+      .where(eq(pickupSlots.id, order.pickupSlotId))
+
+    await tx.update(orders).set({ pickupSlotId: slotId }).where(eq(orders.id, order.id))
+
+    console.log('order_slot_moved', { orderCode, slotId })
+    return { startsAt: wanted.startsAt, endsAt: wanted.endsAt }
+  })
+}
+
 // Anything still pending well past its hold: the webhook never arrived, or never will.
 export async function listStuckOrders(olderThanMinutes = 35) {
   return db

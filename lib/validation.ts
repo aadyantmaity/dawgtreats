@@ -73,6 +73,10 @@ export const eventSchema = z.object({
   detail: z.string().trim().max(60).optional(),
 })
 
+export const moveSlotSchema = z.object({
+  slotId: z.uuid('Pick a pickup time'),
+})
+
 export const notifySchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email(MESSAGES.emailFormat)),
 })
