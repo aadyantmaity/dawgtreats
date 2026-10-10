@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { db } from '@/lib/db'
 import { flavors } from '@/lib/db/schema'
-import { sendConfirmation } from '@/lib/email'
+import { sendConfirmation, sendReminder } from '@/lib/email'
 import { formatCents } from '@/lib/money'
-import { reserve } from '@/lib/orders'
+import { markPaid, reserve } from '@/lib/orders'
 
 import { buyer, resetDatabase, seedWeek } from './helpers'
 
@@ -65,10 +65,13 @@ describe('sending the order confirmation', () => {
     expect(body.text).toContain(`Order code: ${order.orderCode}`)
     expect(body.text).toContain(`2 x Snickerdoodle  ${formatCents(600)}`)
     expect(body.text).toContain(`3 x Caramel  ${formatCents(900)}`)
-    expect(body.text).toContain('The Standard at Seattle, Midrise lobby.')
+    // The address block is a list of lines now, so it carries no full stop.
+    expect(body.text).toContain('The Standard at Seattle, Midrise lobby')
+    expect(body.text).toContain(`Your order: http://localhost:3000/order/${order.orderCode}`)
     // Thursday 11:59pm PT cutoff means the pickup weekend is always a Sat/Sun; the
     // seeded slot starts at 20:00 UTC, 12-13pm PT depending on daylight saving.
-    expect(body.text).toMatch(/Pick up (Saturday|Sunday), .+-.+\./)
+    // Day, time and place each hold their own line, so a phone does not wrap them.
+    expect(body.text).toMatch(/Pick up\n(Saturday|Sunday), \w+ \d+\n.+\u2013.+\n/)
   })
 
   it('totals the money from the price stored on the order, not the flavor table', async () => {
@@ -102,5 +105,33 @@ describe('sending the order confirmation', () => {
 
     expect(result).toBe(false)
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('the pickup-day reminder', () => {
+  it('names the day, the time and the place on their own lines, and links the order', async () => {
+    const fetchMock = stubFetch()
+    const order = await anOrder()
+    await markPaid(order.orderId, { paymentIntentId: 'pi_reminder', amountCents: 1500 })
+
+    expect(await sendReminder(order.orderCode)).toBe(true)
+
+    const body = sentBody(fetchMock)
+    expect(body.text).toMatch(/today's the day\.\n\n(Saturday|Sunday), \w+ \d+\n.+\u2013.+\n/)
+    expect(body.text).toContain('The Standard at Seattle, Midrise lobby')
+    expect(body.text).toContain(`Order code: ${order.orderCode}`)
+    // The page the link opens is also where someone moves their pickup time.
+    expect(body.text).toContain(`Your order: http://localhost:3000/order/${order.orderCode}`)
+  })
+
+  // A full name on a form is not the name someone is called.
+  it('greets by first name only', async () => {
+    const fetchMock = stubFetch()
+    const order = await anOrder()
+    await markPaid(order.orderId, { paymentIntentId: 'pi_name', amountCents: 1500 })
+
+    await sendReminder(order.orderCode)
+
+    expect(sentBody(fetchMock).text.startsWith('Hey Test,')).toBe(true)
   })
 })

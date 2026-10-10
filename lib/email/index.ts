@@ -37,11 +37,27 @@ async function send(message: {
 }
 
 // All three messages name the same pickup window, so they read it from one place.
-function pickupWindow(slot: { startsAt: Date; endsAt: Date }): string {
-  const day = formatPt(slot.startsAt, { weekday: 'long', month: 'long', day: 'numeric' })
+function pickupDay(slot: { startsAt: Date }): string {
+  return formatPt(slot.startsAt, { weekday: 'long', month: 'long', day: 'numeric' })
+}
+
+function pickupTime(slot: { startsAt: Date; endsAt: Date }): string {
   const from = formatPt(slot.startsAt, { hour: 'numeric', minute: '2-digit' })
   const to = formatPt(slot.endsAt, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
-  return `${day}, ${from}-${to}`
+  return `${from}\u2013${to}`
+}
+
+function pickupWindow(slot: { startsAt: Date; endsAt: Date }): string {
+  return `${pickupDay(slot)}, ${pickupTime(slot)}`
+}
+
+// A greeting uses the name someone is called, not the one they typed on a form.
+function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] || name
+}
+
+function orderLink(orderCode: string): string {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/order/${orderCode}`
 }
 
 function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
@@ -49,18 +65,21 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
   const items = lines.map((l) => `  ${l.quantity} x ${l.name}  ${formatCents(l.unitPriceCents * l.quantity)}`)
 
   return [
-    `Thanks ${o.name}. Your cookies are paid for.`,
+    `Thanks ${firstName(o.name)}, your cookies are paid for.`,
     '',
     `Order code: ${o.orderCode}`,
     '',
     ...items,
     `  Total: ${formatCents(o.totalCents)}`,
     '',
-    `Pick up ${pickupWindow(slot)}.`,
-    PICKUP_PLACE + '.',
+    'Pick up',
+    pickupDay(slot),
+    pickupTime(slot),
+    PICKUP_PLACE,
+    '',
     'Show this code when you arrive.',
     '',
-    `Track it: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/order/${o.orderCode}`,
+    `Your order: ${orderLink(o.orderCode)}`,
     '',
     'Reply here if something comes up.',
     'All sales are final. Pickup only.',
@@ -167,13 +186,18 @@ function reminderText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCod
   const { order: o, lines, slot } = order
 
   return [
-    `Hey ${o.name}, today's the day. Pick up ${pickupWindow(slot)}.`,
-    PICKUP_PLACE + '.',
+    `Hey ${firstName(o.name)}, today's the day.`,
+    '',
+    pickupDay(slot),
+    pickupTime(slot),
+    PICKUP_PLACE,
     '',
     `Order code: ${o.orderCode}`,
     ...lines.map((l) => `  ${l.quantity} x ${l.name}`),
     '',
     'Show this code when you arrive.',
+    '',
+    `Your order: ${orderLink(o.orderCode)}`,
   ].join('\n')
 }
 
