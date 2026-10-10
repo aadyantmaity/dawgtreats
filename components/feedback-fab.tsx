@@ -32,7 +32,7 @@ export function FeedbackFab() {
   }, [open]);
 
   return (
-    <div className="fixed inset-x-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6 sm:bottom-6">
+    <div className="fixed inset-x-6 bottom-6 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6 sm:bottom-6">
       {open && (
         <div
           ref={panelRef}
@@ -54,9 +54,24 @@ export function FeedbackFab() {
         onClick={() => setOpen((was) => !was)}
         aria-expanded={open}
         aria-label={open ? "Close" : "Send feedback"}
-        className="h-control-sm w-control-sm rounded-pill bg-action text-xl text-on-action shadow-lg transition-colors hover:bg-action/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:h-control sm:w-auto sm:px-5 sm:text-base"
+        className="grid size-fab place-items-center rounded-pill bg-action text-on-action shadow-lg transition-colors hover:bg-action/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:h-control sm:w-auto sm:px-5 sm:text-base"
       >
-        <span className="sm:hidden">{open ? "×" : "+"}</span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          className="size-6 sm:hidden"
+        >
+          {open ? (
+            <path d="m6 6 12 12M18 6 6 18" />
+          ) : (
+            <path d="M20 11.8a7.4 7.4 0 0 1-10.9 6.5L4.5 19.5l1.2-4.4A7.4 7.4 0 1 1 20 11.8Z" />
+          )}
+        </svg>
         <span className="hidden sm:inline">{open ? "Close" : "Feedback"}</span>
       </button>
     </div>

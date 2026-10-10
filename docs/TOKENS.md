@@ -80,6 +80,7 @@ For values that repeat with a meaning, so they can change in one place.
 | --- | --- | --- |
 | `h-control`, `size-control` | 44px | Inputs, selects, steppers, medium buttons |
 | `h-control-sm` | 36px | Small buttons |
+| `size-fab` | 56px | The floating feedback button, which a thumb reaches rather than a cursor |
 | `max-h-menu` | 256px | Dropdown list before it scrolls |
 | `aspect-photo` | 4:3 | Flavor photos |
 
