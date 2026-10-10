@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import type { z } from 'zod'
 
 export class DomainError extends Error {
@@ -18,10 +19,15 @@ export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Prom
 }
 
 export function errorResponse(error: unknown, context: string): Response {
+  // A DomainError is the answer to a question, not a fault: "snickerdoodle sold out" is
+  // the route working. Only the unexpected ones are worth waking anyone for.
   if (error instanceof DomainError) {
     return Response.json({ error: error.message }, { status: error.status })
   }
   console.error(`[${context}]`, error)
+  // Without this a route that throws is invisible: the catch returns a tidy 500 and the
+  // only trace is a log nobody reads. Analytics died for a day that way.
+  Sentry.captureException(error, { tags: { context } })
   return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
 }
 
