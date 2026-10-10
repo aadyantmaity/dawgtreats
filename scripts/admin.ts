@@ -42,7 +42,7 @@ Weeks
   weeks                                    every week, newest first
   week                                     this week's flavors, quantities and slots
   week:new                                 create the upcoming week
-  week:open                                open it for orders
+  week:open [--quiet]                      open it, and tell the waiting list unless --quiet
   week:close                               close it
   week:delete                              delete it (draft with no orders only)
 
@@ -82,6 +82,18 @@ const args = process.argv.slice(2)
 const command = args.find((a) => !a.startsWith('--')) ?? 'help'
 const positional = args.filter((a) => !a.startsWith('--') && a !== command)
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
+
+// Opening a week and telling the list are the same moment, so both commands end here.
+async function tellTheWaitingList(week: { pickupWeekendStart: string }) {
+  const waiting = await listWaiting()
+  const told: string[] = []
+  for (const row of waiting) {
+    // One address at a time, so a refused one cannot cost the rest their email.
+    if (await sendOpenNotice(row.email, week, row.token)) told.push(row.id)
+  }
+  await markNotified(told)
+  return { told: told.length, waiting: waiting.length }
+}
 
 function fail(message: string): never {
   throw new DomainError(message, 400)
@@ -207,6 +219,10 @@ const commands: Record<string, () => Promise<void>> = {
   async 'week:open'() {
     const week = await openWeek((await targetWeek()).id)
     console.log(`${formatPickupWeekend(week.pickupWeekendStart)} is open. Orders close ${formatClosesAt(week.ordersCloseAt)}.`)
+
+    if (args.includes('--quiet')) return console.log('Nobody told: --quiet.')
+    const { told, waiting } = await tellTheWaitingList(week)
+    console.log(waiting === 0 ? 'Nobody was waiting.' : `Told ${told} of ${waiting} waiting.`)
   },
 
   async 'week:close'() {
@@ -229,16 +245,8 @@ const commands: Record<string, () => Promise<void>> = {
     const week = await getOrderableWeek()
     if (!week) fail('No week is open. Run: npm run admin -- week:open')
 
-    const waiting = await listWaiting()
-    if (waiting.length === 0) return console.log('Nobody is waiting.')
-
-    const told: string[] = []
-    for (const row of waiting) {
-      // One address at a time, so a refused one cannot cost the rest their email.
-      if (await sendOpenNotice(row.email, week, row.token)) told.push(row.id)
-    }
-    await markNotified(told)
-    console.log(`Told ${told.length} of ${waiting.length}.`)
+    const { told, waiting } = await tellTheWaitingList(week)
+    console.log(waiting === 0 ? 'Nobody is waiting.' : `Told ${told} of ${waiting}.`)
   },
 
   async flavors() {
