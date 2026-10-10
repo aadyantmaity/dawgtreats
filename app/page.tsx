@@ -31,37 +31,47 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
 
   return (
     <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-4">
-      {flavor.imageUrl ? (
-        <Image
-          src={flavor.imageUrl}
-          alt={flavor.name}
-          width={600}
-          height={450}
-          // Both cards are above the fold on a laptop, so neither should wait for lazy loading.
-          priority
-          sizes="(min-width: 768px) 24rem, 100vw"
-          className={`aspect-photo w-full rounded-card object-cover ${soldOut ? "opacity-60" : ""}`}
-        />
-      ) : (
-        <PhotoPlaceholder className={`aspect-photo w-full ${soldOut ? "opacity-60" : ""}`} />
-      )}
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className={`font-sans text-lg font-semibold ${soldOut ? "text-tertiary" : ""}`}>
-            {flavor.name}
-          </h2>
-          <span className={`tabular-nums ${soldOut ? "text-tertiary" : ""}`}>
-            {formatCents(flavor.priceCents)}
-          </span>
+      {/* A phone puts the photo beside the name. Full width, three cookies are five
+          screenfuls, and the menu stops being a list you can read at a glance. */}
+      <div className="flex items-center gap-4 sm:flex-col sm:items-stretch">
+        {flavor.imageUrl ? (
+          <Image
+            src={flavor.imageUrl}
+            alt={flavor.name}
+            width={600}
+            height={450}
+            // Both cards are above the fold on a laptop, so neither should wait for lazy loading.
+            priority
+            sizes="(min-width: 640px) 24rem, 6rem"
+            className={`size-24 shrink-0 rounded-card object-cover sm:aspect-photo sm:size-auto sm:w-full ${soldOut ? "opacity-60" : ""}`}
+          />
+        ) : (
+          <PhotoPlaceholder
+            className={`size-24 shrink-0 sm:aspect-photo sm:size-auto sm:w-full ${soldOut ? "opacity-60" : ""}`}
+          />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {/* Beside a thumbnail there is room for about twenty characters, and every name
+              here is longer. The price drops below so the name keeps the width. */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+            <h2 className={`font-sans text-lg font-semibold ${soldOut ? "text-tertiary" : ""}`}>
+              {flavor.name}
+            </h2>
+            <span className={`tabular-nums ${soldOut ? "text-secondary sm:text-primary" : ""}`}>
+              {formatCents(flavor.priceCents)}
+            </span>
+          </div>
+          {flavor.description && <p className="text-sm text-secondary">{flavor.description}</p>}
         </div>
-        {flavor.description && <p className="text-sm text-secondary">{flavor.description}</p>}
       </div>
-      {/* Fixed height: an Add button and a stepper are different sizes, and a card
-          must not grow just because its cookie is in the cart. */}
-      <div className="flex min-h-control items-center justify-between gap-3">
-        <Stock remaining={flavor.remaining} />
-        <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
-      </div>
+      {/* Nothing is for sale while the week is shut, and an empty row still holds its
+          height. Fixed height when it does show, so a card never grows on a press. */}
+      {flavor.remaining !== null && (
+        <div className="flex min-h-control items-center justify-between gap-3">
+          <Stock remaining={flavor.remaining} />
+          <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
+        </div>
+      )}
       <details className="group border-t border-default pt-3">
         <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
           Allergens
