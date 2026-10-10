@@ -2,10 +2,16 @@
 
 import { useEffect } from "react";
 
-import type { EventName } from "@/lib/validation";
+import type { Device, EventName } from "@/lib/validation";
 
 
 const VISITOR_KEY = "dawgtreats.visitor";
+
+// A coarse pointer is a finger. It splits phones and tablets from anything with a mouse,
+// which is the only split worth knowing and the only one that describes no one.
+function device(): Device {
+  return window.matchMedia("(pointer: coarse)").matches ? "phone" : "desktop";
+}
 
 // Held for one browser session only. It is a random string, never anything about a person,
 // and it exists so the same visit is not counted twice at each step.
@@ -26,7 +32,7 @@ export function track(name: EventName, detail?: string): void {
   try {
     const visitor = visitorId();
     if (!visitor) return;
-    const body = JSON.stringify({ name, visitorId: visitor, detail });
+    const body = JSON.stringify({ name, visitorId: visitor, detail, device: device() });
     if (navigator.sendBeacon) {
       navigator.sendBeacon("/api/events", new Blob([body], { type: "application/json" }));
       return;

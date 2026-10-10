@@ -14,12 +14,14 @@ export async function recordEvent(input: {
   visitorId: string
   weekId: string | null
   detail?: string | null
+  device?: string | null
 }): Promise<void> {
   await db.insert(events).values({
     name: input.name,
     visitorId: input.visitorId,
     weekId: input.weekId,
     detail: input.detail ?? null,
+    device: input.device ?? null,
   })
 }
 
@@ -31,6 +33,7 @@ export async function funnel(): Promise<{
   steps: FunnelStep[]
   byFlavor: { flavor: string; adds: number }[]
   byWanted: { flavor: string; wanted: number }[]
+  byDevice: { device: string; people: number }[]
   orders: { status: string; count: number }[]
 }> {
   const counted = await db
@@ -57,6 +60,17 @@ export async function funnel(): Promise<{
     )
     .groupBy(events.detail)
 
+  // Someone who looked on a phone and then bought on a laptop counts in both, which is
+  // the honest answer to where the traffic is.
+  const byDevice = await db
+    .select({
+      device: sql<string>`coalesce(${events.device}, 'unknown')`,
+      people: countDistinct(events.visitorId),
+    })
+    .from(events)
+    .where(gte(events.createdAt, COUNTING_SINCE))
+    .groupBy(events.device)
+
   const byStatus = await db
     .select({ status: orders.status, count: sql<number>`count(*)::int` })
     .from(orders)
@@ -72,6 +86,7 @@ export async function funnel(): Promise<{
     ],
     byFlavor: byFlavor.sort((a, b) => b.adds - a.adds),
     byWanted: byWanted.sort((a, b) => b.wanted - a.wanted),
+    byDevice: byDevice.sort((a, b) => b.people - a.people),
     orders: byStatus,
   }
 }

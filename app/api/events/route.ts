@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       visitorId: input.visitorId,
       weekId: week?.id ?? null,
       detail: input.detail ?? null,
+      device: input.device ?? null,
     })
     return new Response(null, { status: 204 })
   } catch (error) {

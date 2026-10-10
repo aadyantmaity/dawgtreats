@@ -50,6 +50,9 @@ export const events = pgTable('events', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   visitorId: text('visitor_id').notNull(),
+  // 'phone' or 'desktop', and nothing finer. Enough to say where the traffic is without
+  // keeping anything that describes a person. Null on the rows recorded before this.
+  device: text('device'),
   weekId: uuid('week_id'),
   detail: text('detail'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

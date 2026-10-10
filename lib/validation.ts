@@ -67,10 +67,14 @@ export const EVENTS = [
 
 export type EventName = (typeof EVENTS)[number]
 
+export const DEVICES = ['phone', 'desktop'] as const
+export type Device = (typeof DEVICES)[number]
+
 export const eventSchema = z.object({
   name: z.enum(EVENTS),
   visitorId: z.string().trim().min(8).max(64),
   detail: z.string().trim().max(60).optional(),
+  device: z.enum(DEVICES).optional(),
 })
 
 export const moveSlotSchema = z.object({
