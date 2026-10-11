@@ -67,7 +67,7 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
         onChange={setPicked}
         options={choices.map((slot) => ({
           value: slot.id,
-          label: slot.current ? `${slot.label} · now` : `${slot.label} · ${slot.spotsLeft} left`,
+          label: slot.current ? `${slot.label} · now` : `${slot.label} · ${slot.spotsLeft} spots`,
         }))}
       />
       <div className="flex flex-wrap items-center gap-3">

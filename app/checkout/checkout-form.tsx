@@ -13,7 +13,7 @@ import { Spinner } from "@/components/ui/loading";
 import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
-import { LIMITS, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
+import { LIMITS, MESSAGES, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
 
 export type SlotChoice = {
   id: string;
@@ -127,8 +127,8 @@ function OrderSummary({
   );
 }
 
-// On a phone the Pay button sits two screens below the last field. This carries the
-// button and the total down with the scroll.
+// On a phone the Pay button sits two screens below the last field. The bar goes flat
+// until the form is ready, and the button in the form is the one that names the gaps.
 function PayBar({
   count,
   total,
@@ -343,15 +343,15 @@ export function CheckoutForm({
           <p className="text-secondary">Every pickup time is full. Try again later.</p>
         ) : (
           <>
+            <p className="mb-4 text-sm text-tertiary">
+              Each pickup window is {slotMinutes} minutes long. All times are Pacific.
+            </p>
             <SlotPicker slots={slots} value={slotId} onChange={setSlotId} invalid={Boolean(slotRefused)} />
             {slotRefused && (
               <p className="mt-3 text-sm text-error" role="alert">
-                Choose a pickup time
+                {MESSAGES.slotRequired}
               </p>
             )}
-            <p className="mt-3 text-sm text-tertiary">
-              Each one lasts {slotMinutes} minutes. All times Pacific.
-            </p>
           </>
         )}
       </Card>

@@ -1,10 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// Routes that must never scroll sideways or let anything hang off the right edge, at any
-// width. /nope stands in for any 404, and /order/TEST is the paid order that
-// scripts/seed-test-fixtures.ts writes.
+// Routes that must never scroll sideways or let anything hang off the right edge, on a
+// phone or on a laptop. /nope stands in for any 404, and /order/TEST is the paid order
+// that scripts/seed-test-fixtures.ts writes.
 const ROUTES = ["/", "/cart", "/checkout", "/order/lookup", "/order/TEST", "/feedback", "/nope"];
 const WIDTHS = [320, 390, 430, 1280];
+// A thumb needs WCAG 2.5.5's 44px. A mouse only needs 2.5.8's 24px.
 const MIN_TOUCH_TARGET = 44;
 const MIN_POINTER_TARGET = 24;
 const SM_BREAKPOINT = 640;
@@ -187,7 +188,7 @@ test("the checkout chooses no pickup time for you", async ({ page }) => {
   await page.goto("/checkout");
   await settled(page);
 
-  // Whoever does not notice a preselected time is booked for whenever it happened to be.
+  // A preselected time books someone for a slot they never chose.
   await expect(page.getByRole("radio", { checked: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: /^Pay for/ }).click();
@@ -251,8 +252,7 @@ test("the floating Pay bar stays flat until the checkout is ready", async ({ pag
   await expect(bar).toBeEnabled();
 });
 
-// Where the floating feedback button belongs, and the far longer list of places it does
-// not. /feedback is the same form as a page, so the button there would open itself.
+// /feedback is the same form as a page, so the button there would open itself.
 const FEEDBACK_ON = ["/", "/account", "/order/TEST", "/order/lookup"];
 const FEEDBACK_OFF = ["/cart", "/checkout", "/feedback", "/nope"];
 

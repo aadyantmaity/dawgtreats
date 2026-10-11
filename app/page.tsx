@@ -126,6 +126,7 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
   );
 }
 
+// Both grids take the same count, so the sold-out cards line up under the ones for sale.
 const columns = (count: number) =>
   count >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
 
@@ -196,7 +197,7 @@ export default async function MenuPage() {
                 Sold out this week
                 <span aria-hidden className="flex-1 border-t border-default" />
               </h2>
-              <div className={`mt-5 grid items-start gap-5 ${columns(soldOut.length)}`}>
+              <div className={`mt-5 grid items-start gap-5 ${columns(forSale.length)}`}>
                 {soldOut.map((flavor) => (
                   <SoldOutCard key={flavor.id} flavor={flavor} />
                 ))}

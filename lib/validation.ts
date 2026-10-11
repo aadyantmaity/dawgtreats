@@ -12,7 +12,7 @@ export const LIMITS = {
   messageMax: 500,
 } as const
 
-const MESSAGES = {
+export const MESSAGES = {
   nameRequired: 'Name is required',
   nameTooLong: `Name must be ${LIMITS.nameMax} characters or fewer`,
   descriptionTooLong: `Description must be ${LIMITS.descriptionMax} characters or fewer`,
@@ -25,6 +25,7 @@ const MESSAGES = {
   emailFormat: 'That email address does not look right',
   phoneRequired: 'Phone number is required',
   phoneFormat: 'Enter a 10-digit phone number',
+  slotRequired: 'Choose a pickup time',
   ratingRequired: 'Pick a rating first',
   ratingRange: 'A rating is one to five stars',
   messageTooLong: `Keep it to ${LIMITS.messageMax} characters or fewer`,
@@ -78,7 +79,7 @@ export const eventSchema = z.object({
 })
 
 export const moveSlotSchema = z.object({
-  slotId: z.uuid('Pick a pickup time'),
+  slotId: z.uuid(MESSAGES.slotRequired),
 })
 
 export const notifySchema = z.object({
@@ -154,7 +155,7 @@ const contact = {
 
 export const checkoutSchema = z.object({
   ...contact,
-  pickupSlotId: z.uuid('Choose a pickup time'),
+  pickupSlotId: z.uuid(MESSAGES.slotRequired),
   items: z
     .array(
       z.object({
