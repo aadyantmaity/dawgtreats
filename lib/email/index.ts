@@ -110,7 +110,6 @@ function shell(parts: { title: string; preheader: string; body: string }): strin
 <tr><td align="center" bgcolor="#e7e4dd" style="background-color:#e7e4dd;">
 <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560"><tr><td><![endif]-->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${PAPER_HEX}" style="width:100%;max-width:560px;background-color:${PAPER_HEX};border:1px solid ${LINE_HEX};border-radius:18px;overflow:hidden;font-family:${SANS};">
-<tr><td align="center" bgcolor="${INK_HEX}" style="background-color:${INK_HEX};padding:18px;font-family:${DISPLAY};font-size:22px;color:${IVORY_HEX};">Dawg Treats</td></tr>
 ${parts.body}
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
