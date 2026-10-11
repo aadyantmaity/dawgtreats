@@ -104,12 +104,12 @@ function shell(parts: { title: string; preheader: string; body: string }): strin
 :root{color-scheme:light;supported-color-schemes:light}
 </style>
 </head>
-<body style="margin:0;padding:0;background:#e7e4dd;">
+<body bgcolor="#e7e4dd" style="margin:0;padding:0;background-color:#e7e4dd;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(parts.preheader)}</div>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#e7e4dd;padding:24px 12px;">
-<tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#e7e4dd" style="background-color:#e7e4dd;padding:24px 12px;">
+<tr><td align="center" bgcolor="#e7e4dd" style="background-color:#e7e4dd;">
 <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560"><tr><td><![endif]-->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;max-width:560px;background:${PAPER_HEX};border:1px solid ${LINE_HEX};border-radius:18px;overflow:hidden;font-family:${SANS};">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${PAPER_HEX}" style="width:100%;max-width:560px;background-color:${PAPER_HEX};border:1px solid ${LINE_HEX};border-radius:18px;overflow:hidden;font-family:${SANS};">
 <tr><td align="center" style="background:${INK_HEX};padding:18px;">
   <img src="${site}/email/wordmark.png" width="173" height="42" alt="Dawg Treats" style="display:block;border:0;outline:none;width:173px;height:42px;color:${IVORY_HEX};font-family:${DISPLAY};font-size:22px;">
 </td></tr>
@@ -122,9 +122,9 @@ ${parts.body}
 
 // The code is what someone holds up at the table, so it is the one thing that is big.
 function codeBlock(label: string, orderCode: string): string {
-  return `<tr><td style="padding:16px 22px 0;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${IVORY_HEX};border-radius:14px;">
-    <tr><td align="center" style="padding:18px;">
+  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${IVORY_HEX}" style="background-color:${IVORY_HEX};border-radius:14px;">
+    <tr><td align="center" bgcolor="${IVORY_HEX}" style="background-color:${IVORY_HEX};border-radius:14px;padding:18px;">
       <div style="font-family:${SANS};font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:${FAINT_HEX};">${escapeHtml(label)}</div>
       <div style="font-family:${DISPLAY};font-size:42px;letter-spacing:.1em;color:${INK_HEX};padding-top:4px;">${escapeHtml(orderCode)}</div>
     </td></tr>
@@ -133,7 +133,7 @@ function codeBlock(label: string, orderCode: string): string {
 }
 
 function linkButton(href: string, label: string): string {
-  return `<tr><td style="padding:16px 22px 0;">
+  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
     <td align="center" bgcolor="${INK_HEX}" style="border-radius:999px;">
       <a href="${escapeHtml(href)}" style="display:block;padding:13px 20px;font-family:${SANS};font-size:16px;font-weight:600;color:${IVORY_HEX};text-decoration:none;">${escapeHtml(label)}</a>
@@ -144,7 +144,7 @@ function linkButton(href: string, label: string): string {
 
 // Each fact on its own line: these are read at a door, not in a chair.
 function footerLines(lines: string[]): string {
-  return `<tr><td style="padding:16px 22px 22px;font-family:${SANS};font-size:13px;line-height:1.6;color:${FAINT_HEX};">
+  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 22px;font-family:${SANS};font-size:13px;line-height:1.6;color:${FAINT_HEX};">
   ${lines.map((line) => escapeHtml(line)).join('<br>')}
 </td></tr>`
 }
@@ -190,7 +190,7 @@ function confirmationHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderB
   const { order: o, lines, slot } = order
   const items = lines
     .map(
-      (l) => `<tr><td style="padding:8px 0;border-bottom:1px solid ${LINE_HEX};font-size:16px;color:${INK_HEX};">
+      (l) => `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:8px 0;border-bottom:1px solid ${LINE_HEX};font-size:16px;color:${INK_HEX};">
       ${l.quantity} &times; ${escapeHtml(l.name)}
       <div style="font-size:15px;color:${QUIET_HEX};padding-top:2px;">${formatCents(l.unitPriceCents * l.quantity)}</div>
     </td></tr>`,
@@ -201,18 +201,18 @@ function confirmationHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     title: `Dawg Treats order ${o.orderCode}`,
     preheader: `${o.orderCode} · pick up ${pickupDay(slot)}`,
     body: `
-<tr><td style="padding:22px 22px 0;font-size:16px;line-height:1.5;color:${INK_HEX};">Thanks ${escapeHtml(firstName(o.name))}, your cookies are paid for.</td></tr>
-<tr><td style="padding:14px 22px 0;">
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:22px 22px 0;font-size:16px;line-height:1.5;color:${INK_HEX};">Thanks ${escapeHtml(firstName(o.name))}, your cookies are paid for.</td></tr>
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:14px 22px 0;">
   <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">${escapeHtml(pickupDay(slot))}</div>
   <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">${escapeHtml(pickupTimeTight(slot))}</div>
   <div style="font-size:16px;color:${QUIET_HEX};padding-top:4px;">${escapeHtml(PICKUP_PLACE)}</div>
   <div style="font-size:15px;color:${FAINT_HEX};padding-top:8px;">Need another time? Change it on your order page.</div>
 </td></tr>
 ${codeBlock('Show this at pickup', o.orderCode)}
-<tr><td style="padding:18px 22px 0;">
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     ${items}
-    <tr><td style="padding:10px 0;font-size:16px;font-weight:600;color:${INK_HEX};">Total ${formatCents(o.totalCents)}</td></tr>
+    <tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:10px 0;font-size:16px;font-weight:600;color:${INK_HEX};">Total ${formatCents(o.totalCents)}</td></tr>
   </table>
 </td></tr>
 ${linkButton(orderLink(o.orderCode), 'Your order')}
@@ -348,13 +348,13 @@ function reminderHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderByCod
     title: `Dawg Treats pickup today ${o.orderCode}`,
     preheader: `${pickupTime(slot)} · ${o.orderCode}`,
     body: `
-<tr><td style="padding:22px 22px 0;">
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:22px 22px 0;">
   <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">Today</div>
   <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">${escapeHtml(pickupTimeTight(slot))}</div>
   <div style="font-size:16px;color:${QUIET_HEX};padding-top:6px;">${escapeHtml(PICKUP_PLACE)}</div>
 </td></tr>
 ${codeBlock('Show this at the table', o.orderCode)}
-<tr><td style="padding:16px 22px 0;font-size:16px;line-height:1.5;color:${QUIET_HEX};">${items}</td></tr>
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 0;font-size:16px;line-height:1.5;color:${QUIET_HEX};">${items}</td></tr>
 ${linkButton(orderLink(o.orderCode), 'Your order')}
 ${footerLines(['Come any time in the window.', 'Pickup only. No refunds or cancellations.'])}`,
   })
@@ -402,10 +402,10 @@ function menuRow(item: OpenNoticeItem, last: boolean): string {
   const photo = item.imageUrl
     ? `<img src="${escapeHtml(absolute(item.imageUrl))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;object-fit:cover;">`
     : ''
-  return `<tr><td style="padding:12px 0;${last ? '' : `border-bottom:1px solid ${LINE_HEX};`}">
+  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:12px 0;${last ? '' : `border-bottom:1px solid ${LINE_HEX};`}">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-    ${photo ? `<td width="64" valign="middle" style="padding-right:14px;">${photo}</td>` : ''}
-    <td valign="middle" style="font-family:${SANS};font-size:16px;line-height:1.35;color:${INK_HEX};">
+    ${photo ? `<td width="64" valign="middle" bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding-right:14px;">${photo}</td>` : ''}
+    <td valign="middle" bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};font-family:${SANS};font-size:16px;line-height:1.35;color:${INK_HEX};">
       ${escapeHtml(item.name)}
       <div style="font-size:15px;color:${QUIET_HEX};padding-top:2px;">${formatCents(item.priceCents)}</div>
     </td>
@@ -419,7 +419,7 @@ function openNoticeHtml(week: NotifiableWeek, menu: OpenNoticeItem[], stop: stri
     title: 'New menu this week',
     preheader: `Orders close ${formatClosesAt(week.ordersCloseAt)}`,
     body: `
-<tr><td style="padding:18px 22px 0;">
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${menu.map((item, index) => menuRow(item, index === menu.length - 1)).join('')}</table>
 </td></tr>
 ${linkButton(site, 'Order')}
@@ -429,7 +429,7 @@ ${footerLines([
   `${PICKUP_PLACE}.`,
   'Pickup only. No refunds or cancellations.',
 ])}
-<tr><td style="padding:0 22px 22px;font-family:${SANS};font-size:13px;color:${FAINT_HEX};">
+<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:0 22px 22px;font-family:${SANS};font-size:13px;color:${FAINT_HEX};">
   <a href="${escapeHtml(stop)}" style="color:${FAINT_HEX};">Stop these emails</a>
 </td></tr>`,
   })
