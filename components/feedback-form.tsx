@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 
 import { submitFeedback } from "@/app/feedback-actions";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { LIMITS, messageError, ratingError } from "@/lib/validation";
 
 const STARS = [1, 2, 3, 4, 5];
+
+const STEMS = ["Bake this next:", "More of these:", "Pickup was", "Too sweet"];
 
 export function FeedbackForm({
   className = "",
@@ -26,9 +28,28 @@ export function FeedbackForm({
   const [pending, startTransition] = useTransition();
   const [bumped, setBumped] = useState(0);
   const [refused, setRefused] = useState(false);
+  const [seeded, setSeeded] = useState(0);
+  const messageBox = useRef<HTMLTextAreaElement>(null);
 
   const messageProblem = messageError(message);
   const ratingProblem = ratingError(rating);
+
+  // The caret can only go to the end once React has rendered the new value, so this
+  // waits for that render instead of moving it in the click.
+  useEffect(() => {
+    if (!seeded) return;
+    const box = messageBox.current;
+    if (!box) return;
+    box.focus();
+    box.setSelectionRange(box.value.length, box.value.length);
+  }, [seeded]);
+
+  // A stem replaces the box. Picking a second one means the first was the wrong start,
+  // so keeping it would leave two openings to delete by hand.
+  function seedMessage(stem: string) {
+    setMessage(`${stem} `);
+    setSeeded((count) => count + 1);
+  }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,7 +132,23 @@ export function FeedbackForm({
         <label htmlFor="feedback-message" className="text-sm text-secondary">
           What&apos;s on your mind? (optional)
         </label>
+        <div role="group" aria-label="Starters" className="flex flex-wrap gap-2">
+          {STEMS.map((stem) => (
+            <button
+              key={stem}
+              type="button"
+              // A press must not take focus off the box. The blur shows the rating error, which
+              // moves this row down between mousedown and mouseup and loses the click.
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => seedMessage(stem)}
+              className="inline-flex h-control items-center rounded-pill border border-default bg-surface px-3 text-sm text-secondary transition-colors ease-spring hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              {stem}
+            </button>
+          ))}
+        </div>
         <textarea
+          ref={messageBox}
           id="feedback-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
