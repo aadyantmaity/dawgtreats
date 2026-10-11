@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
+import { CartTray } from "@/components/cart-tray";
 import { NotifyForm } from "@/components/notify-form";
 import { TrackView } from "@/lib/analytics/track";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
@@ -146,6 +147,7 @@ export default async function MenuPage() {
       <p className="mt-12 text-sm text-tertiary">
         Pickup only, Saturday or Sunday. No refunds or cancellations.
       </p>
+      <CartTray menu={menu} />
     </main>
   );
 }

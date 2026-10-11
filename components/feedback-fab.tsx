@@ -1,11 +1,18 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { useCart } from "@/components/cart";
 import { FeedbackForm } from "@/components/feedback-form";
 
 export function FeedbackFab() {
   const [open, setOpen] = useState(false);
+  const { count } = useCart();
+  const pathname = usePathname();
+  // The cart tray sits in this corner, and only on the menu. Rise above it rather than
+  // behind it: a button nobody can press is worse than one slightly out of place.
+  const trayUp = count > 0 && pathname === "/";
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -32,7 +39,9 @@ export function FeedbackFab() {
   }, [open]);
 
   return (
-    <div className="fixed inset-x-6 bottom-6 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6 sm:bottom-6">
+    <div className={`fixed inset-x-6 bottom-6 z-40 flex flex-col items-end gap-3 transition-transform ease-out sm:inset-x-auto sm:right-6 sm:bottom-6 sm:translate-y-0 ${
+        trayUp ? "-translate-y-16" : ""
+      }`}>
       {open && (
         <div
           ref={panelRef}
