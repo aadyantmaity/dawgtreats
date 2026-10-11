@@ -141,9 +141,7 @@ export default async function MenuPage() {
   const soldOut = menu.filter((flavor) => flavor.remaining === 0);
 
   return (
-    <main
-      className={`mx-auto w-full max-w-4xl flex-1 animate-fade px-4 sm:px-6 py-12 ${forSale.length >= 3 ? "lg:max-w-6xl" : ""}`}
-    >
+    <main className="w-full flex-1 animate-fade py-12">
       <TrackView name="menu_viewed" />
       <h1 className="text-4xl font-semibold">
         {week ? "This week's bake" : "The menu"}

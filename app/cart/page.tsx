@@ -11,7 +11,7 @@ export default async function CartPage() {
   const menu = await getMenu(week?.id ?? null);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 animate-fade px-4 sm:px-6 py-12">
+    <main className="w-full max-w-2xl flex-1 animate-fade py-12">
       <h1 className="text-4xl font-semibold">Your cart</h1>
       <CartView menu={menu} ordersOpen={week !== null} />
     </main>

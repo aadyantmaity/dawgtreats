@@ -13,7 +13,7 @@ export default async function CheckoutPage() {
 
   if (!week) {
     return (
-      <main className="animate-fade mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12 lg:max-w-5xl">
+      <main className="animate-fade w-full max-w-2xl flex-1 py-12 lg:max-w-none">
         <h1 className="text-4xl font-semibold">Checkout</h1>
         <p className="mt-3 text-secondary">Orders are closed right now.</p>
         <Link href="/" className="mt-4 inline-flex min-h-control items-center underline">
@@ -32,7 +32,7 @@ export default async function CheckoutPage() {
   }));
 
   return (
-    <main className="animate-fade mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12 lg:max-w-5xl">
+    <main className="animate-fade w-full max-w-2xl flex-1 py-12 lg:max-w-none">
       <h1 className="text-4xl font-semibold">Checkout</h1>
       <div className="mt-3 flex flex-col gap-1 text-secondary">
         <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>

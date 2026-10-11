@@ -32,7 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const admin = await viewerIsAdmin();
   const tabs: NavTab[] = [
     { href: "/", label: "Home" },
-    { href: "/order/lookup", label: "My order" },
+    { href: "/order/lookup", label: "Orders" },
     { href: "/feedback", label: "Feedback" },
     { href: "/account", label: "Account" },
   ];
@@ -53,23 +53,38 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             opens from the bottom of this bar, so the bar has to be where it says it is.
             A sticky element with a z-index traps its children in that layer, and the menu
             drawer is one of them, so this has to outrank the floating feedback button. */}
-        <header className="sticky top-0 z-50 border-b border-default bg-page">
-          <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
+        <header className="sticky top-2 z-50 mt-2">
+          <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
+            <div className="relative h-bar">
+            {/* The blur is on its own layer rather than on the bar. A backdrop filter is
+                the containing block for every fixed thing inside it, and the drawer below
+                is one, so blurring the bar pinned the drawer to the bar, not the window. */}
+            <div
+              aria-hidden
+              className="absolute inset-0 rounded-pill border border-default bg-floating shadow-lg backdrop-blur-md"
+            />
+            <div className="relative flex h-full items-center justify-between gap-3 pr-3 pl-5 sm:gap-4">
             <Link href="/" className="inline-flex min-h-control shrink-0 items-center font-display text-base font-semibold whitespace-nowrap sm:text-xl">
               Dawg Treats
             </Link>
             {/* The cart sits in the bar at every width: a part-finished order must never
                 be behind a menu someone has to open first. */}
-            <nav className="flex min-w-0 items-center gap-2 sm:gap-4">
+            <nav className="flex min-w-0 items-center gap-1 sm:gap-3">
               <div className="hidden min-w-0 sm:block">
                 <NavTabs tabs={[...tabs, ...adminTabs]} />
               </div>
-              <CartLink />
               <NavMenu tabs={tabs} adminTabs={adminTabs} />
+              <CartLink />
             </nav>
+            </div>
+            </div>
           </div>
         </header>
-        {children}
+        {/* One column for the whole site, the same width as the bar above it. Every page
+            starts at the same edge, so the bar lines up with the page under it. */}
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 sm:px-6">
+          {children}
+        </div>
         <FeedbackFab />
         <Analytics />
       </body>

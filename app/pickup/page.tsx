@@ -17,7 +17,7 @@ export default async function PickupPage() {
   const week = weeks.find((w) => w.status === "open") ?? weeks[0];
   if (!week) {
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 animate-fade px-4 sm:px-6 py-12">
+      <main className="w-full max-w-2xl flex-1 animate-fade py-12">
         <h1 className="text-4xl font-semibold">Pickup day</h1>
         <p className="mt-3 text-secondary">No weeks yet.</p>
       </main>
@@ -32,7 +32,7 @@ export default async function PickupPage() {
     .reduce((sum, order) => sum + order.cookieCount, 0);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 animate-fade px-4 sm:px-6 py-12">
+    <main className="w-full max-w-2xl flex-1 animate-fade py-12">
       <h1 className="text-4xl font-semibold">Pickup day</h1>
       <p className="mt-3 text-secondary">
         {formatPickupWeekend(week.pickupWeekendStart)} · {week.status}

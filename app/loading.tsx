@@ -2,7 +2,7 @@ import { Bone, LoadingNote } from "@/components/ui/loading";
 
 export default function Loading() {
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6">
+    <main className="w-full flex-1 py-12">
       <LoadingNote>Loading this week&apos;s bake</LoadingNote>
       <Bone className="h-10 w-2/3" />
       <div className="mt-3 flex flex-col gap-1">

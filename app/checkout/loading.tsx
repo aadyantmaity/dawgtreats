@@ -9,7 +9,7 @@ function CardHeading({ className = "" }: { className?: string }) {
 
 export default function Loading() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6">
+    <main className="w-full max-w-2xl flex-1 py-12 lg:max-w-none">
       <LoadingNote>Loading checkout</LoadingNote>
       <Bone className="h-10 w-1/2" />
       <div className="mt-3 flex flex-col gap-1">

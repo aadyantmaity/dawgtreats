@@ -8,7 +8,7 @@ export default async function UnsubscribePage({ searchParams }: PageProps<"/noti
   const token = typeof t === "string" ? t : "";
 
   return (
-    <main className="animate-fade mx-auto w-full max-w-md flex-1 px-4 py-12 sm:px-6">
+    <main className="animate-fade w-full max-w-md flex-1 py-12">
       <h1 className="text-4xl font-semibold">Stop these emails</h1>
       <p className="mt-3 text-secondary">
         You asked to be told when a batch opened. Press below and I&apos;ll forget your address.

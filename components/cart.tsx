@@ -151,7 +151,7 @@ export function CartLink() {
     <Link
       href="/cart"
       aria-label={count === 0 ? "Cart, empty" : `Cart, ${count} cookies`}
-      className="inline-flex h-control shrink-0 items-center gap-2 rounded-pill border border-default bg-surface px-4 text-sm font-medium hover:bg-hover sm:h-control-sm"
+      className="inline-flex h-control shrink-0 items-center gap-2 rounded-pill bg-action px-4 text-sm font-medium text-on-action transition-colors hover:bg-action/90 sm:h-control-sm"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden className="size-4">
         <path d="M3 4h2l2.2 10.2a1.5 1.5 0 0 0 1.5 1.2h7.8a1.5 1.5 0 0 0 1.5-1.2L19.5 7H6" strokeLinecap="round" strokeLinejoin="round" />

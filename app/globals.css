@@ -45,6 +45,12 @@
   --background-color-warning: var(--palette-honey-100);
   /* Dims the page behind the menu. Dark enough to kill the contrast of what is under it. */
   --background-color-scrim: color-mix(in srgb, var(--palette-ink) 45%, transparent);
+  /* The bar floats clear of the page, so the page shows through it. Opaque enough to
+     read over a cookie photo, sheer enough that something is clearly moving beneath. */
+  --background-color-floating: color-mix(in srgb, var(--palette-white) 82%, transparent);
+  /* A control inside the floating bar. A border there would sit a few pixels inside the
+     bar's own, in the same colour, so the fill marks it instead. */
+  --background-color-quiet: color-mix(in srgb, var(--palette-ink) 6%, transparent);
 
   --border-color-default: var(--palette-linen);
   --border-color-focus: var(--palette-ink);
@@ -76,6 +82,9 @@
   /* The floating feedback button: bigger than a control, because a thumb reaches it
      on a moving phone rather than a cursor on a desk. */
   --spacing-fab: 3.5rem;
+  /* The floating bar. Shorter than the old full-width one, because a pill with air
+     around it reads as taller than it is. */
+  --spacing-bar: 3.5rem;
   /* The feedback panel: wide enough for a sentence, short enough to never fill a phone. */
   --spacing-panel: 22rem;
   --spacing-panel-max-h: 70vh;

@@ -82,7 +82,7 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
         aria-controls="nav-menu"
         aria-label="Menu"
         onClick={() => setOpen((was) => !was)}
-        className="relative z-50 grid size-control shrink-0 place-items-center rounded-pill border border-default bg-surface text-primary transition-colors ease-spring hover:bg-hover aria-expanded:border-transparent aria-expanded:bg-action aria-expanded:text-on-action sm:hidden"
+        className="relative z-50 grid size-control shrink-0 place-items-center rounded-pill text-primary transition-colors ease-spring hover:bg-quiet aria-expanded:bg-action aria-expanded:text-on-action sm:hidden"
       >
         <span aria-hidden className="relative block size-4">
           <span className="nav-toggle-line" />
