@@ -5,7 +5,7 @@ export const metadata = { title: "Feedback" };
 
 export default function FeedbackPage() {
   return (
-    <main className="w-full max-w-md flex-1 animate-fade py-12">
+    <main className="mx-auto w-full max-w-md flex-1 animate-fade py-12">
       <h1 className="text-4xl font-semibold">Tell me what you think</h1>
       <p className="mt-3 text-secondary">
         How the cookies were, or what to bake next.

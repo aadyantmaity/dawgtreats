@@ -2,7 +2,7 @@ import { Bone, LoadingNote } from "@/components/ui/loading";
 
 export default function Loading() {
   return (
-    <main className="w-full max-w-md flex-1 py-12">
+    <main className="mx-auto w-full max-w-md flex-1 py-12">
       <LoadingNote>Loading order lookup</LoadingNote>
       <Bone className="h-10 w-3/4" />
       <div className="mt-3 flex flex-col gap-1">

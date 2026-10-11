@@ -11,7 +11,7 @@ export default async function LookupPage() {
 
   if (!account) {
     return (
-      <main className="animate-fade w-full max-w-md flex-1 py-12">
+      <main className="mx-auto animate-fade w-full max-w-md flex-1 py-12">
         <h1 className="text-4xl font-semibold">Find my order</h1>
         <p className="mt-3 text-secondary">
           Your code is in your confirmation email, like 4X7K. Check spam if it&apos;s not there.
@@ -25,7 +25,7 @@ export default async function LookupPage() {
 
   if (orders.length === 0) {
     return (
-      <main className="animate-fade w-full max-w-md flex-1 py-12">
+      <main className="mx-auto animate-fade w-full max-w-md flex-1 py-12">
         <h1 className="text-4xl font-semibold">Your orders</h1>
         <p className="mt-3 text-secondary">
           Nothing ordered with {account.email} yet. If you used a different email, look it up with
@@ -37,7 +37,7 @@ export default async function LookupPage() {
   }
 
   return (
-    <main className="animate-fade w-full max-w-2xl flex-1 py-12">
+    <main className="mx-auto animate-fade w-full max-w-2xl flex-1 py-12">
       <h1 className="mb-6 text-4xl font-semibold">Your orders</h1>
       <OrderList orders={orders} />
 

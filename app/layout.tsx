@@ -80,8 +80,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </div>
           </div>
         </header>
-        {/* One column for the whole site, the same width as the bar above it. Every page
-            starts at the same edge, so the bar lines up with the page under it. */}
+        {/* One column for the whole site, the same width as the bar above it. A page
+            narrower than the bar sits in the middle of it, not against one edge. */}
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 sm:px-6">
           {children}
         </div>

@@ -3,7 +3,7 @@ import { Bone, LoadingNote } from "@/components/ui/loading";
 
 export default function Loading() {
   return (
-    <main className="w-full max-w-md flex-1 py-12">
+    <main className="mx-auto w-full max-w-md flex-1 py-12">
       <LoadingNote>Loading the feedback form</LoadingNote>
       <Bone className="h-10 w-full" />
       <Bone className="mt-3 h-6 w-3/4" />

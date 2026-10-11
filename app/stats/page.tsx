@@ -34,7 +34,7 @@ export default async function StatsPage() {
     .reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <main className="w-full max-w-2xl flex-1 animate-fade py-12">
+    <main className="mx-auto w-full max-w-2xl flex-1 animate-fade py-12">
       <h1 className="text-4xl font-semibold">Stats</h1>
       <p className="mt-3 text-secondary">
         Everything since {formatPt(COUNTING_SINCE, { month: "long", day: "numeric" })}
