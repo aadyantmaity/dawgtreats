@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${shantellSans.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${shantellSans.variable} h-full overscroll-y-none antialiased`}
     >
       <body className="flex min-h-full flex-col">
         {/* Stays put: the menu runs past a phone screen several times over, and the cart

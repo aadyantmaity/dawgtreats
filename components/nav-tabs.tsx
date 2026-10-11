@@ -10,8 +10,8 @@ export type NavTab = { href: string; label: string };
 
 type Box = { left: number; width: number };
 
-// The pill slides and resizes to whichever tab is current. It used to stretch across both
-// on the way, which read as flourish rather than as feedback on a bar this small.
+// The pill stretches across both tabs on the way and draws back in, so it reads as one
+// thing moving rather than a box being put somewhere else.
 export function NavTabs({ tabs }: { tabs: NavTab[] }) {
   const pathname = usePathname();
   const links = useRef(new Map<string, HTMLAnchorElement | null>());
@@ -48,14 +48,18 @@ export function NavTabs({ tabs }: { tabs: NavTab[] }) {
     // One journey at a time: a second would start from where the first is headed.
     for (const running of el.getAnimations()) running.cancel();
 
+    const left = Math.min(from.left, pill.left);
+    const right = Math.max(from.left + from.width, pill.left + pill.width);
+
     el.animate(
       [
         { left: `${from.left}px`, width: `${from.width}px` },
+        { left: `${left}px`, width: `${right - left}px`, offset: 0.45 },
         { left: `${pill.left}px`, width: `${pill.width}px` },
       ],
-      // The 260ms everything else moves in, on a curve that does not overshoot: a marker
-      // that passes its tab and comes back is saying nothing.
-      { duration: 260, easing: "cubic-bezier(0.32, 0.72, 0.3, 1)" },
+      // Longer than the rest of the site on purpose: the pill covers the whole bar on the
+      // way and needs the time to read as one journey rather than a flash.
+      { duration: 420, easing: "cubic-bezier(0.32, 0.72, 0.3, 1)" },
     );
   }, [pill]);
 
