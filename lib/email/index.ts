@@ -74,8 +74,9 @@ const LINE_HEX = '#ded8cb'
 const QUIET_HEX = '#5d564a'
 const FAINT_HEX = '#6e675c'
 const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
-// Gmail drops @font-face, so the wordmark is a picture and everything else names a
-// fallback that is already on the machine. Apple Mail and iOS do load the real one.
+// Gmail drops @font-face, and a picture of the name only appears for someone whose
+// client fetches remote images, which many will not. So the name is text, and the
+// fallback after it is what most people actually read.
 const DISPLAY = "'Shantell Sans',Georgia,'Times New Roman',serif"
 const SHANTELL_WOFF2 =
   'https://fonts.gstatic.com/s/shantellsans/v13/FeUaS0pCoLIo-lcdY7kjvNoQqWVWB0qWpl29ajppTuUTu_kJKmHesPOL-maYi4xZeHCNQ09eBlmv2QcUzJ39-rAISYSiTFixwv0TijRMagQ.woff2'
@@ -91,7 +92,6 @@ function escapeHtml(value: string): string {
 // The preheader is what a phone shows under the subject. Without one it shows the first
 // words of the markup instead.
 function shell(parts: { title: string; preheader: string; body: string }): string {
-  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(parts.title)}</title>
@@ -110,9 +110,7 @@ function shell(parts: { title: string; preheader: string; body: string }): strin
 <tr><td align="center" bgcolor="#e7e4dd" style="background-color:#e7e4dd;">
 <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560"><tr><td><![endif]-->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${PAPER_HEX}" style="width:100%;max-width:560px;background-color:${PAPER_HEX};border:1px solid ${LINE_HEX};border-radius:18px;overflow:hidden;font-family:${SANS};">
-<tr><td align="center" style="background:${INK_HEX};padding:18px;">
-  <img src="${site}/email/wordmark.png" width="173" height="42" alt="Dawg Treats" style="display:block;border:0;outline:none;width:173px;height:42px;color:${IVORY_HEX};font-family:${DISPLAY};font-size:22px;">
-</td></tr>
+<tr><td align="center" bgcolor="${INK_HEX}" style="background-color:${INK_HEX};padding:18px;font-family:${DISPLAY};font-size:22px;color:${IVORY_HEX};">Dawg Treats</td></tr>
 ${parts.body}
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
