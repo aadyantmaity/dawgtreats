@@ -95,8 +95,13 @@ function shell(parts: { title: string; preheader: string; body: string }): strin
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(parts.title)}</title>
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <style>
 @font-face{font-family:'Shantell Sans';font-style:normal;font-weight:600;font-display:swap;src:url(${SHANTELL_WOFF2}) format('woff2')}
+/* The paper is already a warm off-white and the bar is already dark. A client that
+   inverts both gets a negative of a design that has its own dark part. */
+:root{color-scheme:light;supported-color-schemes:light}
 </style>
 </head>
 <body style="margin:0;padding:0;background:#e7e4dd;">
@@ -395,7 +400,7 @@ function absolute(path: string): string {
 // are squeezed together on a phone, where most of these are read.
 function menuRow(item: OpenNoticeItem, last: boolean): string {
   const photo = item.imageUrl
-    ? `<img src="${escapeHtml(absolute(item.imageUrl))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;">`
+    ? `<img src="${escapeHtml(absolute(item.imageUrl))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;object-fit:cover;">`
     : ''
   return `<tr><td style="padding:12px 0;${last ? '' : `border-bottom:1px solid ${LINE_HEX};`}">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
