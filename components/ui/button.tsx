@@ -5,8 +5,10 @@ const variants = {
   secondary: "bg-surface text-primary border border-default hover:bg-hover",
 };
 
+// The small size is only small where there is a cursor. A thumb needs the full control
+// height, and this is the default size, so every button on the site inherits it.
 const sizes = {
-  sm: "h-control-sm px-4 text-sm rounded-control-sm",
+  sm: "h-control px-4 text-sm rounded-control-sm sm:h-control-sm",
   md: "h-control px-5 text-base rounded-control",
 };
 

@@ -153,7 +153,7 @@ export function CheckoutForm({
             Card payment arrives in the next step of the build. Until then this order stays unpaid and its
             cookies are released when the hold expires.
           </p>
-          <Link href="/" className="inline-block py-2 underline">
+          <Link href="/" className="inline-flex min-h-control items-center underline">
             Back to the menu
           </Link>
         </div>
@@ -168,7 +168,7 @@ export function CheckoutForm({
       <>
         <CartNotices className="mt-8" />
         <p className="mt-3 text-secondary">Your cart is empty.</p>
-        <Link href="/" className="mt-4 inline-block py-2 underline">
+        <Link href="/" className="mt-4 inline-flex min-h-control items-center underline">
           Back to the menu
         </Link>
       </>
@@ -259,7 +259,7 @@ export function CheckoutForm({
               {note}
             </p>
           ))}
-          <Link href="/cart" className="inline-block py-2 underline">
+          <Link href="/cart" className="inline-flex min-h-control items-center underline">
             Back to the cart
           </Link>
         </div>

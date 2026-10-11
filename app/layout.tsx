@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             drawer is one of them, so this has to outrank the floating feedback button. */}
         <header className="sticky top-0 z-50 border-b border-default bg-page">
           <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
-            <Link href="/" className="shrink-0 font-display text-base font-semibold whitespace-nowrap sm:text-xl">
+            <Link href="/" className="inline-flex min-h-control shrink-0 items-center font-display text-base font-semibold whitespace-nowrap sm:text-xl">
               Dawg Treats
             </Link>
             {/* The cart sits in the bar at every width: a part-finished order must never

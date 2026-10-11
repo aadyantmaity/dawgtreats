@@ -131,7 +131,7 @@ export default async function StatsPage() {
         while ordering was shut count too, so a quiet week still shows who came by.
       </p>
 
-      <Link href="/pickup" className="mt-6 inline-block py-2 underline">
+      <Link href="/pickup" className="mt-6 inline-flex min-h-control items-center underline">
         Pickup day
       </Link>
     </main>

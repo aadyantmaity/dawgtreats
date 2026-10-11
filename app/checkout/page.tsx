@@ -16,7 +16,7 @@ export default async function CheckoutPage() {
       <main className="animate-fade mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-12">
         <h1 className="text-4xl font-semibold">Checkout</h1>
         <p className="mt-3 text-secondary">Orders are closed right now.</p>
-        <Link href="/" className="mt-4 inline-block py-2 underline">
+        <Link href="/" className="mt-4 inline-flex min-h-control items-center underline">
           Back to the menu
         </Link>
       </main>

@@ -26,14 +26,14 @@ export function CartTray({ menu }: { menu: MenuItem[] }) {
     >
       {/* Only as wide as what it says. Edge to edge it read as a second bar rather than
           something floating over the page. */}
-      <div className="mx-auto flex h-control w-fit max-w-full items-center gap-3 rounded-pill bg-action pr-1.5 pl-5 text-on-action shadow-lg">
+      <div className="mx-auto flex h-control w-fit max-w-full items-center gap-3 rounded-pill bg-action pl-5 text-on-action shadow-lg">
         <span className="text-sm whitespace-nowrap">
           <span className="tabular-nums">{count}</span>{" "}
           {count === 1 ? "cookie" : "cookies"} · {formatCents(total)}
         </span>
         <Link
           href="/checkout"
-          className="inline-flex h-control-sm shrink-0 items-center rounded-pill bg-page px-4 text-sm font-medium text-primary"
+          className="inline-flex h-control shrink-0 items-center rounded-pill bg-page px-5 text-sm font-medium text-primary"
         >
           Checkout
         </Link>

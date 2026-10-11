@@ -87,7 +87,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
       <>
         <CartNotices className="mt-6" />
         <p className="mt-3 text-secondary">Your cart is empty.</p>
-        <Link href="/" className="mt-4 inline-block py-2 underline">
+        <Link href="/" className="mt-4 inline-flex min-h-control items-center underline">
           Back to the menu
         </Link>
       </>
@@ -108,33 +108,39 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
                 onAnimationEnd={(e) => {
                   if (isLeaving && e.target === e.currentTarget) finishLeaving(row.id);
                 }}
-                className={`flex flex-wrap items-center gap-4 p-5 ${isLeaving ? "overflow-hidden animate-leave" : ""}`}
+                className={`flex flex-col gap-4 p-5 sm:flex-row sm:flex-wrap sm:items-center ${isLeaving ? "overflow-hidden animate-leave" : ""}`}
               >
-                {row.imageUrl ? (
-                  <Image
-                    src={row.imageUrl}
-                    alt={row.name}
-                    width={48}
-                    height={48}
-                    className="size-12 rounded-control-sm object-cover"
-                  />
-                ) : (
-                  <PhotoPlaceholder className="size-12" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold">{row.name}</p>
-                  <p className="text-sm text-secondary">{formatCents(row.priceCents)} each</p>
+                {/* A phone gives the name its own line. Sharing one with the stepper and the
+                    total left it about a hundred pixels, and every name here wrapped to three. */}
+                <div className="flex min-w-0 flex-1 items-center gap-4">
+                  {row.imageUrl ? (
+                    <Image
+                      src={row.imageUrl}
+                      alt={row.name}
+                      width={48}
+                      height={48}
+                      className="size-12 shrink-0 rounded-control-sm object-cover"
+                    />
+                  ) : (
+                    <PhotoPlaceholder className="size-12 shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{row.name}</p>
+                    <p className="text-sm text-secondary">{formatCents(row.priceCents)} each</p>
+                  </div>
                 </div>
-                <Stepper
-                  label={row.name}
-                  value={String(row.quantity)}
-                  min={0}
-                  max={limit.max}
-                  onChange={(next, from) => handleQuantityChange(row, Number(next || "0"), from)}
-                />
-                <span className="w-20 text-right tabular-nums">
-                  {formatCents(row.priceCents * row.quantity)}
-                </span>
+                <div className="flex items-center justify-between gap-4">
+                  <Stepper
+                    label={row.name}
+                    value={String(row.quantity)}
+                    min={0}
+                    max={limit.max}
+                    onChange={(next, from) => handleQuantityChange(row, Number(next || "0"), from)}
+                  />
+                  <span className="w-20 text-right tabular-nums">
+                    {formatCents(row.priceCents * row.quantity)}
+                  </span>
+                </div>
                 {limit.reached && (
                   <p className="basis-full text-sm text-tertiary">{limit.reached}</p>
                 )}

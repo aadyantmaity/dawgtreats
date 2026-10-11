@@ -90,7 +90,7 @@ export function FeedbackForm({
               aria-label={`${star} out of 5`}
               aria-pressed={star === rating}
               // A press must read as immediate; only the release springs back.
-              className={`h-control-sm w-control-sm rounded-control-sm text-2xl leading-none transition ease-spring hover:-translate-y-0.5 focus-visible:-translate-y-0.5 active:duration-100 active:scale-95 ${
+              className={`size-control rounded-control-sm text-2xl leading-none transition ease-spring hover:-translate-y-0.5 focus-visible:-translate-y-0.5 active:duration-100 active:scale-95 ${
                 star <= (hovered || rating) ? "text-rating" : "text-tertiary"
               } ${bumped === star ? "animate-bump" : ""}`}
             >

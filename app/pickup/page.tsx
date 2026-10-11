@@ -63,7 +63,7 @@ export default async function PickupPage() {
         ))}
       </div>
 
-      <Link href="/" className="mt-8 inline-block py-2 underline">
+      <Link href="/" className="mt-8 inline-flex min-h-control items-center underline">
         Back to the menu
       </Link>
     </main>

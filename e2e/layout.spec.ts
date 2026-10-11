@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 // whatever width the phone is. /nope stands in for any 404.
 const ROUTES = ["/", "/cart", "/checkout", "/order/lookup", "/feedback", "/nope"];
 const WIDTHS = [320, 390, 430];
-const MIN_TAP_TARGET = 36;
+const MIN_TAP_TARGET = 44;
 const CART_STORAGE_KEY = "dawgtreats.cart";
 
 let seedFlavorId: string;
@@ -58,9 +58,9 @@ function findOverflowingElements() {
   return offenders;
 }
 
+// The whole page, not just <main>: the header and the floating buttons are the ones a
+// thumb reaches most, and they sat outside this check while it only read the article.
 function findTinyTapTargets(minHeight: number) {
-  const main = document.querySelector("main");
-  if (!main) return [];
   const offenders: string[] = [];
 
   // A link inside a sentence cannot be made taller without breaking the line it sits
@@ -76,11 +76,13 @@ function findTinyTapTargets(minHeight: number) {
     return around.length > own.length + 1;
   };
 
-  main.querySelectorAll("button, a").forEach((el) => {
+  document.body.querySelectorAll("button, a").forEach((el) => {
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return; // not visible, not a real target
     const style = getComputedStyle(el);
     if (style.display === "none" || style.visibility === "hidden") return;
+    // An inert subtree, such as the closed menu drawer, cannot be tapped at all.
+    if (el.closest("[inert]")) return;
     if (insideSentence(el)) return;
     if (rect.height < minHeight) {
       const text = (el.textContent ?? el.getAttribute("aria-label") ?? "").trim().slice(0, 30);
@@ -125,7 +127,7 @@ async function assertLayoutInvariants(page: Page, label: string, width: number) 
   const tiny = await page.evaluate(findTinyTapTargets, MIN_TAP_TARGET);
   expect(
     tiny,
-    `${label} at ${width}px: ${tiny.length} tap target(s) inside <main> are under ${MIN_TAP_TARGET}px tall:\n${tiny.join("\n")}`,
+    `${label} at ${width}px: ${tiny.length} tap target(s) are under ${MIN_TAP_TARGET}px tall:\n${tiny.join("\n")}`,
   ).toEqual([]);
 }
 

@@ -79,7 +79,7 @@ export default async function AccountPage() {
       )}
 
       <form action="/auth/signout" method="post" className="mt-8">
-        <button type="submit" className="inline-block py-2 text-sm text-secondary underline hover:text-primary">
+        <button type="submit" className="inline-flex min-h-control items-center text-sm text-secondary underline hover:text-primary">
           Sign out
         </button>
       </form>
