@@ -26,7 +26,7 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-3 py-2 text-sm text-secondary underline transition-colors ease-spring hover:text-primary"
+        className="mt-3 inline-flex min-h-control items-center text-sm text-secondary underline transition-colors ease-spring hover:text-primary"
       >
         Change pickup time
       </button>

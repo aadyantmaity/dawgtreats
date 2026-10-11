@@ -19,7 +19,6 @@ const LOW_STOCK = 10;
 
 function Stock({ remaining }: { remaining: number | null }) {
   if (remaining === null) return null;
-  if (remaining === 0) return <span className="text-sm text-tertiary">Sold out</span>;
   return (
     <span className={`text-sm ${remaining <= LOW_STOCK ? "text-urgent" : "text-secondary"}`}>
       {remaining} left
@@ -27,9 +26,31 @@ function Stock({ remaining }: { remaining: number | null }) {
   );
 }
 
-function FlavorCard({ flavor }: { flavor: MenuItem }) {
-  const soldOut = flavor.remaining === 0;
+function Allergens({ flavor }: { flavor: MenuItem }) {
+  return (
+    <details className="group border-t border-default pt-3">
+      <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
+        Allergens
+        <svg
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          aria-hidden
+          className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
+        >
+          <path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <p className="mt-2 text-sm text-tertiary">{allergenLine(flavor.allergens)}</p>
+      {mayContainLine(flavor.mayContain) && (
+        <p className="mt-1 text-sm text-tertiary">{mayContainLine(flavor.mayContain)}</p>
+      )}
+    </details>
+  );
+}
 
+function FlavorCard({ flavor }: { flavor: MenuItem }) {
   return (
     <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-4">
       {/* A phone puts the photo beside the name. Full width, three cookies are five
@@ -44,23 +65,17 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
             // Both cards are above the fold on a laptop, so neither should wait for lazy loading.
             priority
             sizes="(min-width: 640px) 24rem, 6rem"
-            className={`size-24 shrink-0 rounded-card object-cover sm:aspect-photo sm:size-auto sm:w-full ${soldOut ? "opacity-60" : ""}`}
+            className="size-24 shrink-0 rounded-card object-cover sm:aspect-photo sm:size-auto sm:w-full"
           />
         ) : (
-          <PhotoPlaceholder
-            className={`size-24 shrink-0 sm:aspect-photo sm:size-auto sm:w-full ${soldOut ? "opacity-60" : ""}`}
-          />
+          <PhotoPlaceholder className="size-24 shrink-0 sm:aspect-photo sm:size-auto sm:w-full" />
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {/* Beside a thumbnail there is room for about twenty characters, and every name
               here is longer. The price drops below so the name keeps the width. */}
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-            <h2 className={`font-sans text-lg font-semibold ${soldOut ? "text-tertiary" : ""}`}>
-              {flavor.name}
-            </h2>
-            <span className={`tabular-nums ${soldOut ? "text-secondary sm:text-primary" : ""}`}>
-              {formatCents(flavor.priceCents)}
-            </span>
+            <h2 className="font-sans text-lg font-semibold">{flavor.name}</h2>
+            <span className="tabular-nums">{formatCents(flavor.priceCents)}</span>
           </div>
           {flavor.description && <p className="text-sm text-secondary">{flavor.description}</p>}
         </div>
@@ -73,25 +88,40 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
           <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
         </div>
       )}
-      <details className="group border-t border-default pt-3">
-        <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
-          Allergens
-          <svg
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            aria-hidden
-            className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
-          >
-            <path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </summary>
-        <p className="mt-2 text-sm text-tertiary">{allergenLine(flavor.allergens)}</p>
-        {mayContainLine(flavor.mayContain) && (
-          <p className="mt-1 text-sm text-tertiary">{mayContainLine(flavor.mayContain)}</p>
+      <Allergens flavor={flavor} />
+    </article>
+  );
+}
+
+// A sold-out flavor stays on the menu, so the week still reads as a full bake.
+function SoldOutCard({ flavor }: { flavor: MenuItem }) {
+  return (
+    <article className="flex flex-col gap-3 rounded-card border border-dashed border-default p-4">
+      <div className="flex items-center gap-4">
+        {flavor.imageUrl ? (
+          <Image
+            src={flavor.imageUrl}
+            alt={flavor.name}
+            width={96}
+            height={96}
+            sizes="3rem"
+            className="size-12 shrink-0 rounded-control-sm object-cover opacity-60"
+          />
+        ) : (
+          <PhotoPlaceholder className="size-12 shrink-0 rounded-control-sm" />
         )}
-      </details>
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* An h3, so heading navigation groups these under the one that explains them. */}
+          <h3 className="font-sans text-base font-semibold text-tertiary">{flavor.name}</h3>
+          <span className="text-sm text-tertiary tabular-nums">
+            {formatCents(flavor.priceCents)}
+          </span>
+          {/* In words, not only in grey: the card has to say this on its own. */}
+          <span className="text-sm text-tertiary">Sold out</span>
+        </div>
+      </div>
+      <AddToCart flavorId={flavor.id} name={flavor.name} remaining={0} />
+      <Allergens flavor={flavor} />
     </article>
   );
 }
@@ -101,6 +131,10 @@ export default async function MenuPage() {
   const menu = await getMenu(week?.id ?? null);
   const account = week ? null : await currentAccount();
   const onList = account ? await isWaiting(account.email) : false;
+
+  // A cookie nobody can buy should not sit between two that they can.
+  const forSale = menu.filter((flavor) => flavor.remaining !== 0);
+  const soldOut = menu.filter((flavor) => flavor.remaining === 0);
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 animate-fade px-4 sm:px-6 py-12">
@@ -137,11 +171,34 @@ export default async function MenuPage() {
       {menu.length === 0 ? (
         <p className="mt-10 text-secondary">Nothing on the menu yet. Check back soon.</p>
       ) : (
-        <div className="mt-10 grid items-start gap-5 sm:grid-cols-2">
-          {menu.map((flavor) => (
-            <FlavorCard key={flavor.id} flavor={flavor} />
-          ))}
-        </div>
+        <>
+          {forSale.length > 0 && (
+            <div className="mt-10 grid items-start gap-5 sm:grid-cols-2">
+              {forSale.map((flavor) => (
+                <FlavorCard key={flavor.id} flavor={flavor} />
+              ))}
+            </div>
+          )}
+          {forSale.length === 0 && (
+            <p className="mt-10 text-secondary">
+              Everything sold out this week. There&apos;s a new batch most weeks.
+            </p>
+          )}
+          {soldOut.length > 0 && (
+            <>
+              <h2 className="mt-10 flex items-center gap-3 text-xs uppercase tracking-widest text-tertiary">
+                <span aria-hidden className="flex-1 border-t border-default" />
+                Sold out this week
+                <span aria-hidden className="flex-1 border-t border-default" />
+              </h2>
+              <div className="mt-5 grid items-start gap-5 sm:grid-cols-2">
+                {soldOut.map((flavor) => (
+                  <SoldOutCard key={flavor.id} flavor={flavor} />
+                ))}
+              </div>
+            </>
+          )}
+        </>
       )}
 
       <p className="mt-12 text-sm text-tertiary">

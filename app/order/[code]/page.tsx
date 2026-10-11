@@ -39,7 +39,6 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
       <Card title="Pickup" className="mt-8">
         <p>{pickup}</p>
         <p className="mt-1">{PICKUP_PLACE}</p>
-        <p className="mt-2 text-sm text-secondary">Bring this code.</p>
         <ChangeSlot orderCode={order.orderCode} choices={choices} />
       </Card>
 

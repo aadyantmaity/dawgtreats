@@ -370,6 +370,9 @@ const commands: Record<string, () => Promise<void>> = {
     const demo = [
       { name: 'Brown butter choc chip', description: 'Sea salt, dark chocolate, crisp edges.', priceCents: 350, quantity: 24 },
       { name: 'Snickerdoodle', description: 'Cinnamon sugar, soft centre.', priceCents: 300, quantity: 18 },
+      // The layout tests sell this one out, which is the only way to render the sold-out
+      // half of the menu: a flavor with no batch at all never reaches the menu.
+      { name: 'Oatmeal raisin', description: 'Chewy, with a lot of cinnamon.', priceCents: 300, quantity: 6 },
     ]
     const existing = await listFlavors()
     for (const item of demo) {

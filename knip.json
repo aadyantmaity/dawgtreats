@@ -3,6 +3,7 @@
   "ignore": [
     "drizzle.config.ts",
     "scripts/reset-test-db.ts",
+    "scripts/seed-test-fixtures.ts",
     "tests/setup/server-only-stub.ts"
   ],
   "ignoreExportsUsedInFile": true,

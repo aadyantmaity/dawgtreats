@@ -30,6 +30,7 @@ export default defineConfig({
       "npx tsx scripts/reset-test-db.ts && " +
       "npx tsx --conditions=react-server scripts/admin.ts seed && " +
       "npx tsx --conditions=react-server scripts/admin.ts week:open && " +
+      "npx tsx scripts/seed-test-fixtures.ts && " +
       "npm run build && npm run start -- -p " +
       PORT,
     url: `http://localhost:${PORT}`,

@@ -1,13 +1,18 @@
 import { expect, test, type Page } from "@playwright/test";
 
 // Routes that must never scroll sideways or let anything hang off the right edge,
-// whatever width the phone is. /nope stands in for any 404.
-const ROUTES = ["/", "/cart", "/checkout", "/order/lookup", "/feedback", "/nope"];
+// whatever width the phone is. /nope stands in for any 404, and /order/TEST is the paid
+// order that scripts/seed-test-fixtures.ts writes.
+const ROUTES = ["/", "/cart", "/checkout", "/order/lookup", "/order/TEST", "/feedback", "/nope"];
 const WIDTHS = [320, 390, 430];
 const MIN_TAP_TARGET = 44;
 const CART_STORAGE_KEY = "dawgtreats.cart";
 
 let seedFlavorId: string;
+
+// Emptied by scripts/seed-test-fixtures.ts before the server starts, so every worker
+// sees the same menu.
+const SOLD_OUT_FLAVOR = "Oatmeal raisin";
 
 test.beforeAll(async ({ browser }) => {
   // The menu never prints a flavor's id, so the only honest way to get a real one
@@ -84,9 +89,11 @@ function findTinyTapTargets(minHeight: number) {
     // An inert subtree, such as the closed menu drawer, cannot be tapped at all.
     if (el.closest("[inert]")) return;
     if (insideSentence(el)) return;
-    if (rect.height < minHeight) {
+    // While the page composites an animation, a control sized to exactly the minimum
+    // measures a hair under it. That is not a small tap target, so allow half a pixel.
+    if (rect.height < minHeight - 0.5) {
       const text = (el.textContent ?? el.getAttribute("aria-label") ?? "").trim().slice(0, 30);
-      offenders.push(`<${el.tagName.toLowerCase()}> "${text}" height=${rect.height.toFixed(1)}px`);
+      offenders.push(`<${el.tagName.toLowerCase()}> "${text}" height=${rect.height.toFixed(2)}px`);
     }
   });
 
@@ -94,6 +101,13 @@ function findTinyTapTargets(minHeight: number) {
 }
 
 async function assertLayoutInvariants(page: Page, label: string, width: number) {
+  // Every route here is dynamic and answers with its loading skeleton first. Measured
+  // then, each real control reports no box and the check passes on a page nobody sees.
+  await expect(page.locator(".shimmer")).toHaveCount(0);
+  // The display font changes every text metric on the page when it swaps in. Measured
+  // before that, a control can report no box at all and be taken for something hidden.
+  await page.evaluate(() => document.fonts.ready);
+
   const { scrollWidth, clientWidth } = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
@@ -130,6 +144,28 @@ async function assertLayoutInvariants(page: Page, label: string, width: number) 
     `${label} at ${width}px: ${tiny.length} tap target(s) are under ${MIN_TAP_TARGET}px tall:\n${tiny.join("\n")}`,
   ).toEqual([]);
 }
+
+test("the menu separates what is sold out from what is for sale", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/");
+
+  const heading = page.getByRole("heading", { name: "Sold out this week" });
+  await expect(heading, "the sold-out heading is missing; is the fixture still sold out?").toBeVisible();
+
+  const soldOut = page.getByRole("heading", { name: SOLD_OUT_FLAVOR });
+  await expect(soldOut).toBeVisible();
+
+  // Below the heading, not above it: the whole point is that it stops taking a place in
+  // the grid of things someone can buy.
+  const headingBox = await heading.boundingBox();
+  const cardBox = await soldOut.boundingBox();
+  if (!headingBox || !cardBox) throw new Error("the sold-out heading or card has no bounding box");
+  expect(cardBox.y).toBeGreaterThan(headingBox.y);
+
+  // The card says so in words, so the dashed border and the grey are not carrying it alone.
+  await expect(page.getByText("Sold out", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "I wanted this" })).toBeVisible();
+});
 
 for (const width of WIDTHS) {
   test.describe(`at ${width}px`, () => {

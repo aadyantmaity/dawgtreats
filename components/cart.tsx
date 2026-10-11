@@ -168,17 +168,19 @@ export function CartLink() {
   );
 }
 
-// Nothing here is for sale, so this is not styled as a buyable button. The card already
-// says "Sold out", so this control only says "I wanted this".
+// Nothing here is for sale, so this is not styled as a buyable button. It only records
+// that someone wanted the flavor.
 function SoldOutInterest({ name }: { name: string }) {
   const [sent, setSent] = useState(false);
 
   return (
     <div className="flex flex-col items-end gap-1">
-      {/* The reply must stay on one line. The row is pinned to one control height, so a
-          second line is the one thing that can make a sold-out card taller than its neighbour. */}
+      {/* The reply must stay on one line: a second line makes this card taller than the
+          one beside it, and the grid aligns the two at the top. */}
       {sent ? (
-        <p className="animate-fade py-2 text-sm text-secondary">Noted that you wanted this</p>
+        <p className="animate-fade flex min-h-control items-center text-sm text-secondary">
+          Noted that you wanted this
+        </p>
       ) : (
         <button
           type="button"
@@ -186,7 +188,7 @@ function SoldOutInterest({ name }: { name: string }) {
             setSent(true);
             track("sold_out_wanted", name);
           }}
-          className="inline-block py-2 text-sm text-secondary underline hover:text-primary"
+          className="inline-flex min-h-control items-center text-sm text-secondary underline hover:text-primary"
         >
           I wanted this
         </button>
