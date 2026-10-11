@@ -48,7 +48,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${dmSans.variable} ${shantellSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <header className="border-b border-default">
+        {/* Stays put: the menu runs past a phone screen several times over, and the cart
+            was only reachable by scrolling all the way back to the top. The drawer below
+            opens from the bottom of this bar, so the bar has to be where it says it is.
+            A sticky element with a z-index traps its children in that layer, and the menu
+            drawer is one of them, so this has to outrank the floating feedback button. */}
+        <header className="sticky top-0 z-50 border-b border-default bg-page">
           <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
             <Link href="/" className="shrink-0 font-display text-base font-semibold whitespace-nowrap sm:text-xl">
               Dawg Treats
