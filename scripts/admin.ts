@@ -14,6 +14,7 @@ import {
   addSlot,
   deleteSlot,
   findSlotAt,
+  getMenu,
   getWeekInventory,
   listSlots,
   setBatchQuantities,
@@ -84,12 +85,15 @@ const positional = args.filter((a) => !a.startsWith('--') && a !== command)
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 
 // Opening a week and telling the list are the same moment, so both commands end here.
-async function tellTheWaitingList(week: { pickupWeekendStart: string }) {
+async function tellTheWaitingList(week: { id: string; pickupWeekendStart: string; ordersCloseAt: Date }) {
   const waiting = await listWaiting()
+  // Read once, not once per address: the menu is the same for everyone on the list. A
+  // flavor with nothing left is not news, so it is left out.
+  const menu = (await getMenu(week.id)).filter((item) => item.remaining !== 0)
   const told: string[] = []
   for (const row of waiting) {
     // One address at a time, so a refused one cannot cost the rest their email.
-    if (await sendOpenNotice(row.email, week, row.token)) told.push(row.id)
+    if (await sendOpenNotice(row.email, week, row.token, menu)) told.push(row.id)
   }
   await markNotified(told)
   return { told: told.length, waiting: waiting.length }
