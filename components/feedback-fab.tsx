@@ -10,6 +10,9 @@ export function FeedbackFab() {
   const [open, setOpen] = useState(false);
   const { count } = useCart();
   const pathname = usePathname();
+  // Nobody wants to be asked for feedback in the middle of paying. On /feedback the
+  // button would open the form that is already on the page.
+  const invited = pathname === "/" || pathname === "/account" || pathname.startsWith("/order");
   // The cart tray sits in this corner, and only on the menu. Rise above it rather than
   // behind it: a button nobody can press is worse than one slightly out of place.
   const trayUp = count > 0 && pathname === "/";
@@ -37,6 +40,8 @@ export function FeedbackFab() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  if (!invited) return null;
 
   return (
     <div className={`fixed inset-x-6 bottom-6 z-40 flex flex-col items-end gap-3 transition-transform ease-out sm:inset-x-auto sm:right-6 sm:bottom-6 sm:translate-y-0 ${

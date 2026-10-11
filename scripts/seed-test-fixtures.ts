@@ -29,6 +29,15 @@ async function main() {
   const [flavor] = await sql`select id, price_cents from flavors order by created_at limit 1`
   if (!slot || !flavor) throw new Error('the week has no slot or the menu has no flavor; did week:open run?')
 
+  // One slot booked solid, so the picker renders a full chip. Nothing else in the fixtures
+  // books a slot, so that state had never been drawn.
+  const [filled] = await sql`
+    update pickup_slots set booked_count = capacity
+     where id = (select id from pickup_slots where week_id = ${week.id} order by starts_at desc limit 1)
+     returning id
+  `
+  if (!filled) throw new Error('the week has no slot to fill; did week:open run?')
+
   const id = randomUUID()
   await sql`delete from orders where order_code = ${ORDER_CODE}`
   await sql`
@@ -41,6 +50,6 @@ async function main() {
   `
 
   await sql.end()
-  console.log(`${SOLD_OUT_FLAVOR} is sold out, and order ${ORDER_CODE} is paid.`)
+  console.log(`${SOLD_OUT_FLAVOR} is sold out, one slot is full, and order ${ORDER_CODE} is paid.`)
 }
 main()

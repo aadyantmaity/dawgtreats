@@ -126,6 +126,9 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
   );
 }
 
+const columns = (count: number) =>
+  count >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
+
 export default async function MenuPage() {
   const week = await getOrderableWeek();
   const menu = await getMenu(week?.id ?? null);
@@ -137,7 +140,9 @@ export default async function MenuPage() {
   const soldOut = menu.filter((flavor) => flavor.remaining === 0);
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 animate-fade px-4 sm:px-6 py-12">
+    <main
+      className={`mx-auto w-full max-w-4xl flex-1 animate-fade px-4 sm:px-6 py-12 ${forSale.length >= 3 ? "lg:max-w-6xl" : ""}`}
+    >
       <TrackView name="menu_viewed" />
       <h1 className="text-4xl font-semibold">
         {week ? "This week's bake" : "The menu"}
@@ -173,7 +178,7 @@ export default async function MenuPage() {
       ) : (
         <>
           {forSale.length > 0 && (
-            <div className="mt-10 grid items-start gap-5 sm:grid-cols-2">
+            <div className={`mt-10 grid items-start gap-5 ${columns(forSale.length)}`}>
               {forSale.map((flavor) => (
                 <FlavorCard key={flavor.id} flavor={flavor} />
               ))}
@@ -191,7 +196,7 @@ export default async function MenuPage() {
                 Sold out this week
                 <span aria-hidden className="flex-1 border-t border-default" />
               </h2>
-              <div className="mt-5 grid items-start gap-5 sm:grid-cols-2">
+              <div className={`mt-5 grid items-start gap-5 ${columns(soldOut.length)}`}>
                 {soldOut.map((flavor) => (
                   <SoldOutCard key={flavor.id} flavor={flavor} />
                 ))}

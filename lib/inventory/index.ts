@@ -7,7 +7,7 @@ import { batchItems, flavors, orders, pickupSlots, weeks } from '@/lib/db/schema
 import { DomainError } from '@/lib/errors'
 import { addDays, ptToUtc } from '@/lib/weeks'
 
-const SLOT_MINUTES = 30
+export const SLOT_MINUTES = 30
 
 export type InventoryRow = {
   flavorId: string

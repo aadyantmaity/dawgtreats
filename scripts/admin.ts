@@ -390,11 +390,16 @@ const commands: Record<string, () => Promise<void>> = {
       const flavor = await findFlavor(item.name)
       await setBatchQuantities(week.id, [{ flavorId: flavor.id, quantity: item.quantity }])
     }
-    for (const time of ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30']) {
-      try {
-        await addSlot(week.id, 'sat', time)
-      } catch (error) {
-        if (!(error instanceof DomainError)) throw error
+    for (const [day, times] of [
+      ['sat', ['12:00', '12:30', '13:00', '13:30']],
+      ['sun', ['14:00', '14:30']],
+    ] as const) {
+      for (const time of times) {
+        try {
+          await addSlot(week.id, day, time)
+        } catch (error) {
+          if (!(error instanceof DomainError)) throw error
+        }
       }
     }
     await showWeek(week)

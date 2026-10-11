@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { CartNotices, reconcile, useCart } from "@/components/cart";
+import { CartNotices, EmptyCart, reconcile, useCart } from "@/components/cart";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { track } from "@/lib/analytics/track";
@@ -90,32 +90,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
     return (
       <>
         <CartNotices className="mt-6" />
-        <div className="mt-8 flex flex-col items-center rounded-card border border-dashed border-default px-5 py-10 text-center">
-          <span className="flex size-12 items-center justify-center rounded-pill bg-disabled text-secondary">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              className="size-6"
-            >
-              <path d="M6 8h12l-1 11.5a1.5 1.5 0 0 1-1.5 1.4h-9A1.5 1.5 0 0 1 5 19.5L4 8Z" />
-              <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
-            </svg>
-          </span>
-          <p className="mt-3 text-lg font-semibold">Nothing in here yet</p>
-          <p className="mt-1 text-secondary">
-            {ordersOpen
-              ? `${buyable} ${buyable === 1 ? "flavor is" : "flavors are"} out of the oven this week.`
-              : "Orders are closed right now. New batch most weeks."}
-          </p>
-          <Link href="/" className={`${buttonClass({ size: "md" })} mt-5`}>
-            {ordersOpen ? "See this week's bake" : "Back to the menu"}
-          </Link>
-        </div>
+        <EmptyCart buyable={buyable} ordersOpen={ordersOpen} />
       </>
     );
   }

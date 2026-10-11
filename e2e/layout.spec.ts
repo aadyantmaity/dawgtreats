@@ -1,11 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// Routes that must never scroll sideways or let anything hang off the right edge,
-// whatever width the phone is. /nope stands in for any 404, and /order/TEST is the paid
-// order that scripts/seed-test-fixtures.ts writes.
+// Routes that must never scroll sideways or let anything hang off the right edge, at any
+// width. /nope stands in for any 404, and /order/TEST is the paid order that
+// scripts/seed-test-fixtures.ts writes.
 const ROUTES = ["/", "/cart", "/checkout", "/order/lookup", "/order/TEST", "/feedback", "/nope"];
-const WIDTHS = [320, 390, 430];
-const MIN_TAP_TARGET = 44;
+const WIDTHS = [320, 390, 430, 1280];
+const MIN_TOUCH_TARGET = 44;
+const MIN_POINTER_TARGET = 24;
+const SM_BREAKPOINT = 640;
+const minTargetAt = (width: number) =>
+  width < SM_BREAKPOINT ? MIN_TOUCH_TARGET : MIN_POINTER_TARGET;
 const CART_STORAGE_KEY = "dawgtreats.cart";
 
 let seedFlavorId: string;
@@ -100,13 +104,16 @@ function findTinyTapTargets(minHeight: number) {
   return offenders;
 }
 
-async function assertLayoutInvariants(page: Page, label: string, width: number) {
-  // Every route here is dynamic and answers with its loading skeleton first. Measured
-  // then, each real control reports no box and the check passes on a page nobody sees.
+// Every route here is dynamic and answers with its loading skeleton first, and the
+// display font changes every text metric when it swaps in. Measured before either, a
+// real control reports no box and is taken for something that is not there.
+async function settled(page: Page) {
   await expect(page.locator(".shimmer")).toHaveCount(0);
-  // The display font changes every text metric on the page when it swaps in. Measured
-  // before that, a control can report no box at all and be taken for something hidden.
   await page.evaluate(() => document.fonts.ready);
+}
+
+async function assertLayoutInvariants(page: Page, label: string, width: number) {
+  await settled(page);
 
   const { scrollWidth, clientWidth } = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -138,16 +145,18 @@ async function assertLayoutInvariants(page: Page, label: string, width: number) 
     `${label} at ${width}px: the cart link's right edge is off-screen (right=${cartBox.x + cartBox.width}, viewport=${width})`,
   ).toBeLessThanOrEqual(width);
 
-  const tiny = await page.evaluate(findTinyTapTargets, MIN_TAP_TARGET);
+  const minTarget = minTargetAt(width);
+  const tiny = await page.evaluate(findTinyTapTargets, minTarget);
   expect(
     tiny,
-    `${label} at ${width}px: ${tiny.length} tap target(s) are under ${MIN_TAP_TARGET}px tall:\n${tiny.join("\n")}`,
+    `${label} at ${width}px: ${tiny.length} tap target(s) are under ${minTarget}px tall:\n${tiny.join("\n")}`,
   ).toEqual([]);
 }
 
 test("the menu separates what is sold out from what is for sale", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto("/");
+  await settled(page);
 
   const heading = page.getByRole("heading", { name: "Sold out this week" });
   await expect(heading, "the sold-out heading is missing; is the fixture still sold out?").toBeVisible();
@@ -165,6 +174,102 @@ test("the menu separates what is sold out from what is for sale", async ({ page 
   // The card says so in words, so the dashed border and the grey are not carrying it alone.
   await expect(page.getByText("Sold out", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "I wanted this" })).toBeVisible();
+});
+
+test("the checkout chooses no pickup time for you", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.addInitScript(
+    ([key, flavorId]) => {
+      window.localStorage.setItem(key, JSON.stringify([{ flavorId, quantity: 2 }]));
+    },
+    [CART_STORAGE_KEY, seedFlavorId] as const,
+  );
+  await page.goto("/checkout");
+  await settled(page);
+
+  // Whoever does not notice a preselected time is booked for whenever it happened to be.
+  await expect(page.getByRole("radio", { checked: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: /^Pay for/ }).click();
+  await expect(page.getByText("Choose a pickup time")).toBeVisible();
+  await expect(page, "an order with no pickup time left the checkout").toHaveURL(/\/checkout$/);
+
+  await page.locator("label:has(input[name='pickup-slot'])").first().click();
+  await expect(page.getByText("Choose a pickup time")).toHaveCount(0);
+
+  // A full slot is listed rather than hidden, so the weekend has no holes in it, but it
+  // cannot be chosen. scripts/seed-test-fixtures.ts books the last one solid.
+  const full = page.getByRole("radio", { disabled: true });
+  await expect(full, "no slot is full; did the fixture book one?").toHaveCount(1);
+  await expect(full).not.toBeChecked();
+});
+
+test("every pickup chip is the same height at the narrowest phone", async ({ page }) => {
+  // 320px leaves about 60px inside a chip, and "12:00 PM" measures 58.7px. A single
+  // wrapped time makes its whole row taller than the rest of the grid.
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.addInitScript(
+    ([key, flavorId]) => {
+      window.localStorage.setItem(key, JSON.stringify([{ flavorId, quantity: 1 }]));
+    },
+    [CART_STORAGE_KEY, seedFlavorId] as const,
+  );
+  await page.goto("/checkout");
+  await settled(page);
+
+  const heights = await page
+    .locator("label:has(input[name='pickup-slot'])")
+    .evaluateAll((labels) => labels.map((label) => Math.round(label.getBoundingClientRect().height)));
+  expect(heights.length).toBeGreaterThan(1);
+  expect(new Set(heights), `the pickup chips are ${[...new Set(heights)].join(" and ")}px tall`).toHaveProperty(
+    "size",
+    1,
+  );
+});
+
+test("the floating Pay bar stays flat until the checkout is ready", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.addInitScript(
+    ([key, flavorId]) => {
+      window.localStorage.setItem(key, JSON.stringify([{ flavorId, quantity: 2 }]));
+    },
+    [CART_STORAGE_KEY, seedFlavorId] as const,
+  );
+  await page.goto("/checkout");
+  await settled(page);
+
+  // The bar's own button, not the one at the end of the form.
+  const bar = page.getByRole("button", { name: "Pay", exact: true });
+  await expect(bar).toBeDisabled();
+
+  await page.locator("label:has(input[name='pickup-slot'])").first().click();
+  await expect(bar, "a pickup time alone is not a complete form").toBeDisabled();
+
+  await page.getByLabel("Name").fill("Alex Rivera");
+  await page.getByLabel("Email").fill("alex@example.com");
+  await page.getByLabel("Phone").fill("4255550142");
+  await expect(bar).toBeEnabled();
+});
+
+// Where the floating feedback button belongs, and the far longer list of places it does
+// not. /feedback is the same form as a page, so the button there would open itself.
+const FEEDBACK_ON = ["/", "/account", "/order/TEST", "/order/lookup"];
+const FEEDBACK_OFF = ["/cart", "/checkout", "/feedback", "/nope"];
+
+test("the feedback button only shows where feedback is worth asking for", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  const button = page.getByRole("button", { name: /feedback/i });
+
+  for (const route of FEEDBACK_ON) {
+    await page.goto(route);
+    await settled(page);
+    await expect(button, `${route} should offer the feedback button`).toBeVisible();
+  }
+  for (const route of FEEDBACK_OFF) {
+    await page.goto(route);
+    await settled(page);
+    await expect(button, `${route} should not offer the feedback button`).toHaveCount(0);
+  }
 });
 
 for (const width of WIDTHS) {
