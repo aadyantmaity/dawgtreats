@@ -7,11 +7,15 @@ import { notifyRequests } from '@/lib/db/schema'
 
 // Asking twice is not an error, and a second row would mean a second email. Someone who
 // was already told and asks again is waiting for the next batch, so the mark is cleared.
-export async function addNotifyRequest(email: string): Promise<void> {
+// The answer says which happened, because "you are on the list" reads as a refusal to
+// someone who knows they already asked.
+export async function addNotifyRequest(email: string): Promise<'added' | 'already-waiting'> {
+  const waiting = await isWaiting(email)
   await db
     .insert(notifyRequests)
     .values({ email })
     .onConflictDoUpdate({ target: notifyRequests.email, set: { notifiedAt: null } })
+  return waiting ? 'already-waiting' : 'added'
 }
 
 export async function isWaiting(email: string): Promise<boolean> {

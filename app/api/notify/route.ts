@@ -29,8 +29,11 @@ export async function POST(request: Request) {
     // somebody else's address by editing the request.
     const account = await currentAccount()
     const email = account ? account.email : (await parseBody(request, notifySchema)).email
-    await addNotifyRequest(email)
-    return Response.json({ ok: true }, { status: 201 })
+    const result = await addNotifyRequest(email)
+    return Response.json(
+      { ok: true, already: result === 'already-waiting' },
+      { status: result === 'added' ? 201 : 200 },
+    )
   } catch (error) {
     return errorResponse(error, 'POST /api/notify')
   }

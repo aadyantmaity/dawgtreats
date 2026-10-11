@@ -21,6 +21,7 @@ export function NotifyForm({
   const [attempt, setAttempt] = useState(0);
   const [onList, setOnList] = useState(alreadyOnList);
   const [justJoined, setJustJoined] = useState(false);
+  const [wasAlready, setWasAlready] = useState(false);
 
   // The count is what makes the field shake, so a refusal that never increments it
   // passes in silence.
@@ -38,15 +39,17 @@ export function NotifyForm({
         headers: { "Content-Type": "application/json" },
         body: method === "POST" ? JSON.stringify(body) : undefined,
       });
+      const parsed: unknown = await response.json().catch(() => null);
+      const field = (key: string) =>
+        parsed && typeof parsed === "object" && key in parsed
+          ? (parsed as Record<string, unknown>)[key]
+          : null;
       if (!response.ok) {
-        const parsed: unknown = await response.json().catch(() => null);
-        const message =
-          parsed && typeof parsed === "object" && "error" in parsed
-            ? String(parsed.error)
-            : null;
-        refuse(message ?? "That didn't send. Try again in a moment.");
+        const message = field("error");
+        refuse(message ? String(message) : "That didn't send. Try again in a moment.");
         return false;
       }
+      setWasAlready(field("already") === true);
       return true;
     } catch {
       refuse("That didn't send. Check your connection and try again.");
@@ -72,6 +75,7 @@ export function NotifyForm({
     if (await ask("DELETE", null)) {
       setOnList(false);
       setJustJoined(false);
+      setWasAlready(false);
     }
   }
 
@@ -81,7 +85,9 @@ export function NotifyForm({
     return (
       <div className="mt-6 flex flex-col items-start gap-2">
         <p className={justJoined ? "animate-rise text-secondary" : "text-secondary"} role="status">
-          You&apos;re on the list. I&apos;ll email you when the next batch opens.
+          {wasAlready
+            ? "You're already on the list. I'll email you when the next batch opens."
+            : "You're on the list. I'll email you when the next batch opens."}
         </p>
         {signedInAs && (
           <button
