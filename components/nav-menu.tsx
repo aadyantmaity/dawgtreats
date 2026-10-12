@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
-import type { NavTab } from "@/components/nav-tabs";
+import { CartLink } from "@/components/cart";
+import { NavIcon, type NavTab } from "@/components/nav-tabs";
 
-// The phone's whole navigation. The bar keeps the cart, because the one thing someone is
-// part way through must never be behind a menu they have to open first.
+// The phone's whole navigation. The bar keeps its own cart as well, because the one thing
+// someone is part way through must never be behind a menu they have to open first.
 export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -65,10 +66,11 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
       key={tab.href}
       href={tab.href}
       aria-current={here(tab.href) ? "page" : undefined}
-      className={`flex h-control items-center rounded-pill px-4 text-base transition-colors ease-spring ${
+      className={`flex h-control items-center gap-3 rounded-pill px-4 text-base transition-colors ease-spring ${
         here(tab.href) ? "bg-action text-on-action" : "text-secondary hover:bg-subtle hover:text-primary"
       }`}
     >
+      <NavIcon name={tab.icon} />
       {tab.label}
     </Link>
   );
@@ -111,6 +113,7 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
         }`}
       >
         {tabs.map(link)}
+        <CartLink variant="drawer" />
         {adminTabs.length > 0 && (
           <>
             <p className="mt-2 border-t border-default px-4 pt-3 pb-1 text-xs tracking-wider text-tertiary uppercase">

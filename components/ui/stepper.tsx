@@ -1,5 +1,6 @@
 "use client";
 
+import { Minus, Plus } from "lucide-react";
 import { useRef, type KeyboardEvent } from "react";
 
 import { bump } from "@/lib/motion";
@@ -23,11 +24,16 @@ const buttonClass =
 export function Stepper({ label, value, onChange, min = 0, max, invalid = false, describedBy }: StepperProps) {
   const current = Number(value || String(min));
   const inputRef = useRef<HTMLInputElement>(null);
-  const digitsOnly = (raw: string) =>
-    raw
+  // Typing has to obey the same ceiling the buttons do. Truncating the digits is not a
+  // clamp: with a max of 24 it still lets 99 through, and the cart then cannot be paid for.
+  const digitsOnly = (raw: string) => {
+    const digits = raw
       .replace(/\D/g, "")
       .replace(/^0+(?=\d)/, "")
       .slice(0, String(max).length);
+    if (digits === "") return "";
+    return String(Math.min(max, Math.max(min, Number(digits))));
+  };
 
   const step = (delta: number) => {
     const next = String(Math.min(max, Math.max(min, current + delta)));
@@ -51,7 +57,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
         onClick={() => step(-1)}
         className={buttonClass}
       >
-        −
+        <Minus aria-hidden className="size-5" />
       </button>
       <input
         ref={inputRef}
@@ -77,7 +83,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
         onClick={() => step(1)}
         className={buttonClass}
       >
-        +
+        <Plus aria-hidden className="size-5" />
       </button>
     </div>
   );

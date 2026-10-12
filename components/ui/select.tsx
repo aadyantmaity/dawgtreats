@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
 export type SelectOption<T extends string> = { value: T; label: string };
@@ -149,16 +150,10 @@ export function Select<T extends string>({
         >
           <span className="truncate">{options[selectedIndex]?.label}</span>
         </button>
-        <svg
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.5}
+        <ChevronDown
           aria-hidden
           className={`pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-secondary transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        />
 
         <ul
           ref={listRef}
@@ -182,11 +177,7 @@ export function Select<T extends string>({
                 className={`flex cursor-pointer items-center justify-between gap-6 px-4 py-2 text-base ${index === activeIndex ? "bg-hover" : ""} ${selected ? "font-medium text-primary" : "text-primary/80"}`}
               >
                 {option.label}
-                {selected && (
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden className="size-4">
-                    <path d="m3.5 8.5 3 3 6-7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
+                {selected && <Check aria-hidden className="size-4" />}
               </li>
             );
           })}

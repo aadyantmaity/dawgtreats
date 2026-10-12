@@ -31,15 +31,15 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const admin = await viewerIsAdmin();
   const tabs: NavTab[] = [
-    { href: "/", label: "Home" },
-    { href: "/order/lookup", label: "Orders" },
-    { href: "/feedback", label: "Feedback" },
-    { href: "/account", label: "Account" },
+    { href: "/", label: "Home", icon: "home" },
+    { href: "/order/lookup", label: "Orders", icon: "orders" },
+    { href: "/feedback", label: "Feedback", icon: "feedback" },
+    { href: "/account", label: "Account", icon: "account" },
   ];
   const adminTabs: NavTab[] = admin
     ? [
-        { href: "/pickup", label: "Pickup" },
-        { href: "/stats", label: "Stats" },
+        { href: "/pickup", label: "Pickup", icon: "pickup" },
+        { href: "/stats", label: "Stats", icon: "stats" },
       ]
     : [];
   return (
@@ -70,11 +70,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {/* The cart sits in the bar at every width: a part-finished order must never
                 be behind a menu someone has to open first. */}
             <nav className="flex min-w-0 items-center gap-1 sm:gap-3">
+              {/* The cart rides in the tab row, so the pill travels to it like any tab. */}
               <div className="hidden min-w-0 sm:block">
-                <NavTabs tabs={[...tabs, ...adminTabs]} />
+                <NavTabs tabs={[...tabs, ...adminTabs]}>
+                  {/* Four of these are places and the last one is a basket. The rule says
+                      so, and the pill still travels across it. */}
+                  <span aria-hidden className="nav-rule h-5 w-0 shrink-0 border-l" />
+                  <CartLink variant="tab" />
+                </NavTabs>
               </div>
               <NavMenu tabs={tabs} adminTabs={adminTabs} />
-              <CartLink />
+              {/* A phone has no tab row to join. */}
+              <div className="sm:hidden">
+                <CartLink />
+              </div>
             </nav>
             </div>
             </div>
