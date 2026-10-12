@@ -1,6 +1,6 @@
 "use client";
 
-import { IconArrowBackUp, IconCheck, IconPackageExport, IconPhone, IconShoppingBag } from "@tabler/icons-react";
+import { IconArrowBackUp, IconCheck, IconPackageExport, IconShoppingBag } from "@tabler/icons-react";
 import { useState, useTransition } from "react";
 
 import { pickedUpAction, readyAction, undoAction } from "@/app/pickup/actions";
@@ -38,31 +38,30 @@ export function OrderCard({ order }: { order: Order }) {
 
   return (
     <li
-      className={`flex flex-col gap-3 p-5 transition-opacity sm:flex-row sm:items-center sm:gap-5 ${
+      className={`flex flex-col gap-3 p-4 transition-opacity sm:flex-row sm:items-center sm:gap-5 ${
         order.status === "picked_up" ? "opacity-60" : ""
       }`}
     >
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-semibold tabular-nums">{order.orderCode}</span>
+          <span className="font-medium">{order.name}</span>
           <Badge tone={tone[order.status]} className="gap-1">
             <StatusIcon className="size-3" aria-hidden />
             {label[order.status]}
           </Badge>
         </div>
-        <p className="mt-1 font-medium">{order.name}</p>
-        <p className="text-sm text-secondary">
+        <p className="mt-1 text-sm text-secondary">
           {order.lines.map((line) => `${line.quantity} × ${line.name}`).join(", ")}
+          {order.phone && (
+            <>
+              {" · "}
+              <a href={`tel:${order.phone}`} className="whitespace-nowrap underline">
+                {formatPhone(order.phone)}
+              </a>
+            </>
+          )}
         </p>
-        {order.phone && (
-          <a
-            href={`tel:${order.phone}`}
-            className="inline-flex items-center gap-1 text-sm text-secondary"
-          >
-            <IconPhone className="size-4" aria-hidden />
-            <span className="underline">{formatPhone(order.phone)}</span>
-          </a>
-        )}
       </div>
 
       <div className="flex shrink-0 flex-wrap gap-2">

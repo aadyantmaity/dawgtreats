@@ -301,6 +301,21 @@
     color: var(--border-color-default);
   }
 
+  /* The whole row is the control, so the browser's own marker is a second one. */
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Tailwind's group-open variant compiles to nothing here, and a chevron that never
+     turns reads as a decoration rather than as the control it is. */
+  details[open] > summary .slot-chevron {
+    transform: rotate(90deg);
+  }
+
   /* A word with no descenders, like Home or Cart, sits high in its own line box, so an
      icon centred beside it reads low. Measured across 100/125/150/200%: a quarter of a
      pixel up takes the worst case from 1.05px to 0.28px. */
