@@ -5,6 +5,7 @@ import { FunnelBar } from "@/app/stats/funnel-bar";
 import { Card } from "@/components/ui/card";
 import { COUNTING_SINCE, funnel } from "@/lib/analytics";
 import { currentAdmin } from "@/lib/auth";
+import { listFeedback } from "@/lib/feedback";
 import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ const DEVICE_WORDS: Record<string, string> = {
   unknown: "Counted before this was recorded",
 };
 
+const STARS = [1, 2, 3, 4, 5];
+
 const ORDER_WORDS: Record<string, string> = {
   paid: "Paid",
   pending: "Started paying, not finished",
@@ -24,10 +27,25 @@ const ORDER_WORDS: Record<string, string> = {
   picked_up: "Picked up",
 };
 
+function Stars({ rating }: { rating: number }) {
+  return (
+    <span aria-label={`${rating} out of 5`} className="text-base leading-none">
+      {STARS.map((star) => (
+        <span key={star} aria-hidden className={star <= rating ? "text-rating" : "text-tertiary"}>
+          ★
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default async function StatsPage() {
   if (!(await currentAdmin())) notFound();
 
   const { steps, byFlavor, byWanted, byDevice, orders } = await funnel();
+  const said = await listFeedback();
+  const rated = said.filter((note) => note.rating !== null);
+  const average = rated.reduce((sum, note) => sum + (note.rating ?? 0), 0) / (rated.length || 1);
   const top = steps[0].people;
   const bought = orders
     .filter((row) => row.status !== "pending" && row.status !== "expired")
@@ -123,6 +141,42 @@ export default async function StatsPage() {
               </li>
             ))}
           </ul>
+        )}
+      </Card>
+
+      <Card title="What people said" className="mt-6">
+        {said.length === 0 ? (
+          <p className="text-secondary">Nobody has written yet.</p>
+        ) : (
+          <>
+            {rated.length > 0 && (
+              <p className="mb-3 text-sm text-secondary">
+                <span className="tabular-nums">{average.toFixed(1)}</span> average from{" "}
+                <span className="tabular-nums">{rated.length}</span>
+              </p>
+            )}
+            <ul className="flex flex-col gap-4">
+              {said.map((note) => (
+                <li
+                  key={note.id}
+                  className="flex flex-col gap-1 border-b border-default pb-4 last:border-0 last:pb-0"
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    {note.rating === null ? (
+                      <span className="text-sm text-tertiary">No rating</span>
+                    ) : (
+                      <Stars rating={note.rating} />
+                    )}
+                    <span className="text-sm text-tertiary">
+                      {formatPt(note.createdAt, { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                  <p className="text-sm whitespace-pre-line">{note.message}</p>
+                  <p className="text-sm text-tertiary">{note.name ?? "anonymous"}</p>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </Card>
 
