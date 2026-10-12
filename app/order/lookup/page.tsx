@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { IconChevronDown } from "@tabler/icons-react";
 
 import { LookupForm } from "@/app/order/lookup/lookup-form";
 import { OrderList } from "@/components/order-list";
@@ -46,7 +46,7 @@ export default async function LookupPage() {
       <details className="group mt-10 border-t border-default pt-3">
         <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
           Ordered with a different email?
-          <ChevronDown
+          <IconChevronDown
             aria-hidden
             className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
           />

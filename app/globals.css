@@ -301,6 +301,13 @@
     color: var(--border-color-default);
   }
 
+  /* A word with no descenders, like Home or Cart, sits high in its own line box, so an
+     icon centred beside it reads low. Measured across 100/125/150/200%: a quarter of a
+     pixel up takes the worst case from 1.05px to 0.28px. */
+  .nav-icon {
+    transform: translateY(-0.25px);
+  }
+
   /* The rule between the pages and the cart. It sits over the pill rather than under it,
      and turns the pill's own colour while the pill is across it. */
   .nav-rule {

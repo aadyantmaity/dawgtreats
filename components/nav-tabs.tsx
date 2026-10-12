@@ -1,6 +1,13 @@
 "use client";
 
-import { ChartColumn, House, MessageCircle, ReceiptText, Store, User } from "lucide-react";
+import {
+  IconBuildingStore,
+  IconChartBar,
+  IconHome,
+  IconMessageCircle,
+  IconReceipt,
+  IconUser,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -22,19 +29,19 @@ export type IconName = keyof typeof ICONS;
 
 // A tab names its icon rather than passing one in, so the server layout stays a list of links.
 const ICONS = {
-  home: House,
-  orders: ReceiptText,
-  feedback: MessageCircle,
-  account: User,
-  pickup: Store,
-  stats: ChartColumn,
+  home: IconHome,
+  orders: IconReceipt,
+  feedback: IconMessageCircle,
+  account: IconUser,
+  pickup: IconBuildingStore,
+  stats: IconChartBar,
 } as const;
 
 export function NavIcon({ name }: { name: IconName }) {
   const Icon = ICONS[name];
-  // A lucide glyph is drawn inside its box with about 2px of air, so even padding reads
+  // A Tabler glyph is drawn inside its box with about 2px of air, so even padding reads
   // as left-heavy against a word that starts at its own edge. This takes that air back.
-  return <Icon aria-hidden className="-ml-0.5 size-4 shrink-0" />;
+  return <Icon aria-hidden className="nav-icon -ml-0.5 size-4 shrink-0" />;
 }
 
 type Box = { left: number; width: number };

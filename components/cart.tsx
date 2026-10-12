@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, ShoppingBag, ShoppingCart } from "lucide-react";
+import { IconPlus, IconShoppingBag, IconShoppingCart } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -184,9 +184,9 @@ export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | 
     >
       {/* In the bar every other tab is a picture and a word, and the cart's word is the
           number. The drawer is a list of names, so there it says its own. */}
-      <ShoppingCart
+      <IconShoppingCart
         aria-hidden
-        className={asTab || inDrawer ? "size-4 shrink-0" : "size-5 shrink-0"}
+        className={asTab || inDrawer ? "nav-icon size-4 shrink-0" : "size-5 shrink-0"}
       />
       {inDrawer && "Cart"}
       {count > 0 && (
@@ -204,7 +204,7 @@ export function EmptyCart({ ordersOpen }: { ordersOpen: boolean }) {
   return (
     <div className="mt-8 flex flex-col items-center rounded-card border border-default bg-surface px-5 py-10 text-center">
       <span className="flex size-12 items-center justify-center rounded-pill bg-disabled text-secondary">
-        <ShoppingBag aria-hidden className="size-6" />
+        <IconShoppingBag aria-hidden className="size-6" />
       </span>
       <p className="mt-3 text-lg font-semibold">Nothing in here yet</p>
       {/* Open, the button below already says what to do. Shut is news, and it is the only
@@ -281,7 +281,7 @@ export function AddToCart({
             track("add_to_cart", name);
           }}
         >
-          <Plus aria-hidden className="size-4" />
+          <IconPlus aria-hidden className="size-4" />
           Add
         </Button>
         {note && <p className="text-sm text-secondary">{note}</p>}

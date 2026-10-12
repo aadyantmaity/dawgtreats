@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Message } from "@/components/ui/message";
 import { emailError } from "@/lib/validation";
-import { BellOff, BellRing, Check } from "lucide-react";
+import { IconBell, IconBellOff, IconCheck } from "@tabler/icons-react";
 
 // Shown only while ordering is shut: the one moment someone wants cookies and
 // cannot have them.
@@ -90,7 +90,7 @@ export function NotifyForm({
           className={`flex items-start gap-2 text-secondary ${justJoined ? "animate-rise" : ""}`}
           role="status"
         >
-          <Check aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <IconCheck aria-hidden className="mt-0.5 size-4 shrink-0" />
           <span>
           {wasAlready
             ? "You're already on the list. I'll email you when the next batch opens."
@@ -104,7 +104,7 @@ export function NotifyForm({
             disabled={pending}
             className="inline-flex items-center gap-2 py-2 text-sm text-secondary transition-colors ease-spring hover:text-primary disabled:text-disabled"
           >
-            <BellOff aria-hidden className="size-4 shrink-0" />
+            <IconBellOff aria-hidden className="size-4 shrink-0" />
             <span className="underline">
               {pending ? "Taking you off…" : "Take me off the list"}
             </span>
@@ -123,7 +123,7 @@ export function NotifyForm({
     return (
       <form onSubmit={submit} className="mt-6 flex flex-col items-start gap-2">
         <Button type="submit" size="md" disabled={pending}>
-          <BellRing aria-hidden className="size-4" />
+          <IconBell aria-hidden className="size-4" />
           {pending ? "Adding you…" : "Email me when it opens"}
         </Button>
         {problem && (

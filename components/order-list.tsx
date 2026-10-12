@@ -1,4 +1,4 @@
-import { Check, CircleSlash, Hourglass, PackageCheck, ShoppingBag } from "lucide-react";
+import { IconCheck, IconCircleOff, IconHourglass, IconPackageExport, IconShoppingBag } from "@tabler/icons-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -12,11 +12,11 @@ type AccountOrder = Awaited<ReturnType<typeof listOrdersForAccount>>[number];
 
 // Three of the five statuses share the success tone, so the icon is what tells them apart.
 const STATUS_ICON = {
-  pending: Hourglass,
-  paid: Check,
-  ready: ShoppingBag,
-  picked_up: PackageCheck,
-  expired: CircleSlash,
+  pending: IconHourglass,
+  paid: IconCheck,
+  ready: IconShoppingBag,
+  picked_up: IconPackageExport,
+  expired: IconCircleOff,
 } as const;
 
 export function OrderList({ orders }: { orders: AccountOrder[] }) {

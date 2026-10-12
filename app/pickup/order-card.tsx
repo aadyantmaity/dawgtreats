@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, PackageCheck, Phone, ShoppingBag, Undo2 } from "lucide-react";
+import { IconArrowBackUp, IconCheck, IconPackageExport, IconPhone, IconShoppingBag } from "@tabler/icons-react";
 import { useState, useTransition } from "react";
 
 import { pickedUpAction, readyAction, undoAction } from "@/app/pickup/actions";
@@ -21,7 +21,7 @@ type Order = {
 
 const tone = { paid: "neutral", ready: "warning", picked_up: "success" } as const;
 const label = { paid: "to bag", ready: "ready", picked_up: "picked up" } as const;
-const icon = { paid: ShoppingBag, ready: PackageCheck, picked_up: Check } as const;
+const icon = { paid: IconShoppingBag, ready: IconPackageExport, picked_up: IconCheck } as const;
 
 export function OrderCard({ order }: { order: Order }) {
   const StatusIcon = icon[order.status];
@@ -59,7 +59,7 @@ export function OrderCard({ order }: { order: Order }) {
             href={`tel:${order.phone}`}
             className="inline-flex items-center gap-1 text-sm text-secondary"
           >
-            <Phone className="size-4" aria-hidden />
+            <IconPhone className="size-4" aria-hidden />
             <span className="underline">{formatPhone(order.phone)}</span>
           </a>
         )}
@@ -72,7 +72,7 @@ export function OrderCard({ order }: { order: Order }) {
               {running === "ready" ? (
                 <Spinner className="size-4" />
               ) : (
-                <ShoppingBag className="size-4" aria-hidden />
+                <IconShoppingBag className="size-4" aria-hidden />
               )}
               Bagged
             </span>
@@ -84,7 +84,7 @@ export function OrderCard({ order }: { order: Order }) {
               {running === "pickedUp" ? (
                 <Spinner className="size-4" />
               ) : (
-                <Check className="size-4" aria-hidden />
+                <IconCheck className="size-4" aria-hidden />
               )}
               Picked up
             </span>
@@ -96,7 +96,7 @@ export function OrderCard({ order }: { order: Order }) {
               {running === "undo" ? (
                 <Spinner className="size-4" />
               ) : (
-                <Undo2 className="size-4" aria-hidden />
+                <IconArrowBackUp className="size-4" aria-hidden />
               )}
               Undo
             </span>

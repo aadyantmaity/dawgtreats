@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
@@ -32,7 +32,7 @@ function Allergens({ flavor }: { flavor: MenuItem }) {
     <details className="group border-t border-default pt-3">
       <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
         Allergens
-        <ChevronDown
+        <IconChevronDown
           aria-hidden
           className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
         />

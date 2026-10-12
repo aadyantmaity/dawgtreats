@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus } from "lucide-react";
+import { IconMinus, IconPlus } from "@tabler/icons-react";
 import { useRef, type KeyboardEvent } from "react";
 
 import { bump } from "@/lib/motion";
@@ -57,7 +57,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
         onClick={() => step(-1)}
         className={buttonClass}
       >
-        <Minus aria-hidden className="size-5" />
+        <IconMinus aria-hidden className="size-5" />
       </button>
       <input
         ref={inputRef}
@@ -83,7 +83,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
         onClick={() => step(1)}
         className={buttonClass}
       >
-        <Plus aria-hidden className="size-5" />
+        <IconPlus aria-hidden className="size-5" />
       </button>
     </div>
   );

@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/ui/message";
 import { Select } from "@/components/ui/select";
-import { Clock } from "lucide-react";
+import { IconClock } from "@tabler/icons-react";
 
 export type SlotChoice = { id: string; label: string; spotsLeft: number; current: boolean };
 
@@ -33,7 +33,7 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
         onClick={() => setOpen(true)}
         className="mt-3 inline-flex min-h-control items-center gap-2 text-sm text-secondary transition-colors ease-spring hover:text-primary"
       >
-        <Clock aria-hidden className="size-4 shrink-0" />
+        <IconClock aria-hidden className="size-4 shrink-0" />
         <span className="underline">Change pickup time</span>
       </button>
     );

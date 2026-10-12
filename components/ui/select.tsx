@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { IconCheck, IconChevronDown } from "@tabler/icons-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
 export type SelectOption<T extends string> = { value: T; label: string };
@@ -150,7 +150,7 @@ export function Select<T extends string>({
         >
           <span className="truncate">{options[selectedIndex]?.label}</span>
         </button>
-        <ChevronDown
+        <IconChevronDown
           aria-hidden
           className={`pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-secondary transition-transform ${open ? "rotate-180" : ""}`}
         />
@@ -177,7 +177,7 @@ export function Select<T extends string>({
                 className={`flex cursor-pointer items-center justify-between gap-6 px-4 py-2 text-base ${index === activeIndex ? "bg-hover" : ""} ${selected ? "font-medium text-primary" : "text-primary/80"}`}
               >
                 {option.label}
-                {selected && <Check aria-hidden className="size-4" />}
+                {selected && <IconCheck aria-hidden className="size-4" />}
               </li>
             );
           })}

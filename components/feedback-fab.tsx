@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, X } from "lucide-react";
+import { IconMessageCircle, IconX } from "@tabler/icons-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -81,9 +81,9 @@ export function FeedbackFab() {
         {/* The word arrives beside the icon on a wider screen, never instead of it: every
             other control in the chrome is a picture and a word. */}
         {open ? (
-          <X aria-hidden className="size-6 sm:size-4" />
+          <IconX aria-hidden className="size-6 sm:size-4" />
         ) : (
-          <MessageCircle aria-hidden className="size-6 sm:size-4" />
+          <IconMessageCircle aria-hidden className="size-6 sm:size-4" />
         )}
         <span className="hidden sm:inline">{open ? "Close" : "Feedback"}</span>
       </button>

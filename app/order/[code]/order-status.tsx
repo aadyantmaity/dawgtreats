@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Timer } from "lucide-react";
+import { IconCheck, IconClockPause } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -72,7 +72,7 @@ function Progress({ status }: { status: Status }) {
                     : "border-default bg-surface"
               }`}
             >
-              {done && <Check aria-hidden className="size-3" />}
+              {done && <IconCheck aria-hidden className="size-3" />}
             </span>
             {step}
           </li>
@@ -184,7 +184,7 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
       )}
       {status === "expired" && (
         <p className="mt-6 flex items-start gap-2 text-secondary">
-          <Timer aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <IconClockPause aria-hidden className="mt-0.5 size-4 shrink-0" />
           <span>The hold ran out. Those cookies are back on the menu.</span>
         </p>
       )}

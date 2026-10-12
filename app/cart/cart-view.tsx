@@ -15,7 +15,7 @@ import type { MenuItem } from "@/lib/inventory";
 import { bump } from "@/lib/motion";
 import { formatCents } from "@/lib/money";
 import { LIMITS, cartLimit } from "@/lib/validation";
-import { Clock } from "lucide-react";
+import { IconClock } from "@tabler/icons-react";
 
 type Row = MenuItem & { quantity: number };
 
@@ -162,7 +162,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
           href="/checkout"
           className={buttonClass({ size: "md" })}
         >
-          <Clock aria-hidden className="size-4" />
+          <IconClock aria-hidden className="size-4" />
           Pick a pickup time
         </Link>
       ) : (

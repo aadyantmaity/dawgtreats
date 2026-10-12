@@ -15,7 +15,7 @@ import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { LIMITS, MESSAGES, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
-import { CalendarX, Lock } from "lucide-react";
+import { IconCalendarX, IconLock } from "@tabler/icons-react";
 
 export type SlotChoice = {
   id: string;
@@ -353,7 +353,7 @@ export function CheckoutForm({
       <Card title="Pickup time">
         {open.length === 0 ? (
           <p className="flex items-start gap-2 text-secondary">
-            <CalendarX aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <IconCalendarX aria-hidden className="mt-0.5 size-4 shrink-0" />
             <span>Every pickup time is full. Try again later.</span>
           </p>
         ) : (
@@ -443,7 +443,7 @@ export function CheckoutForm({
           </span>
         ) : (
           <span className="inline-flex items-center gap-2">
-            <Lock aria-hidden className="size-4" />
+            <IconLock aria-hidden className="size-4" />
             Pay for {count} cookies
           </span>
         )}

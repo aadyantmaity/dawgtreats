@@ -1,9 +1,9 @@
-import { Check, CircleAlert } from "lucide-react";
+import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 const tones = {
-  error: { icon: CircleAlert, text: "text-error", role: "alert" },
-  success: { icon: Check, text: "text-success", role: "status" },
+  error: { icon: IconAlertCircle, text: "text-error", role: "alert" },
+  success: { icon: IconCheck, text: "text-success", role: "status" },
 };
 
 type MessageProps = {
