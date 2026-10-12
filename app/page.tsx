@@ -47,7 +47,7 @@ function Allergens({ flavor }: { flavor: MenuItem }) {
 
 function FlavorCard({ flavor }: { flavor: MenuItem }) {
   return (
-    <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-4">
+    <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-5">
       {/* A phone puts the photo beside the name. Full width, three cookies are five
           screenfuls, and the menu stops being a list you can read at a glance. */}
       <div className="flex items-center gap-4 sm:flex-col sm:items-stretch">
@@ -137,9 +137,9 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
   );
 }
 
-// Both grids take the same count, so the sold-out cards line up under the ones for sale.
-const columns = (count: number) =>
-  count >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
+// Two across, whatever the count. The column is 848px wide, so a third card takes each
+// one down to about 270px and the photo stops being the point of the card.
+const columns = "sm:grid-cols-2";
 
 export default async function MenuPage() {
   const week = await getOrderableWeek();
@@ -188,7 +188,7 @@ export default async function MenuPage() {
       ) : (
         <>
           {forSale.length > 0 && (
-            <div className={`mt-10 grid items-start gap-5 ${columns(forSale.length)}`}>
+            <div className={`mt-10 grid items-start gap-5 sm:gap-12 ${columns}`}>
               {forSale.map((flavor) => (
                 <FlavorCard key={flavor.id} flavor={flavor} />
               ))}
@@ -206,7 +206,7 @@ export default async function MenuPage() {
                 Sold out this week
                 <span aria-hidden className="flex-1 border-t border-default" />
               </h2>
-              <div className={`mt-5 grid items-start gap-5 ${columns(forSale.length)}`}>
+              <div className={`mt-5 grid items-start gap-5 sm:gap-12 ${columns}`}>
                 {soldOut.map((flavor) => (
                   <SoldOutCard key={flavor.id} flavor={flavor} />
                 ))}
