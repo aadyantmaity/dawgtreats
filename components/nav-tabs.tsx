@@ -32,7 +32,9 @@ const ICONS = {
 
 export function NavIcon({ name }: { name: IconName }) {
   const Icon = ICONS[name];
-  return <Icon aria-hidden className="size-4 shrink-0" />;
+  // A lucide glyph is drawn inside its box with about 2px of air, so even padding reads
+  // as left-heavy against a word that starts at its own edge. This takes that air back.
+  return <Icon aria-hidden className="-ml-0.5 size-4 shrink-0" />;
 }
 
 type Box = { left: number; width: number };
