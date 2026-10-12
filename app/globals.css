@@ -202,6 +202,13 @@
 
 /* In @layer base so a font-sans utility can still override it. */
 @layer base {
+  /* The room for a scrollbar is always there, whether the page needs one or not. A short
+     page and a long one then start at the same place, instead of everything jumping
+     sideways on the way between them. Both edges, so the centred column stays centred. */
+  html {
+    scrollbar-gutter: stable both-edges;
+  }
+
   body {
     background: var(--background-color-page);
     color: var(--text-color-primary);
