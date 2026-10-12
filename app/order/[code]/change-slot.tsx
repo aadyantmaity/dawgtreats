@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Message } from "@/components/ui/message";
 import { Select } from "@/components/ui/select";
+import { Clock } from "lucide-react";
 
 export type SlotChoice = { id: string; label: string; spotsLeft: number; current: boolean };
 
@@ -14,6 +16,9 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
   const router = useRouter();
   const current = choices.find((slot) => slot.current);
   const [open, setOpen] = useState(false);
+  // Empty when the order's own slot has already passed, so `current` is gone from the
+  // list. The picker then starts on nothing and the button below stays refused until
+  // a real time is chosen.
   const [picked, setPicked] = useState(current?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, startTransition] = useTransition();
@@ -26,9 +31,10 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-3 inline-flex min-h-control items-center text-sm text-secondary underline transition-colors ease-spring hover:text-primary"
+        className="mt-3 inline-flex min-h-control items-center gap-2 text-sm text-secondary transition-colors ease-spring hover:text-primary"
       >
-        Change pickup time
+        <Clock aria-hidden className="size-4 shrink-0" />
+        <span className="underline">Change pickup time</span>
       </button>
     );
   }
@@ -67,11 +73,11 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
         onChange={setPicked}
         options={choices.map((slot) => ({
           value: slot.id,
-          label: slot.current ? `${slot.label} · now` : `${slot.label} · ${slot.spotsLeft} spots`,
+          label: slot.current ? `${slot.label} · yours now` : `${slot.label} · ${slot.spotsLeft} ${slot.spotsLeft === 1 ? "spot" : "spots"}`,
         }))}
       />
       <div className="flex flex-wrap items-center gap-3">
-        <Button size="md" onClick={save} disabled={saving || picked === current?.id}>
+        <Button size="md" onClick={save} disabled={saving || !picked || picked === current?.id}>
           {saving ? "Moving…" : "Move my pickup"}
         </Button>
         <button
@@ -87,9 +93,9 @@ export function ChangeSlot({ orderCode, choices }: { orderCode: string; choices:
         </button>
       </div>
       {error && (
-        <p role="alert" className="animate-rise text-sm text-error">
+        <Message tone="error" className="animate-rise text-sm">
           {error}
-        </p>
+        </Message>
       )}
     </div>
   );

@@ -217,6 +217,12 @@ export async function getPublicOrder(orderCode: string): Promise<PublicOrder | n
 }
 
 // A Stripe retry of the same event does nothing: the second insert finds nothing new to write.
+// Handling failed, so the mark has to go: Stripe retries the same event id, and a mark
+// left behind would answer "already handled" and drop the payment on the floor.
+export async function forgetEvent(stripeEventId: string): Promise<void> {
+  await db.delete(stripeEvents).where(eq(stripeEvents.stripeEventId, stripeEventId))
+}
+
 export async function recordEvent(stripeEventId: string, type: string): Promise<boolean> {
   const written = await db
     .insert(stripeEvents)

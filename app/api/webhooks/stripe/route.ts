@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 
 import { alertStrandedPayment, announcePaidOrder } from '@/lib/email'
 import { errorResponse } from '@/lib/errors'
-import { markPaid, recordEvent, releaseOrder } from '@/lib/orders'
+import { forgetEvent, markPaid, recordEvent, releaseOrder } from '@/lib/orders'
 import { verifyWebhook } from '@/lib/payments'
 
 const SETTLED = new Set<Stripe.Event['type']>([
@@ -41,10 +41,24 @@ export async function POST(request: Request) {
   try {
     const event = verifyWebhook(body, request.headers.get('stripe-signature'))
 
+    // The mark goes down first so two deliveries of one event cannot both be handled, and
+    // comes back up if the handling fails, so Stripe's retry is not answered with silence.
     if (!(await recordEvent(event.id, event.type))) {
       return Response.json({ received: true, alreadyHandled: true })
     }
 
+    try {
+      return await handle(event)
+    } catch (error) {
+      await forgetEvent(event.id)
+      throw error
+    }
+  } catch (error) {
+    return errorResponse(error, 'POST /api/webhooks/stripe')
+  }
+}
+
+async function handle(event: Stripe.Event) {
     const ends =
       SETTLED.has(event.type) ||
       event.type === 'checkout.session.expired' ||
@@ -74,7 +88,4 @@ export async function POST(request: Request) {
 
     const acted = await releaseOrder(orderId)
     return Response.json({ received: true, acted })
-  } catch (error) {
-    return errorResponse(error, 'POST /api/webhooks/stripe')
-  }
 }

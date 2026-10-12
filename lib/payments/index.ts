@@ -9,9 +9,16 @@ const SESSION_MINUTES = 31
 
 export type CheckoutLine = { name: string; quantity: number; unitPriceCents: number }
 
+// A missing key is my problem, not the customer's: they get a sentence they can act on,
+// and the reason goes to the log where someone can fix it.
+const PAYMENT_UNAVAILABLE = 'Payment is down for a moment. Nothing was charged. Try again shortly.'
+
 function client(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY
-  if (!key) throw new DomainError('Card payment is not set up yet', 503)
+  if (!key) {
+    console.error('stripe_misconfigured', { missing: 'STRIPE_SECRET_KEY' })
+    throw new DomainError(PAYMENT_UNAVAILABLE, 503)
+  }
   return new Stripe(key)
 }
 
@@ -66,13 +73,19 @@ export async function createCheckoutSession(order: {
     cancel_url: `${origin}/order/${order.orderCode}`,
   })
 
-  if (!session.url) throw new DomainError('Stripe did not return a payment page', 502)
+  if (!session.url) {
+    console.error('stripe_session_without_url', { sessionId: session.id })
+    throw new DomainError(PAYMENT_UNAVAILABLE, 502)
+  }
   return { sessionId: session.id, url: session.url }
 }
 
 export function verifyWebhook(body: string, signature: string | null): Stripe.Event {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
-  if (!secret) throw new DomainError('Webhooks are not set up yet', 503)
+  if (!secret) {
+    console.error('stripe_misconfigured', { missing: 'STRIPE_WEBHOOK_SECRET' })
+    throw new DomainError(PAYMENT_UNAVAILABLE, 503)
+  }
   if (!signature) throw new DomainError('Missing Stripe signature', 400)
 
   try {

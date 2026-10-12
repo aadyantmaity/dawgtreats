@@ -7,19 +7,32 @@ import { Card } from "@/components/ui/card";
 import { formatCents } from "@/lib/money";
 import { getPublicOrder, listSlotsForOrder } from "@/lib/orders";
 import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
+import { cache } from "react";
 
 export const dynamic = "force-dynamic";
 
-// The code in the tab title, so several open orders stay tellable apart.
+// One read per request, shared by the title and the page. Without this the lookup runs
+// twice for every order page.
+const findOrder = cache((code: string) => getPublicOrder(code.toUpperCase()));
+
+// The code in the tab title, so several open orders stay tellable apart. The miss is
+// answered here rather than in the page: by the time the page runs, the response has
+// started and the status can no longer become a 404.
 export async function generateMetadata({ params }: PageProps<"/order/[code]">) {
   const { code } = await params;
-  return { title: `Order ${code.toUpperCase()}` };
+  const order = await findOrder(code);
+  if (!order) notFound();
+  // This page carries an order code and a pickup time, so it is for the person holding
+  // the link, not for a search engine. The code's own loading skeleton also means the
+  // response has already begun when a miss is found, so a wrong code answers 200 with
+  // "Nothing here" rather than a 404 — another reason not to let it be indexed.
+  return { title: `Order ${order.orderCode}`, robots: { index: false, follow: false } };
 }
 
 export default async function OrderPage({ params }: PageProps<"/order/[code]">) {
   const { code } = await params;
   // The public shape, so a name or phone number cannot reach this page by accident.
-  const order = await getPublicOrder(code.toUpperCase());
+  const order = await findOrder(code);
   if (!order) notFound();
 
   const choices: SlotChoice[] = (await listSlotsForOrder(order.orderCode)).map((slot) => ({

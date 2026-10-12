@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 
 import { unsubscribe } from "@/app/notify/unsubscribe/actions";
 import { Button } from "@/components/ui/button";
+import { Message } from "@/components/ui/message";
+import { BellOff, Check } from "lucide-react";
 
 // A press, not a page load: mail scanners open every link in a message, and an address
 // must not come off the list because a filter looked at it.
@@ -14,8 +16,9 @@ export function UnsubscribeButton({ token }: { token: string }) {
 
   if (done !== null) {
     return (
-      <p className="animate-rise mt-6 text-secondary" role="status">
-        Done. {done ? `${done} is off the list.` : "That address is off the list."}
+      <p className="animate-rise mt-6 flex items-start gap-2 text-secondary" role="status">
+        <Check aria-hidden className="mt-0.5 size-4 shrink-0" />
+        <span>Done. {done ? `${done} is off the list.` : "That address is off the list."}</span>
       </p>
     );
   }
@@ -34,12 +37,13 @@ export function UnsubscribeButton({ token }: { token: string }) {
           })
         }
       >
+        <BellOff aria-hidden className="size-4" />
         {pending ? "Taking you off…" : "Stop emailing me"}
       </Button>
       {error && (
-        <p className="animate-rise text-sm text-error" role="alert">
+        <Message tone="error" className="animate-rise text-sm">
           {error}
-        </p>
+        </Message>
       )}
     </div>
   );

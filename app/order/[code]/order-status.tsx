@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, Timer } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Spinner } from "@/components/ui/loading";
@@ -26,8 +28,12 @@ const REACHED: Record<Status, number | null> = {
   expired: null,
 };
 
-const EVERY_MS = 3_000;
-const GIVE_UP_AFTER = 40; // about two minutes
+// Stripe usually lands within seconds, so ask quickly at first and then back off. A flat
+// 3 seconds for two minutes is 40 requests, and the lookup limiter allows 20 a minute from
+// one address — so the page used to rate-limit itself and then tell a paying customer it
+// could not confirm them, which invites a second payment.
+const WAITS_MS = [3_000, 3_000, 3_000, 4_000, 5_000, 6_000, 8_000, 10_000, 12_000, 15_000];
+const GIVE_UP_MS = 120_000;
 
 function Progress({ status }: { status: Status }) {
   const reached = REACHED[status];
@@ -66,18 +72,7 @@ function Progress({ status }: { status: Status }) {
                     : "border-default bg-surface"
               }`}
             >
-              {done && (
-                <svg
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.2}
-                  aria-hidden
-                  className="size-3"
-                >
-                  <path d="m3.5 8.5 3 3 6-7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
+              {done && <Check aria-hidden className="size-3" />}
             </span>
             {step}
           </li>
@@ -89,6 +84,7 @@ function Progress({ status }: { status: Status }) {
 
 // Stripe's webhook lands a moment after the customer gets here, so the page waits for it.
 export function OrderStatus({ orderCode, initial }: { orderCode: string; initial: Status }) {
+  const router = useRouter();
   const [status, setStatus] = useState<Status>(initial);
   const [waiting, setWaiting] = useState(initial === "pending");
   // Payment landing is only news to someone who watched it land. An order that was already
@@ -99,32 +95,50 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
     if (status !== "pending") return;
 
     let tries = 0;
-    const timer = setInterval(async () => {
-      tries++;
-      if (tries > GIVE_UP_AFTER) {
-        clearInterval(timer);
+    let timer: ReturnType<typeof setTimeout>;
+    let stopped = false;
+    const startedAt = Date.now();
+
+    const ask = async () => {
+      if (stopped) return;
+      if (Date.now() - startedAt > GIVE_UP_MS) {
         setWaiting(false);
         return;
       }
       try {
         const response = await fetch(`/api/orders/${orderCode}`, { cache: "no-store" });
-        if (!response.ok) return;
-        const data: unknown = await response.json();
-        const next =
-          data && typeof data === "object" && "status" in data ? (data.status as Status) : null;
-        if (next && next !== "pending") {
-          setStatus(next);
-          setWaiting(false);
-          setLanded(true);
-          clearInterval(timer);
+        if (response.ok) {
+          const data: unknown = await response.json();
+          const next =
+            data && typeof data === "object" && "status" in data ? (data.status as Status) : null;
+          if (next && next !== "pending") {
+            setStatus(next);
+            setWaiting(false);
+            setLanded(true);
+            // The rest of this page was rendered while the order was still pending, so
+            // the pickup-time picker was not there. Paying is exactly when it should be.
+            router.refresh();
+            return;
+          }
         }
+        // 429 means this address asked too often, not that the order is unpaid. Waiting
+        // longer is the right answer, and saying "not confirmed" would be a lie.
+        if (response.status === 429) tries += 2;
       } catch {
-        // A dropped request is fine; the next tick tries again.
+        // A dropped request is fine; the next turn tries again.
       }
-    }, EVERY_MS);
+      const wait = WAITS_MS[Math.min(tries, WAITS_MS.length - 1)];
+      tries++;
+      timer = setTimeout(ask, wait);
+    };
 
-    return () => clearInterval(timer);
-  }, [status, orderCode]);
+    timer = setTimeout(ask, WAITS_MS[0]);
+
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [status, orderCode, router]);
 
   // A collected or expired order has nothing left to show at the table.
   const holdUp = status === "paid" || status === "ready";
@@ -169,8 +183,9 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
         </p>
       )}
       {status === "expired" && (
-        <p className="mt-6 text-secondary">
-          The hold ran out. Those cookies are back on the menu.
+        <p className="mt-6 flex items-start gap-2 text-secondary">
+          <Timer aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span>The hold ran out. Those cookies are back on the menu.</span>
         </p>
       )}
     </>
