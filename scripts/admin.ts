@@ -72,7 +72,9 @@ Feedback
 
 Waiting list
   notify                                   who asked to be told when a batch opens
-  notify:send                              tell them the open week is open, once each
+  notify:send [--again] [--note=]           tell them the open week is open, once each
+                                           --again also tells the people already told
+                                           --note= puts one line at the top of the email
 
 Test data
   seed                                     flavors, quantities and slots for the upcoming week
@@ -85,15 +87,25 @@ const positional = args.filter((a) => !a.startsWith('--') && a !== command)
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 
 // Opening a week and telling the list are the same moment, so both commands end here.
-async function tellTheWaitingList(week: { id: string; pickupWeekendStart: string; ordersCloseAt: Date }) {
-  const waiting = await listWaiting()
+async function tellTheWaitingList(
+  week: { id: string; pickupWeekendStart: string; ordersCloseAt: Date },
+  { again = false, note }: { again?: boolean; note?: string } = {},
+) {
+  // The CLI reads .env.local, where the site URL is the dev server. That address is dead on
+  // the phone of everyone on the list, so refuse the send instead of mailing a dead link.
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  if (!/^https:\/\//.test(site)) {
+    fail(`NEXT_PUBLIC_SITE_URL is "${site || 'unset'}", so every link in the email is dead. Run it again as: NEXT_PUBLIC_SITE_URL=https://dawgtreats.shop npm run admin -- ${command}`)
+  }
+
+  const waiting = await listWaiting(again)
   // Read once, not once per address: the menu is the same for everyone on the list. A
   // flavor with nothing left is not news, so it is left out.
   const menu = (await getMenu(week.id)).filter((item) => item.remaining !== 0)
   const told: string[] = []
   for (const row of waiting) {
     // One address at a time, so a refused one cannot cost the rest their email.
-    if (await sendOpenNotice(row.email, week, row.token, menu)) told.push(row.id)
+    if (await sendOpenNotice(row.email, week, row.token, menu, note)) told.push(row.id)
   }
   await markNotified(told)
   return { told: told.length, waiting: waiting.length }
@@ -249,7 +261,8 @@ const commands: Record<string, () => Promise<void>> = {
     const week = await getOrderableWeek()
     if (!week) fail('No week is open. Run: npm run admin -- week:open')
 
-    const { told, waiting } = await tellTheWaitingList(week)
+    const again = args.includes('--again')
+    const { told, waiting } = await tellTheWaitingList(week, { again, note: flag('note') })
     console.log(waiting === 0 ? 'Nobody is waiting.' : `Told ${told} of ${waiting}.`)
   },
 

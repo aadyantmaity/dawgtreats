@@ -41,11 +41,12 @@ export async function removeByToken(token: string): Promise<string | null> {
   return gone?.email ?? null
 }
 
-export async function listWaiting() {
+// `includeTold` is for a second send of the same news, when the first one went out wrong.
+export async function listWaiting(includeTold = false) {
   return db
     .select({ id: notifyRequests.id, email: notifyRequests.email, token: notifyRequests.token })
     .from(notifyRequests)
-    .where(isNull(notifyRequests.notifiedAt))
+    .where(includeTold ? undefined : isNull(notifyRequests.notifiedAt))
     .orderBy(asc(notifyRequests.createdAt))
 }
 

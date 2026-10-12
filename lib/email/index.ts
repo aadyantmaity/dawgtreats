@@ -410,12 +410,13 @@ function menuRow(item: OpenNoticeItem, last: boolean): string {
 </td></tr>`
 }
 
-function openNoticeHtml(week: NotifiableWeek, menu: OpenNoticeItem[], stop: string): string {
+function openNoticeHtml(week: NotifiableWeek, menu: OpenNoticeItem[], stop: string, note?: string): string {
   const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
   return shell({
     title: 'New menu this week',
-    preheader: `Orders close ${formatClosesAt(week.ordersCloseAt)}`,
+    preheader: note ?? `Orders close ${formatClosesAt(week.ordersCloseAt)}`,
     body: `
+${note ? `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;font-family:${SANS};font-size:15px;line-height:1.45;color:${QUIET_HEX};">${escapeHtml(note)}</td></tr>` : ''}
 <tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${menu.map((item, index) => menuRow(item, index === menu.length - 1)).join('')}</table>
 </td></tr>
@@ -432,9 +433,10 @@ ${footerLines([
   })
 }
 
-function openNoticeText(week: NotifiableWeek, menu: OpenNoticeItem[], stop: string): string {
+function openNoticeText(week: NotifiableWeek, menu: OpenNoticeItem[], stop: string, note?: string): string {
   const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
   return [
+    ...(note ? [note, ''] : []),
     ...menu.flatMap((item) => [`  ${item.name}`, `  ${formatCents(item.priceCents)}`, '']),
     `Order: ${site}`,
     '',
@@ -454,6 +456,7 @@ export async function sendOpenNotice(
   week: NotifiableWeek,
   token: string,
   menu: OpenNoticeItem[] = [],
+  note?: string,
 ): Promise<boolean> {
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
   const stop = `${site}/notify/unsubscribe?t=${encodeURIComponent(token)}`
@@ -461,14 +464,14 @@ export async function sendOpenNotice(
     const sent = await send({
       to: email,
       subject: 'New menu this week',
-      html: openNoticeHtml(week, menu, stop),
+      html: openNoticeHtml(week, menu, stop, note),
       // A mail client reads these to offer its own unsubscribe button, which stops
       // someone reporting the message as spam to get the same result.
       headers: {
         'List-Unsubscribe': `<${site}/api/notify/unsubscribe?t=${encodeURIComponent(token)}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
       },
-      text: openNoticeText(week, menu, stop),
+      text: openNoticeText(week, menu, stop, note),
     })
     console.log('open_notice_sent', { messageId: sent?.id ?? null })
     return sent !== null
