@@ -55,7 +55,13 @@ export function Input({
         {...props}
       />
       {message && (
-        <p id={messageId} className={`text-sm ${error ? "text-error" : "text-tertiary"}`}>
+        <p
+          id={messageId}
+          // A refusal has to be heard, not only seen. The hint under an untouched field is
+          // not news, so only the error speaks.
+          role={error ? "alert" : undefined}
+          className={`text-sm ${error ? "text-error" : "text-tertiary"}`}
+        >
           {message}
         </p>
       )}

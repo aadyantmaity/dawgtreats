@@ -133,7 +133,16 @@ async function assertLayoutInvariants(page: Page, label: string, width: number) 
     `${label} at ${width}px: ${overflowing.length} element(s) extend past the right edge of the viewport:\n${overflowing.join("\n")}`,
   ).toEqual([]);
 
-  const cartLink = page.getByRole("link", { name: /^Cart/ });
+  // Three cart links exist in the markup: one in the tab row for a wide screen, one that
+  // stands alone on a phone, and one in the drawer. The drawer's is parked off-screen
+  // rather than hidden, so it has to be excluded by where it is, not by whether it shows.
+  const cartLinks = page.locator('header a[href="/cart"]:not(#nav-menu a)');
+  const shown = cartLinks.filter({ visible: true });
+  await expect(
+    shown,
+    `${label} at ${width}px: expected exactly one visible cart link in the header`,
+  ).toHaveCount(1);
+  const cartLink = shown.first();
   await expect(cartLink, `${label} at ${width}px: the cart link in the header is not visible`).toBeVisible();
   const cartBox = await cartLink.boundingBox();
   if (!cartBox) throw new Error(`${label} at ${width}px: the cart link has no bounding box`);
@@ -172,8 +181,9 @@ test("the menu separates what is sold out from what is for sale", async ({ page 
   if (!headingBox || !cardBox) throw new Error("the sold-out heading or card has no bounding box");
   expect(cardBox.y).toBeGreaterThan(headingBox.y);
 
-  // The card says so in words, so the dashed border and the grey are not carrying it alone.
-  await expect(page.getByText("Sold out", { exact: true })).toBeVisible();
+  // The words are on the heading above the group, not repeated on every card. What the
+  // card must not do is offer a way to buy: no price-and-add row, only the interest link.
+  await expect(page.getByRole("button", { name: `Add ${SOLD_OUT_FLAVOR}` })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "I wanted this" })).toBeVisible();
 });
 

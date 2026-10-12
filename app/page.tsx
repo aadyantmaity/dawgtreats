@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
@@ -31,16 +32,10 @@ function Allergens({ flavor }: { flavor: MenuItem }) {
     <details className="group border-t border-default pt-3">
       <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
         Allergens
-        <svg
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.5}
+        <ChevronDown
           aria-hidden
           className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
-        >
-          <path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        />
       </summary>
       <p className="mt-2 text-sm text-tertiary">{allergenLine(flavor.allergens)}</p>
       {mayContainLine(flavor.mayContain) && (
@@ -96,7 +91,25 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
 // A sold-out flavor stays on the menu, so the week still reads as a full bake.
 function SoldOutCard({ flavor }: { flavor: MenuItem }) {
   return (
-    <article className="flex flex-col gap-3 rounded-card border border-dashed border-default p-4">
+    <article className="relative flex flex-col gap-3 rounded-card bg-surface p-4">
+      {/* The outline is drawn rather than bordered, so the dashes can have air between
+          them. The radius repeats rounded-card, because an SVG cannot read a CSS one. */}
+      <svg
+        aria-hidden
+        className="dotted-edge pointer-events-none absolute inset-0 size-full overflow-visible"
+      >
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          rx="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeDasharray="9 7"
+        />
+      </svg>
       <div className="flex items-center gap-4">
         {flavor.imageUrl ? (
           <Image
@@ -116,8 +129,6 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
           <span className="text-sm text-tertiary tabular-nums">
             {formatCents(flavor.priceCents)}
           </span>
-          {/* In words, not only in grey: the card has to say this on its own. */}
-          <span className="text-sm text-tertiary">Sold out</span>
         </div>
       </div>
       <AddToCart flavorId={flavor.id} name={flavor.name} remaining={0} />

@@ -42,6 +42,7 @@ describe('asking to be told when a batch opens', () => {
     const response = await ask({ email: 'buyer@uw.edu' })
 
     expect(response.status).toBe(201)
+    expect(await response.json()).toMatchObject({ ok: true, already: false })
     expect(await rows()).toMatchObject([{ email: 'buyer@uw.edu', notifiedAt: null }])
   })
 
@@ -49,7 +50,10 @@ describe('asking to be told when a batch opens', () => {
     await ask({ email: 'twice@uw.edu' })
     const second = await ask({ email: 'twice@uw.edu' })
 
-    expect(second.status).toBe(201)
+    // 200 and `already`, not 201: the page says "you are already on the list" rather than
+    // "you are on the list", which reads as a refusal to someone who knows they asked.
+    expect(second.status).toBe(200)
+    expect(await second.json()).toMatchObject({ ok: true, already: true })
     expect(await rows()).toHaveLength(1)
   })
 

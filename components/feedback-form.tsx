@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition, type FormEvent } from "reac
 import { submitFeedback } from "@/app/feedback-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Message } from "@/components/ui/message";
 import { LIMITS, messageError, ratingError } from "@/lib/validation";
 
 const STARS = [1, 2, 3, 4, 5];
@@ -13,9 +14,13 @@ const STEMS = ["Bake this next:", "More of these:", "Pickup was", "Too sweet"];
 
 export function FeedbackForm({
   className = "",
+  compact = false,
   onDone,
 }: {
   className?: string;
+  // The popup is an aside, not the page: it asks for less so the Send button stays in
+  // view on a short phone. The whole form still lives on /feedback.
+  compact?: boolean;
   onDone?: () => void;
 }) {
   const [rating, setRating] = useState(0);
@@ -30,9 +35,14 @@ export function FeedbackForm({
   const [refused, setRefused] = useState(false);
   const [seeded, setSeeded] = useState(0);
   const messageBox = useRef<HTMLTextAreaElement>(null);
+  const doneRef = useRef<HTMLDivElement>(null);
 
   const messageProblem = messageError(message);
   const ratingProblem = ratingError(rating);
+
+  useEffect(() => {
+    if (done) doneRef.current?.focus();
+  }, [done]);
 
   // The caret can only go to the end once React has rendered the new value, so this
   // waits for that render instead of moving it in the click.
@@ -73,7 +83,14 @@ export function FeedbackForm({
 
   if (done) {
     return (
-      <div className={`animate-rise ${className}`}>
+      // The form it replaces is gone, so without a home focus lands on the page body and
+      // a reader is told nothing. This takes the focus and says what happened.
+      <div
+        ref={doneRef}
+        role="status"
+        tabIndex={-1}
+        className={`animate-rise outline-none ${className}`}
+      >
         <p className="font-medium">Thanks.</p>
         <p className="mt-1 text-sm text-secondary">I read all of these.</p>
       </div>
@@ -154,7 +171,7 @@ export function FeedbackForm({
           onChange={(e) => setMessage(e.target.value)}
           onBlur={() => setTried(true)}
           maxLength={LIMITS.messageMax}
-          rows={3}
+          rows={compact ? 2 : 3}
           aria-invalid={tried && messageProblem ? true : undefined}
           className="w-full rounded-card border border-default bg-surface px-4 py-3 text-base text-primary placeholder:text-tertiary focus:border-focus focus:outline-none aria-invalid:border-error"
           placeholder="Matcha white chocolate"
@@ -168,15 +185,21 @@ export function FeedbackForm({
         )}
       </div>
 
-      <Input
-        label="Your name (optional)"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        autoComplete="name"
-        maxLength={LIMITS.nameMax}
-      />
+      {!compact && (
+        <Input
+          label="Your name (optional)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
+          maxLength={LIMITS.nameMax}
+        />
+      )}
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && (
+        <Message tone="error" className="text-sm">
+          {error}
+        </Message>
+      )}
 
       <div>
         <Button type="submit" disabled={pending}>

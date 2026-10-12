@@ -4,6 +4,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Message } from "@/components/ui/message";
 
 export function SignInWithGoogle({ next = "/account" }: { next?: string }) {
   const [busy, setBusy] = useState(false);
@@ -38,7 +39,11 @@ export function SignInWithGoogle({ next = "/account" }: { next?: string }) {
       <Button size="md" variant="secondary" onClick={signIn} disabled={busy}>
         {busy ? "Opening Google…" : "Sign in with Google"}
       </Button>
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && (
+        <Message tone="error" className="text-sm">
+          {error}
+        </Message>
+      )}
     </div>
   );
 }

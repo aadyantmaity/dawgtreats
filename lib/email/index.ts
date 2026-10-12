@@ -179,7 +179,7 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     `Your order: ${orderLink(o.orderCode)}`,
     '',
     'Reply here if something comes up.',
-    'All sales are final. Pickup only.',
+    'Pickup only. No refunds or cancellations.',
   ].join('\n')
 }
 

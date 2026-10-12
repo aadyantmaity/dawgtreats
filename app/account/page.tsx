@@ -4,6 +4,7 @@ import { SignInWithGoogle } from "@/components/sign-in";
 import { Card } from "@/components/ui/card";
 import { currentAccount } from "@/lib/auth";
 import { listOrdersForAccount } from "@/lib/orders";
+import { LogOut } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your account" };
@@ -44,8 +45,9 @@ export default async function AccountPage() {
       )}
 
       <form action="/auth/signout" method="post" className="mt-8">
-        <button type="submit" className="inline-flex min-h-control items-center text-sm text-secondary underline hover:text-primary">
-          Sign out
+        <button type="submit" className="inline-flex min-h-control items-center gap-2 text-sm text-secondary hover:text-primary">
+          <LogOut aria-hidden className="size-4" />
+          <span className="underline">Sign out</span>
         </button>
       </form>
     </main>

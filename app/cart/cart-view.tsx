@@ -15,6 +15,7 @@ import type { MenuItem } from "@/lib/inventory";
 import { bump } from "@/lib/motion";
 import { formatCents } from "@/lib/money";
 import { LIMITS, cartLimit } from "@/lib/validation";
+import { Clock } from "lucide-react";
 
 type Row = MenuItem & { quantity: number };
 
@@ -82,15 +83,11 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
 
   // Rendered in both states: an emptied cart is exactly when someone needs telling why.
 
-  // What is left to buy, not what the week started with: a sold-out flavor is not an
-  // invitation back to the menu.
-  const buyable = menu.filter((item) => item.remaining !== 0).length;
-
   if (displayRows.length === 0) {
     return (
       <>
         <CartNotices className="mt-6" />
-        <EmptyCart buyable={buyable} ordersOpen={ordersOpen} />
+        <EmptyCart ordersOpen={ordersOpen} />
       </>
     );
   }
@@ -165,6 +162,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
           href="/checkout"
           className={buttonClass({ size: "md" })}
         >
+          <Clock aria-hidden className="size-4" />
           Pick a pickup time
         </Link>
       ) : (
@@ -172,7 +170,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
       )}
 
       <p className="text-sm text-tertiary">
-        {LIMITS.perOrderMax} cookies per order. Pickup only, Saturday or Sunday. All sales are final.
+        {LIMITS.perOrderMax} cookies per order. Pickup only, Saturday or Sunday. No refunds or cancellations.
       </p>
     </div>
   );

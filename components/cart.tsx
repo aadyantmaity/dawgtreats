@@ -1,9 +1,12 @@
 "use client";
 
+import { Plus, ShoppingBag, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Button, buttonClass } from "@/components/ui/button";
+import { useNavPill } from "@/components/nav-tabs";
 import { Stepper } from "@/components/ui/stepper";
 import { track } from "@/lib/analytics/track";
 import { bump } from "@/lib/motion";
@@ -86,21 +89,26 @@ export function reconcile(menu: Availability[]) {
   const notices: string[] = [];
   const lines: CartLine[] = [];
 
+  // A line the menu no longer carries is dropped, and `dropped` makes sure that is written
+  // back. Left in storage it counts towards the badge for ever and can never be paid for.
+  let dropped = false;
+
   for (const line of state.lines) {
     const item = onMenu.get(line.flavorId);
     if (!item || item.remaining === 0) {
-      if (item) notices.push(`${item.name} just sold out, so we removed it.`);
+      if (item) notices.push(`${item.name} just sold out, so I removed it.`);
+      else dropped = true;
       continue;
     }
     if (item.remaining !== null && item.remaining < line.quantity) {
-      notices.push(`Only ${item.remaining} ${item.name} left, so we lowered your cart.`);
+      notices.push(`Only ${item.remaining} ${item.name} left, so I lowered your cart.`);
       lines.push({ flavorId: line.flavorId, quantity: item.remaining });
       continue;
     }
     lines.push(line);
   }
 
-  if (notices.length > 0) write(lines, notices);
+  if (notices.length > 0 || dropped) write(lines, notices);
 }
 
 export function useCart() {
@@ -136,8 +144,15 @@ export function CartNotices({ className = "" }: { className?: string }) {
   );
 }
 
-export function CartLink() {
+export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | "drawer" }) {
   const { count } = useCart();
+  const pathname = usePathname();
+  // In the tab row the pill behind says which page this is, the same as every other tab.
+  // Standing alone on a phone there is no pill, so the fill has to say it instead.
+  const asTab = variant === "tab";
+  const inDrawer = variant === "drawer";
+  const here = pathname === "/cart";
+  const ref = useNavPill("/cart");
 
   const countRef = useRef<HTMLSpanElement>(null);
   const prevCount = useRef(count);
@@ -149,16 +164,31 @@ export function CartLink() {
 
   return (
     <Link
+      ref={asTab ? ref : undefined}
       href="/cart"
-      aria-label={count === 0 ? "Cart, empty" : `Cart, ${count} cookies`}
-      className="inline-flex h-control shrink-0 items-center gap-2 rounded-pill bg-action px-4 text-sm font-medium text-on-action transition-colors hover:bg-action/90 sm:h-control-sm"
+      aria-label={count === 0 ? "Cart, empty" : `Cart, ${count} ${count === 1 ? "cookie" : "cookies"}`}
+      aria-current={here ? "page" : undefined}
+      className={
+        asTab
+          ? `relative inline-flex shrink-0 items-center gap-2 rounded-pill px-3 py-1.5 text-sm whitespace-nowrap transition-colors ease-spring ${
+              here ? "text-on-action" : "text-secondary hover:text-primary"
+            }`
+          : inDrawer
+            ? `flex h-control items-center gap-3 rounded-pill px-4 text-base transition-colors ease-spring ${
+                here
+                  ? "bg-action text-on-action"
+                  : "text-secondary hover:bg-subtle hover:text-primary"
+              }`
+            : "inline-flex h-control shrink-0 items-center gap-2 rounded-pill bg-action px-4 text-sm font-medium text-on-action transition-colors hover:bg-action/90"
+      }
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden className="size-4">
-        <path d="M3 4h2l2.2 10.2a1.5 1.5 0 0 0 1.5 1.2h7.8a1.5 1.5 0 0 0 1.5-1.2L19.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="9.5" cy="19" r="1.3" />
-        <circle cx="16.5" cy="19" r="1.3" />
-      </svg>
-      Cart
+      {/* In the bar every other tab is a picture and a word, and the cart's word is the
+          number. The drawer is a list of names, so there it says its own. */}
+      <ShoppingCart
+        aria-hidden
+        className={asTab || inDrawer ? "size-4 shrink-0" : "size-5 shrink-0"}
+      />
+      {inDrawer && "Cart"}
       {count > 0 && (
         <span ref={countRef} className="tabular-nums">
           {count}
@@ -170,30 +200,18 @@ export function CartLink() {
 
 // An emptied cart is a dead end without a way back to the menu. The cart and the
 // checkout both need one.
-export function EmptyCart({ buyable, ordersOpen }: { buyable: number; ordersOpen: boolean }) {
+export function EmptyCart({ ordersOpen }: { ordersOpen: boolean }) {
   return (
-    <div className="mt-8 flex flex-col items-center rounded-card border border-dashed border-default px-5 py-10 text-center">
+    <div className="mt-8 flex flex-col items-center rounded-card border border-default bg-surface px-5 py-10 text-center">
       <span className="flex size-12 items-center justify-center rounded-pill bg-disabled text-secondary">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          className="size-6"
-        >
-          <path d="M6 8h12l-1 11.5a1.5 1.5 0 0 1-1.5 1.4h-9A1.5 1.5 0 0 1 5 19.5L4 8Z" />
-          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
-        </svg>
+        <ShoppingBag aria-hidden className="size-6" />
       </span>
       <p className="mt-3 text-lg font-semibold">Nothing in here yet</p>
-      <p className="mt-1 text-secondary">
-        {ordersOpen
-          ? `${buyable} ${buyable === 1 ? "flavor is" : "flavors are"} out of the oven this week.`
-          : "Orders are closed right now. New batch most weeks."}
-      </p>
+      {/* Open, the button below already says what to do. Shut is news, and it is the only
+          reason an empty cart is not the person's own doing. */}
+      {!ordersOpen && (
+        <p className="mt-1 text-secondary">Orders are closed right now. New batch most weeks.</p>
+      )}
       <Link href="/" className={`${buttonClass({ size: "md" })} mt-5`}>
         {ordersOpen ? "See this week's bake" : "Back to the menu"}
       </Link>
@@ -263,6 +281,7 @@ export function AddToCart({
             track("add_to_cart", name);
           }}
         >
+          <Plus aria-hidden className="size-4" />
           Add
         </Button>
         {note && <p className="text-sm text-secondary">{note}</p>}

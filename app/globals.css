@@ -87,7 +87,7 @@
   --spacing-bar: 3.5rem;
   /* The feedback panel: wide enough for a sentence, short enough to never fill a phone. */
   --spacing-panel: 22rem;
-  --spacing-panel-max-h: 70vh;
+  --spacing-panel-max-h: 78vh;
   --spacing-menu: 16rem;
 
   --radius-*: initial;
@@ -286,6 +286,24 @@
   [aria-expanded='true'] .nav-toggle-line:last-child {
     translate: 0 -3.25px;
     rotate: -45deg;
+  }
+
+  /* A dashed border is drawn with the gaps as short as the dashes, which reads as a line.
+     A stroked outline can space them out, and this gives it the border colour. */
+  .dotted-edge {
+    color: var(--border-color-default);
+  }
+
+  /* The rule between the pages and the cart. It sits over the pill rather than under it,
+     and turns the pill's own colour while the pill is across it. */
+  .nav-rule {
+    position: relative;
+    border-color: var(--border-color-default);
+    transition: border-color var(--duration-motion) ease;
+  }
+
+  [data-covered] .nav-rule {
+    border-color: color-mix(in srgb, var(--palette-ivory) 45%, transparent);
   }
 
   /* A disclosure reads as a row. Only the marker needs CSS: the default one is a

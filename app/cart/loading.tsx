@@ -10,14 +10,18 @@ export default function Loading() {
         <Card className="p-0">
           <ul className="divide-y divide-default">
             {[0, 1].map((row) => (
-              <li key={row} className="flex flex-wrap items-center gap-4 p-5">
-                <Bone className="size-12 shrink-0" />
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <Bone className="h-6 w-3/4" />
-                  <Bone className="h-5 w-1/2" />
+              <li key={row} className="flex flex-col gap-4 p-5 sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-4">
+                  <Bone className="size-12 shrink-0 rounded-control-sm" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Bone className="h-6 w-3/4" />
+                    <Bone className="h-5 w-1/2" />
+                  </div>
                 </div>
-                <Bone className="h-control w-24 rounded-control" />
-                <Bone className="h-6 w-20" />
+                <div className="flex items-center justify-between gap-4">
+                  <Bone className="h-control w-24 rounded-control" />
+                  <Bone className="h-6 w-20" />
+                </div>
               </li>
             ))}
           </ul>

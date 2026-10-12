@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/loading";
+import { Message } from "@/components/ui/message";
 import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { LIMITS, MESSAGES, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
+import { CalendarX, Lock } from "lucide-react";
 
 export type SlotChoice = {
   id: string;
@@ -65,7 +67,7 @@ function SlotPicker({
                 return (
                   <label
                     key={slot.id}
-                    className={`flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-2 py-2 transition ease-spring has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
+                    className={`group flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-2 py-2 transition ease-spring has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
                       full
                         ? "cursor-default border-default bg-disabled text-disabled"
                         : "border-default bg-surface hover:bg-hover"
@@ -81,8 +83,10 @@ function SlotPicker({
                       className="sr-only"
                     />
                     <span className="text-sm font-medium whitespace-nowrap">{slot.startsAt}</span>
+                    {/* The count sets its own colour, so on the chosen chip it would stay
+                        grey on ink. Chosen wins. */}
                     <span
-                      className={`text-xs ${
+                      className={`text-xs group-has-checked:text-on-action ${
                         full || slot.spotsLeft > LOW_SPOTS ? "text-tertiary" : "text-urgent"
                       }`}
                     >
@@ -231,6 +235,14 @@ export function CheckoutForm({
       ? [`${row.name}: only ${row.remaining} left. Lower it in your cart to continue.`]
       : [],
   );
+  // The server refuses a cart over the per-order cap, so the page must refuse it first and
+  // say by how much. Otherwise Pay is pressable and answers with a 400 and no way forward.
+  const overCap = count > LIMITS.perOrderMax;
+  if (overCap) {
+    shortfalls.push(
+      `${count} cookies is over the ${LIMITS.perOrderMax} per order. Remove ${count - LIMITS.perOrderMax} in your cart to continue.`,
+    );
+  }
 
   // One answer for both submit buttons. This one stays enabled while a field is empty,
   // because pressing it is how someone finds out which field that is.
@@ -322,7 +334,7 @@ export function CheckoutForm({
     return (
       <>
         <CartNotices className="mt-8" />
-        <EmptyCart buyable={menu.filter((item) => item.remaining !== 0).length} ordersOpen />
+        <EmptyCart ordersOpen />
       </>
     );
   }
@@ -340,7 +352,10 @@ export function CheckoutForm({
       <div className="flex flex-col gap-6 lg:col-span-2">
       <Card title="Pickup time">
         {open.length === 0 ? (
-          <p className="text-secondary">Every pickup time is full. Try again later.</p>
+          <p className="flex items-start gap-2 text-secondary">
+            <CalendarX aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <span>Every pickup time is full. Try again later.</span>
+          </p>
         ) : (
           <>
             <p className="mb-4 text-sm text-tertiary">
@@ -379,7 +394,7 @@ export function CheckoutForm({
             attempt={attempt}
             autoComplete="email"
             maxLength={120}
-            hint="We&apos;ll send your order code here."
+            hint="I&apos;ll send your order code here."
           />
           <Input
             label="Phone"
@@ -415,9 +430,9 @@ export function CheckoutForm({
 
       {/* A role="alert" already on the page can go unannounced, so the paragraph mounts with the refusal. */}
       {error && (
-        <p role="alert" className="animate-rise text-error">
+        <Message tone="error" className="animate-rise">
           {error}
-        </p>
+        </Message>
       )}
 
       <Button type="submit" size="md" disabled={blocked}>
@@ -427,7 +442,10 @@ export function CheckoutForm({
             Taking you to payment…
           </span>
         ) : (
-          `Pay for ${count} cookies`
+          <span className="inline-flex items-center gap-2">
+            <Lock aria-hidden className="size-4" />
+            Pay for {count} cookies
+          </span>
         )}
       </Button>
 

@@ -4,7 +4,9 @@ import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Message } from "@/components/ui/message";
 import { emailError } from "@/lib/validation";
+import { BellOff, BellRing, Check } from "lucide-react";
 
 // Shown only while ordering is shut: the one moment someone wants cookies and
 // cannot have them.
@@ -84,25 +86,34 @@ export function NotifyForm({
   if (onList) {
     return (
       <div className="mt-6 flex flex-col items-start gap-2">
-        <p className={justJoined ? "animate-rise text-secondary" : "text-secondary"} role="status">
+        <p
+          className={`flex items-start gap-2 text-secondary ${justJoined ? "animate-rise" : ""}`}
+          role="status"
+        >
+          <Check aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span>
           {wasAlready
             ? "You're already on the list. I'll email you when the next batch opens."
             : "You're on the list. I'll email you when the next batch opens."}
+          </span>
         </p>
         {signedInAs && (
           <button
             type="button"
             onClick={leave}
             disabled={pending}
-            className="py-2 text-sm text-secondary underline transition-colors ease-spring hover:text-primary disabled:text-disabled"
+            className="inline-flex items-center gap-2 py-2 text-sm text-secondary transition-colors ease-spring hover:text-primary disabled:text-disabled"
           >
-            {pending ? "Taking you off…" : "Take me off the list"}
+            <BellOff aria-hidden className="size-4 shrink-0" />
+            <span className="underline">
+              {pending ? "Taking you off…" : "Take me off the list"}
+            </span>
           </button>
         )}
         {problem && (
-          <p className="animate-rise text-sm text-error" role="alert">
+          <Message tone="error" className="animate-rise text-sm">
             {problem}
-          </p>
+          </Message>
         )}
       </div>
     );
@@ -112,9 +123,14 @@ export function NotifyForm({
     return (
       <form onSubmit={submit} className="mt-6 flex flex-col items-start gap-2">
         <Button type="submit" size="md" disabled={pending}>
+          <BellRing aria-hidden className="size-4" />
           {pending ? "Adding you…" : "Email me when it opens"}
         </Button>
-        {problem && <p className="text-sm text-error">{problem}</p>}
+        {problem && (
+          <Message tone="error" className="text-sm">
+            {problem}
+          </Message>
+        )}
       </form>
     );
   }

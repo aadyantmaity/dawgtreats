@@ -6,6 +6,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Message } from "@/components/ui/message";
 import { messageFromBody } from "@/lib/errors";
 import { LIMITS, formatPhoneInput, phoneError } from "@/lib/validation";
 
@@ -84,8 +85,16 @@ export function ContactDetails({
           inputMode="tel"
           placeholder="(425) 555-0142"
         />
-        {error && <p className="text-sm text-error">{error}</p>}
-        {saved && <p className="text-sm text-success">Saved.</p>}
+        {error && (
+          <Message tone="error" className="text-sm">
+            {error}
+          </Message>
+        )}
+        {saved && (
+          <Message tone="success" className="text-sm">
+            Saved.
+          </Message>
+        )}
         <div>
           <Button type="submit" disabled={sending || refreshing}>
             {sending || refreshing ? "Saving…" : "Save details"}
