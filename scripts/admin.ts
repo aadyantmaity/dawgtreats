@@ -91,6 +91,10 @@ async function tellTheWaitingList(
   week: { id: string; pickupWeekendStart: string; ordersCloseAt: Date },
   { again = false, note }: { again?: boolean; note?: string } = {},
 ) {
+  const waiting = await listWaiting(again)
+  // Nobody to tell is not a send, so opening a week on a dev machine still works.
+  if (waiting.length === 0) return { told: 0, waiting: 0 }
+
   // The CLI reads .env.local, where the site URL is the dev server. That address is dead on
   // the phone of everyone on the list, so refuse the send instead of mailing a dead link.
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
@@ -98,7 +102,6 @@ async function tellTheWaitingList(
     fail(`NEXT_PUBLIC_SITE_URL is "${site || 'unset'}", so every link in the email is dead. Run it again as: NEXT_PUBLIC_SITE_URL=https://dawgtreats.shop npm run admin -- ${command}`)
   }
 
-  const waiting = await listWaiting(again)
   // Read once, not once per address: the menu is the same for everyone on the list. A
   // flavor with nothing left is not news, so it is left out.
   const menu = (await getMenu(week.id)).filter((item) => item.remaining !== 0)
