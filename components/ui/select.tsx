@@ -12,7 +12,14 @@ type SelectProps<T extends string> = {
   onChange: (value: T) => void;
   disabled?: boolean;
   className?: string;
+  // What the control says when `value` names nothing in `options`. The default reads
+  // "Choose a pickup time"; a label that needs "an" passes its own.
+  placeholder?: string;
 };
+
+// How long typed letters keep building one search word. A pause longer than this starts a
+// new one, so "sa" then a pause then "t" looks for "t", not "sat".
+const TYPEAHEAD_MS = 600;
 
 // Select-only combobox (WAI-ARIA APG): focus stays on the button; aria-activedescendant tracks the highlight.
 export function Select<T extends string>({
@@ -22,6 +29,7 @@ export function Select<T extends string>({
   onChange,
   disabled = false,
   className = "",
+  placeholder,
 }: SelectProps<T>) {
   const id = useId();
   const labelId = `${id}-label`;
@@ -29,8 +37,13 @@ export function Select<T extends string>({
   const optionId = (index: number) => `${id}-option-${index}`;
 
   const [open, setOpen] = useState(false);
-  const selectedIndex = Math.max(0, options.findIndex((o) => o.value === value));
-  const [activeIndex, setActiveIndex] = useState(selectedIndex);
+  // A value that names nothing in the list is no selection at all. Rounding it up to the
+  // first option would show someone a pickup time they never chose, and they would turn
+  // up at it: the list loses an option when a slot fills between render and interaction.
+  const selectedIndex = options.findIndex((o) => o.value === value);
+  const chosen = selectedIndex >= 0;
+  // With nothing chosen the keyboard still has to start somewhere.
+  const [activeIndex, setActiveIndex] = useState(chosen ? selectedIndex : 0);
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const typeahead = useRef({ text: "", at: 0 });
@@ -61,22 +74,26 @@ export function Select<T extends string>({
   }, [open, activeIndex]);
 
   useEffect(() => {
-    if (open) revealOption(selectedIndex, true);
-  }, [open, selectedIndex]);
+    if (open && chosen) revealOption(selectedIndex, true);
+  }, [open, chosen, selectedIndex]);
 
   function openList() {
-    setActiveIndex(selectedIndex);
+    setActiveIndex(chosen ? selectedIndex : 0);
     setOpen(true);
   }
 
   function choose(index: number) {
-    onChange(options[index].value);
+    const option = options[index];
+    // The list can lose the highlighted option between render and click, so this closes
+    // rather than reading a value off nothing and taking the form down with it.
+    if (!option) return setOpen(false);
+    onChange(option.value);
     setOpen(false);
   }
 
   function jumpTo(char: string) {
     const now = Date.now();
-    const text = now - typeahead.current.at < 600 ? typeahead.current.text + char : char;
+    const text = now - typeahead.current.at < TYPEAHEAD_MS ? typeahead.current.text + char : char;
     typeahead.current = { text, at: now };
     const match = options.findIndex((o) => o.label.toLowerCase().startsWith(text.toLowerCase()));
     if (match === -1) return;
@@ -148,7 +165,9 @@ export function Select<T extends string>({
           onKeyDown={onKeyDown}
           className={`flex h-control w-full items-center rounded-control border bg-surface pr-10 pl-4 text-left text-base text-primary transition-colors ease-spring focus:outline-none disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled disabled:transition-none ${open ? "border-focus" : "border-default focus-visible:border-focus"}`}
         >
-          <span className="truncate">{options[selectedIndex]?.label}</span>
+          <span className={`truncate ${chosen ? "" : "text-tertiary"}`}>
+            {chosen ? options[selectedIndex].label : placeholder ?? `Choose a ${label.toLowerCase()}`}
+          </span>
         </button>
         <IconChevronDown
           aria-hidden

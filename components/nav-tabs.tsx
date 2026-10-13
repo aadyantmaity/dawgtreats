@@ -21,6 +21,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { NAV_TAB } from "@/components/nav-chrome";
 import { prefersReducedMotion } from "@/lib/motion";
 
 export type NavTab = { href: string; label: string; icon: IconName };
@@ -49,6 +50,13 @@ type Box = { left: number; width: number };
 type Register = (href: string, el: HTMLAnchorElement | null) => void;
 
 const Pill = createContext<Register | null>(null);
+
+// Longer than the rest of the site on purpose: the pill covers the whole bar on the way
+// and needs the time to read as one journey rather than a flash.
+const JOURNEY_MS = 420;
+// Not the site's spring. A spring overshoots, and a pill that overshoots lands past the
+// tab it is going to and slides back onto it.
+const JOURNEY_EASING = "cubic-bezier(0.32, 0.72, 0.3, 1)";
 
 // A control that is not one of the tabs, but belongs to the same row, says so with this.
 // The pill then travels to it like any other, and outside the row it does nothing.
@@ -115,9 +123,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
         { left: `${left}px`, width: `${right - left}px`, offset: 0.45 },
         { left: `${pill.left}px`, width: `${pill.width}px` },
       ],
-      // Longer than the rest of the site on purpose: the pill covers the whole bar on the
-      // way and needs the time to read as one journey rather than a flash.
-      { duration: 420, easing: "cubic-bezier(0.32, 0.72, 0.3, 1)" },
+      { duration: JOURNEY_MS, easing: JOURNEY_EASING },
     );
 
     // Only the widest point of the journey matters: the rule is either inside the span the
@@ -138,8 +144,17 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
     window.addEventListener("resize", measure);
     // Text shifts when the display font finishes loading, and so must the pill.
     void document.fonts?.ready.then(measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [measure]);
+    // The active tab can change width without the window moving at all: the cart's count
+    // reaching two digits widens it, and the pill was left short until the next resize.
+    const observer = new ResizeObserver(measure);
+    if (row.current) observer.observe(row.current);
+    const el = active ? links.current.get(active) : null;
+    if (el) observer.observe(el);
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer.disconnect();
+    };
+  }, [measure, active]);
 
   return (
     // No sideways scrolling: a phone gets the drawer instead, so these always fit. The
@@ -167,7 +182,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
           aria-current={here(tab.href) ? "page" : undefined}
           // The pill is measured in the browser, so until that happens there is nothing
           // dark behind this tab and on-action ink would be ivory on ivory.
-          className={`relative flex shrink-0 items-center gap-1.5 rounded-pill px-3 py-1.5 text-sm whitespace-nowrap transition-colors ease-spring ${
+          className={`${NAV_TAB} ${
             here(tab.href)
               ? pill
                 ? "text-on-action"

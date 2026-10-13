@@ -8,9 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Message } from "@/components/ui/message";
 import { LIMITS, messageError, ratingError } from "@/lib/validation";
 
-const STARS = [1, 2, 3, 4, 5];
+// The row of stars is the rating rule drawn. It follows `ratingMax`, or the server refuses
+// a star the form let someone press.
+const STARS = Array.from({ length: LIMITS.ratingMax }, (_, index) => index + 1);
 
 const STEMS = ["Bake this next:", "More of these:", "Pickup was", "Too sweet"];
+
+// Long enough to read "Thanks." before a popup takes it away.
+const THANKS_MS = 1500;
 
 export function FeedbackForm({
   className = "",
@@ -76,8 +81,7 @@ export function FeedbackForm({
       const result = await submitFeedback({ rating, message, name });
       if (!result.ok) return setError(result.error);
       setDone(true);
-      // Let them read the thank-you before a popup closes itself.
-      if (onDone) setTimeout(onDone, 1500);
+      if (onDone) setTimeout(onDone, THANKS_MS);
     });
   }
 
@@ -125,7 +129,7 @@ export function FeedbackForm({
               onMouseEnter={() => setHovered(star)}
               onFocus={() => setHovered(star)}
               onBlur={() => setHovered(0)}
-              aria-label={`${star} out of 5`}
+              aria-label={`${star} out of ${LIMITS.ratingMax}`}
               aria-pressed={star === rating}
               // A press must read as immediate; only the release springs back.
               className={`size-control rounded-control-sm text-2xl leading-none transition ease-spring hover:-translate-y-0.5 focus-visible:-translate-y-0.5 active:duration-100 active:scale-95 ${

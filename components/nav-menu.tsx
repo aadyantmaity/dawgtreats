@@ -5,14 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { CartLink } from "@/components/cart";
+import { NAV_CUTOVER, NAV_DRAWER_ROW } from "@/components/nav-chrome";
 import { NavIcon, type NavTab } from "@/components/nav-tabs";
 
 // The phone's whole navigation. The bar keeps its own cart as well, because the one thing
 // someone is part way through must never be behind a menu they have to open first.
-// The owner's bar carries two more tabs than a visitor's, so the row it would have to
-// fit in is wider. `wide` moves the drawer's own cutover to match.
-const HIDE_AT = { md: "md:hidden", lg: "lg:hidden" } as const;
-
+// The owner's row needs a wider window than a visitor's, so `wide` moves this drawer's own
+// cutover to match it. The measurement behind both lives with NAV_CUTOVER.
 export function NavMenu({
   tabs,
   adminTabs,
@@ -22,7 +21,7 @@ export function NavMenu({
   adminTabs: NavTab[];
   wide?: boolean;
 }) {
-  const hide = wide ? HIDE_AT.lg : HIDE_AT.md;
+  const hide = NAV_CUTOVER[wide ? "wide" : "narrow"].drawer;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [seenPath, setSeenPath] = useState(pathname);
@@ -46,9 +45,16 @@ export function NavMenu({
     // The page behind must not scroll away under the menu.
     const scroll = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Past the cutover the drawer and its button are both display:none. A menu left open
+    // there would hold the scroll lock with nothing on screen to release it.
+    const onResize = () => {
+      if (!opener?.offsetParent) setOpen(false);
+    };
+    window.addEventListener("resize", onResize);
     panel.current?.querySelector("a")?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
       document.body.style.overflow = scroll;
       // Focus goes back to the button that opened it, never to the top of the page.
       opener?.focus();
@@ -79,7 +85,7 @@ export function NavMenu({
       key={tab.href}
       href={tab.href}
       aria-current={here(tab.href) ? "page" : undefined}
-      className={`flex h-control items-center gap-3 rounded-pill px-4 text-base transition-colors ease-spring ${
+      className={`${NAV_DRAWER_ROW} ${
         here(tab.href) ? "bg-action text-on-action" : "text-secondary hover:bg-subtle hover:text-primary"
       }`}
     >

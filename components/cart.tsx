@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Button, buttonClass } from "@/components/ui/button";
+import { NAV_DRAWER_ROW, NAV_TAB } from "@/components/nav-chrome";
 import { useNavPill } from "@/components/nav-tabs";
 import { Stepper } from "@/components/ui/stepper";
 import { track } from "@/lib/analytics/track";
 import { bump } from "@/lib/motion";
-import { LIMITS } from "@/lib/validation";
+import { LIMITS, cartLimit } from "@/lib/validation";
 
 export type CartLine = { flavorId: string; quantity: number };
 
@@ -108,7 +109,21 @@ export function reconcile(menu: Availability[]) {
     lines.push(line);
   }
 
-  if (notices.length > 0 || dropped) write(lines, notices);
+  // A cart held in storage from when the cap was higher arrives over it. Left alone the
+  // stepper shows a number above its own ceiling and the checkout refuses the whole order.
+  let total = lines.reduce((sum, line) => sum + line.quantity, 0);
+  if (total > LIMITS.perOrderMax) {
+    notices.push(`${LIMITS.perOrderMax} cookies per order, so I lowered your cart.`);
+    // The earliest choices were the deliberate ones, so the last flavors added give way first.
+    for (let index = lines.length - 1; index >= 0 && total > LIMITS.perOrderMax; index--) {
+      const give = Math.min(lines[index].quantity, total - LIMITS.perOrderMax);
+      lines[index] = { ...lines[index], quantity: lines[index].quantity - give };
+      total -= give;
+    }
+  }
+
+  const kept = lines.filter((line) => line.quantity > 0);
+  if (notices.length > 0 || dropped) write(kept, notices);
 }
 
 export function useCart() {
@@ -119,9 +134,16 @@ export function useCart() {
     notices,
     count: lines.reduce((sum, line) => sum + line.quantity, 0),
     quantityOf: (flavorId: string) => lines.find((line) => line.flavorId === flavorId)?.quantity ?? 0,
+    // A line keeps its place in the cart. Rewriting it to the end moved the row out from
+    // under the finger that had just pressed it, because the cart renders in this order.
     setQuantity: (flavorId: string, quantity: number) => {
-      const without = lines.filter((line) => line.flavorId !== flavorId);
-      write(quantity > 0 ? [...without, { flavorId, quantity }] : without);
+      if (quantity <= 0) return write(lines.filter((line) => line.flavorId !== flavorId));
+      const held = lines.some((line) => line.flavorId === flavorId);
+      write(
+        held
+          ? lines.map((line) => (line.flavorId === flavorId ? { flavorId, quantity } : line))
+          : [...lines, { flavorId, quantity }],
+      );
     },
     clear: () => write(EMPTY),
   };
@@ -131,15 +153,22 @@ export function useCart() {
 // exactly the moment someone needs telling what happened to their cookies.
 export function CartNotices({ className = "" }: { className?: string }) {
   const { notices } = useCart();
-  if (notices.length === 0) return null;
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`} role="status">
-      {notices.map((note) => (
-        <p key={note} className="animate-rise text-urgent">
-          {note}
-        </p>
-      ))}
+    // The region is on the page from the first render, empty. A live region that arrives
+    // in the same commit as its text is announced by nothing, and this is the message that
+    // has to be heard: it says stock moved and the cart was lowered to match.
+    // The spacing sits on the inner box so an empty region takes up no room.
+    <div role="status">
+      {notices.length > 0 && (
+        <div className={`flex flex-col gap-1 ${className}`}>
+          {notices.map((note) => (
+            <p key={note} className="animate-rise text-urgent">
+              {note}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -170,11 +199,9 @@ export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | 
       aria-current={here ? "page" : undefined}
       className={
         asTab
-          ? `relative inline-flex shrink-0 items-center gap-2 rounded-pill px-3 py-1.5 text-sm whitespace-nowrap transition-colors ease-spring ${
-              here ? "text-on-action" : "text-secondary hover:text-primary"
-            }`
+          ? `${NAV_TAB} ${here ? "text-on-action" : "text-secondary hover:text-primary"}`
           : inDrawer
-            ? `flex h-control items-center gap-3 rounded-pill px-4 text-base transition-colors ease-spring ${
+            ? `${NAV_DRAWER_ROW} ${
                 here
                   ? "bg-action text-on-action"
                   : "text-secondary hover:bg-subtle hover:text-primary"
@@ -264,18 +291,17 @@ export function AddToCart({
   if (remaining === null) return null;
   if (remaining === 0) return <SoldOutInterest name={name} />;
 
-  const max = Math.min(
-    remaining,
-    LIMITS.perFlavorMax,
-    quantity + Math.max(0, LIMITS.perOrderMax - count),
-  );
+  // Three things can stop another cookie, and the one that binds is the one to name.
+  // Deriving the ceiling here instead let the menu blame the per-order cap for a flavor
+  // that had simply run low.
+  const limit = cartLimit({ quantity, remaining }, count);
 
   if (quantity === 0) {
     return (
       <div className="flex flex-col items-end gap-1">
         <Button
           onClick={() => {
-            if (max === 0) return setNote(`${LIMITS.perOrderMax} cookies per order`);
+            if (limit.max === 0) return setNote(limit.reached);
             setQuantity(flavorId, 1);
             // The flavor name carries no personal detail; nothing here identifies anyone.
             track("add_to_cart", name);
@@ -294,7 +320,7 @@ export function AddToCart({
       label={name}
       value={String(quantity)}
       min={0}
-      max={max}
+      max={limit.max}
       onChange={(next) => setQuantity(flavorId, Number(next || "0"))}
     />
   );
