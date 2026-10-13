@@ -61,10 +61,10 @@ function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean 
             // menu competes with the ones that are, which costs the page its own LCP.
             priority={priority}
             sizes="(min-width: 640px) 24rem, 7rem"
-            className="aspect-photo w-thumb shrink-0 rounded-card object-cover sm:size-auto sm:w-full"
+            className="aspect-photo w-24 shrink-0 rounded-card object-cover bigmark:w-thumb sm:size-auto sm:w-full"
           />
         ) : (
-          <PhotoPlaceholder className="aspect-photo w-thumb shrink-0 sm:size-auto sm:w-full" />
+          <PhotoPlaceholder className="aspect-photo w-24 shrink-0 bigmark:w-thumb sm:size-auto sm:w-full" />
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {/* Beside a thumbnail there is room for about twenty characters, and every name

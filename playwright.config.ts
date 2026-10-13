@@ -36,7 +36,7 @@ export default defineConfig({
       "npm run build && npm run start -- -p " +
       PORT,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 180_000,
     env: {
       NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`,
