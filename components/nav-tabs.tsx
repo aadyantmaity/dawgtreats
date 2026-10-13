@@ -157,8 +157,8 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
   }, [measure, active]);
 
   return (
-    // No sideways scrolling: a phone gets the drawer instead, so these always fit. The
-    // scroller rubber-banded at its ends and dragged the pill along with it.
+    // No sideways scrolling: the row drops to marks alone before it would need any, so it
+    // always fits. The scroller rubber-banded at its ends and dragged the pill with it.
     <div
       ref={row}
       data-covered={covered ? "" : undefined}
@@ -168,7 +168,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
         <span
           ref={pillRef}
           aria-hidden
-          className="absolute inset-y-0 rounded-pill bg-action"
+          className="absolute inset-y-1.5 rounded-pill bg-action sm:inset-y-0"
           style={{ left: pill.left, width: pill.width }}
         />
       )}
@@ -191,7 +191,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
           }`}
         >
           <NavIcon name={tab.icon} />
-          {tab.label}
+          <span className="sr-only tabtext:not-sr-only">{tab.label}</span>
         </Link>
       ))}
       <Pill value={register}>{children}</Pill>

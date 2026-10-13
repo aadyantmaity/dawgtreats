@@ -20,6 +20,11 @@
 }
 
 @theme {
+  /* Below this the words beside the marks no longer fit beside the cart, so the marks
+     carry the row alone. Measured at the shared tab size: the labelled row needs 327px of
+     bar, which needs a 432px window once the mark, the gap and the gutters are counted. */
+  --breakpoint-tabtext: 27rem;
+
   /* Removing Tailwind's default colours means only the role tokens below compile. */
   --color-*: initial;
 

@@ -104,17 +104,6 @@ export async function currentAccount(): Promise<Account | null> {
   return syncAccount({ supabaseUid: user.id, email: user.email, name })
 }
 
-// A non-admin gets false and the page 404s, never "forbidden": no reason to advertise
-// that an admin screen exists. This never creates an account; signing in does that.
-export async function viewerIsAdmin(): Promise<boolean> {
-  const supabase = await supabaseServer()
-  const { data } = await supabase.auth.getUser()
-  const uid = data.user?.id
-  if (!uid) return false
-
-  const [row] = await db.select({ role: users.role }).from(users).where(eq(users.supabaseUid, uid))
-  return row?.role === 'admin'
-}
 
 export async function currentAdmin(): Promise<Account | null> {
   const account = await currentAccount()

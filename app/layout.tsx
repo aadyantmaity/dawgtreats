@@ -3,11 +3,8 @@ import type { Metadata } from "next";
 import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
-import { NavMenu } from "@/components/nav-menu";
-import { NAV_CUTOVER } from "@/components/nav-chrome";
 import { NavTabs, type NavTab } from "@/components/nav-tabs";
 import { FeedbackFab } from "@/components/feedback-fab";
-import { viewerIsAdmin } from "@/lib/auth";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -30,22 +27,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const admin = await viewerIsAdmin();
   const tabs: NavTab[] = [
     { href: "/", label: "Home", icon: "home" },
     { href: "/order/lookup", label: "Orders", icon: "orders" },
-    { href: "/feedback", label: "Feedback", icon: "feedback" },
     { href: "/account", label: "Account", icon: "account" },
   ];
-  const adminTabs: NavTab[] = admin
-    ? [
-        { href: "/pickup", label: "Pickup", icon: "pickup" },
-        { href: "/stats", label: "Stats", icon: "stats" },
-      ]
-    : [];
-  // Two more tabs than a visitor sees, so the row needs a wider window before it fits.
-  // Below that the drawer carries all of them instead of the row clipping a word in half.
-  const wide = adminTabs.length > 0;
+  // The owner's two screens live inside the account page now, and feedback has its own
+  // button on the page, so the bar carries the same short row for everyone.
   return (
     <html
       lang="en"
@@ -59,7 +47,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             drawer is one of them, so this has to outrank the floating feedback button. */}
         <header className="sticky top-2 z-50 mt-2">
           <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
-            <div className="relative h-bar">
+            <div className="relative mx-auto h-bar w-fit max-w-full">
             {/* The blur is on its own layer rather than on the bar. A backdrop filter is
                 the containing block for every fixed thing inside it, and the drawer below
                 is one, so blurring the bar pinned the drawer to the bar, not the window. */}
@@ -67,14 +55,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               aria-hidden
               className="absolute inset-0 rounded-pill border border-default bg-floating shadow-lg backdrop-blur-md"
             />
-            <div className="relative flex h-full items-center justify-between gap-3 pr-3 pl-5 sm:gap-4">
+            <div className="relative flex h-full items-center justify-start gap-5 pr-2 pl-3 sm:pr-3 sm:pl-5">
             <Link href="/" className="inline-flex min-h-control shrink-0 items-center gap-2 font-display text-base font-semibold whitespace-nowrap">
               {/* The mark carries the name beside it, so it is decoration to a reader
                   who cannot see it. next/image has nothing to optimise in a vector, and
                   one cached file beats the same paths in every page's HTML. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="" className="h-12 w-auto" />
-              <span className="wordmark flex flex-col">
+              <img src="/logo.svg" alt="" className="h-10 w-auto sm:h-12" />
+              <span className="wordmark hidden flex-col sm:flex">
                 <span>Dawg</span>
                 <span>Treats</span>
               </span>
@@ -83,18 +71,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 be behind a menu someone has to open first. */}
             <nav className="flex min-w-0 items-center gap-1 sm:gap-3">
               {/* The cart rides in the tab row, so the pill travels to it like any tab. */}
-              <div className={NAV_CUTOVER[wide ? "wide" : "narrow"].row}>
-                <NavTabs tabs={[...tabs, ...adminTabs]}>
+              <div className="min-w-0">
+                <NavTabs tabs={tabs}>
                   {/* Four of these are places and the last one is a basket. The rule says
                       so, and the pill still travels across it. */}
                   <span aria-hidden className="nav-rule h-5 w-0 shrink-0 border-l" />
                   <CartLink variant="tab" />
                 </NavTabs>
-              </div>
-              <NavMenu tabs={tabs} adminTabs={adminTabs} wide={wide} />
-              {/* A phone has no tab row to join. */}
-              <div className={NAV_CUTOVER[wide ? "wide" : "narrow"].drawer}>
-                <CartLink />
               </div>
             </nav>
             </div>
