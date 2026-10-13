@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
+import { NavCondense } from "@/components/nav-condense";
 import { NavTabs, type NavTab } from "@/components/nav-tabs";
 import { FeedbackFab } from "@/components/feedback-fab";
 import "./globals.css";
@@ -46,8 +47,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             A sticky element with a z-index traps its children in that layer, and the menu
             drawer is one of them, so this has to outrank the floating feedback button. */}
         <header className="sticky top-2 z-50 mt-2">
+          <NavCondense />
           <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
-            <div className="relative mx-auto h-bar w-fit max-w-full">
+            <div className="nav-bar relative mx-auto h-bar w-fit max-w-full">
             {/* The blur is on its own layer rather than on the bar. A backdrop filter is
                 the containing block for every fixed thing inside it, and the drawer below
                 is one, so blurring the bar pinned the drawer to the bar, not the window. */}
@@ -61,8 +63,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   who cannot see it. next/image has nothing to optimise in a vector, and
                   one cached file beats the same paths in every page's HTML. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="" className="h-10 w-auto sm:h-12" />
-              <span className="wordmark hidden flex-col sm:flex">
+              <img src="/logo.svg" alt="" className="nav-logo h-10 w-auto sm:h-12" />
+              <span className="wordmark nav-name hidden flex-col sm:flex">
                 <span>Dawg</span>
                 <span>Treats</span>
               </span>
