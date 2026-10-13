@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3100;
+// Not the dev server's port. These tests reuse whatever already listens here, so sharing
+// a port with `npm run dev` points them at the database that server holds.
+const PORT = 3101;
 
 // The steps below migrate and then wipe whatever database they are pointed at, so the
 // address is set here rather than inherited. Without this, scripts/migrate.ts reads
