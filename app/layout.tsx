@@ -42,6 +42,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         { href: "/stats", label: "Stats", icon: "stats" },
       ]
     : [];
+  // Two more tabs than a visitor sees, so the row needs a wider window before it fits.
+  // Below that the drawer carries all of them instead of the row clipping a word in half.
+  const wide = adminTabs.length > 0;
   return (
     <html
       lang="en"
@@ -64,14 +67,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               className="absolute inset-0 rounded-pill border border-default bg-floating shadow-lg backdrop-blur-md"
             />
             <div className="relative flex h-full items-center justify-between gap-3 pr-3 pl-5 sm:gap-4">
-            <Link href="/" className="inline-flex min-h-control shrink-0 items-center font-display text-base font-semibold whitespace-nowrap sm:text-xl">
-              Dawg Treats
+            <Link href="/" className="inline-flex min-h-control shrink-0 items-center gap-2 font-display text-base font-semibold whitespace-nowrap">
+              {/* The mark carries the name beside it, so it is decoration to a reader
+                  who cannot see it. next/image has nothing to optimise in a vector, and
+                  one cached file beats the same paths in every page's HTML. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="" className="h-12 w-auto" />
+              <span className="wordmark flex flex-col">
+                <span>Dawg</span>
+                <span>Treats</span>
+              </span>
             </Link>
             {/* The cart sits in the bar at every width: a part-finished order must never
                 be behind a menu someone has to open first. */}
             <nav className="flex min-w-0 items-center gap-1 sm:gap-3">
               {/* The cart rides in the tab row, so the pill travels to it like any tab. */}
-              <div className="hidden min-w-0 sm:block">
+              <div className={wide ? "hidden min-w-0 lg:block" : "hidden min-w-0 md:block"}>
                 <NavTabs tabs={[...tabs, ...adminTabs]}>
                   {/* Four of these are places and the last one is a basket. The rule says
                       so, and the pill still travels across it. */}
@@ -79,9 +90,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   <CartLink variant="tab" />
                 </NavTabs>
               </div>
-              <NavMenu tabs={tabs} adminTabs={adminTabs} />
+              <NavMenu tabs={tabs} adminTabs={adminTabs} wide={wide} />
               {/* A phone has no tab row to join. */}
-              <div className="sm:hidden">
+              <div className={wide ? "lg:hidden" : "md:hidden"}>
                 <CartLink />
               </div>
             </nav>

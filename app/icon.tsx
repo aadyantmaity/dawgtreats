@@ -3,13 +3,13 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
-// The mark is the wordmark's two initials. A favicon file cannot carry a font, so the
-// letters are drawn here from the same face the site uses.
+// A favicon is read at 16px, where the mark's thin lines close up, so it sits on the
+// page colour at full bleed rather than inside a badge that steals half the room.
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
 
 export default async function Icon() {
-  const font = await readFile(join(process.cwd(), "assets", "shantell-sans-bold.ttf"));
+  const logo = await readFile(join(process.cwd(), "public", "logo.svg"));
 
   return new ImageResponse(
     (
@@ -21,15 +21,16 @@ export default async function Icon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#e6e0d2",
-          color: "#15130f",
-          fontFamily: "Shantell",
-          fontSize: 34,
-          letterSpacing: -1,
         }}
       >
-        DT
+        <img
+          width={52}
+          height={64}
+          src={`data:image/svg+xml;base64,${logo.toString("base64")}`}
+          alt=""
+        />
       </div>
     ),
-    { ...size, fonts: [{ name: "Shantell", data: font, weight: 700, style: "normal" }] },
+    size,
   );
 }

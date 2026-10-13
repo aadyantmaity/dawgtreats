@@ -84,7 +84,10 @@
   --spacing-fab: 3.5rem;
   /* The floating bar. Shorter than the old full-width one, because a pill with air
      around it reads as taller than it is. */
-  --spacing-bar: 3.5rem;
+  --spacing-bar: 4rem;
+  /* Where the drawer starts: the bar, plus the gap it floats in. Tied to the bar by
+     hand, because a drawer that begins under its own edge covers it. */
+  --spacing-under-bar: 4.5rem;
   /* The feedback panel: wide enough for a sentence, short enough to never fill a phone. */
   --spacing-panel: 22rem;
   --spacing-panel-max-h: 78vh;
@@ -314,6 +317,16 @@
      turns reads as a decoration rather than as the control it is. */
   details[open] > summary .slot-chevron {
     transform: rotate(90deg);
+  }
+
+  /* The name reads as one block, not two lines: the words sit tight, and the second is
+     pulled back because a capital T carries more air on its left than a D. */
+  .wordmark {
+    line-height: 0.9;
+  }
+
+  .wordmark > span + span {
+    margin-left: -5px;
   }
 
   /* A word with no descenders, like Home or Cart, sits high in its own line box, so an

@@ -147,7 +147,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
     <div
       ref={row}
       data-covered={covered ? "" : undefined}
-      className="relative flex min-w-0 items-center gap-1 sm:gap-2"
+      className="relative flex min-w-0 items-center gap-1 sm:gap-3"
     >
       {pill && (
         <span

@@ -9,7 +9,20 @@ import { NavIcon, type NavTab } from "@/components/nav-tabs";
 
 // The phone's whole navigation. The bar keeps its own cart as well, because the one thing
 // someone is part way through must never be behind a menu they have to open first.
-export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab[] }) {
+// The owner's bar carries two more tabs than a visitor's, so the row it would have to
+// fit in is wider. `wide` moves the drawer's own cutover to match.
+const HIDE_AT = { md: "md:hidden", lg: "lg:hidden" } as const;
+
+export function NavMenu({
+  tabs,
+  adminTabs,
+  wide = false,
+}: {
+  tabs: NavTab[];
+  adminTabs: NavTab[];
+  wide?: boolean;
+}) {
+  const hide = wide ? HIDE_AT.lg : HIDE_AT.md;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [seenPath, setSeenPath] = useState(pathname);
@@ -84,7 +97,7 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
         aria-controls="nav-menu"
         aria-label="Menu"
         onClick={() => setOpen((was) => !was)}
-        className="relative z-50 grid size-control shrink-0 place-items-center rounded-pill text-primary transition-colors ease-spring hover:bg-quiet aria-expanded:bg-action aria-expanded:text-on-action sm:hidden"
+        className={`relative z-50 grid size-control shrink-0 place-items-center rounded-pill text-primary transition-colors ease-spring hover:bg-quiet aria-expanded:bg-action aria-expanded:text-on-action ${hide}`}
       >
         <span aria-hidden className="relative block size-4">
           <span className="nav-toggle-line" />
@@ -95,7 +108,7 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
       <div
         aria-hidden
         onClick={() => setOpen(false)}
-        className={`fixed inset-x-0 top-16 bottom-0 z-50 bg-scrim transition-opacity sm:hidden ${
+        className={`fixed inset-x-0 top-under-bar bottom-0 z-50 bg-scrim transition-opacity ${hide} ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -108,7 +121,7 @@ export function NavMenu({ tabs, adminTabs }: { tabs: NavTab[]; adminTabs: NavTab
         aria-label="Menu"
         inert={!open}
         onKeyDown={keepFocusIn}
-        className={`fixed top-16 right-0 bottom-0 z-50 flex w-menu max-w-full flex-col gap-1 overflow-y-auto border-l border-default bg-surface p-3 transition-transform ease-out sm:hidden ${
+        className={`fixed top-under-bar right-0 bottom-0 z-50 flex w-menu max-w-full flex-col gap-1 overflow-y-auto border-l border-default bg-surface p-3 transition-transform ease-out ${hide} ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
