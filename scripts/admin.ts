@@ -11,6 +11,7 @@ import { sendOpenNotice } from '@/lib/email'
 import { createFlavor, listFlavors, updateFlavor, type Flavor } from '@/lib/flavors'
 import { countWaiting, listWaiting, markNotified } from '@/lib/notify'
 import {
+  SLOT_MINUTES,
   addSlot,
   deleteSlot,
   findSlotAt,
@@ -20,7 +21,7 @@ import {
   setBatchQuantities,
 } from '@/lib/inventory'
 import { formatCents, parsePriceCents } from '@/lib/money'
-import { flavorSchema, quantitySchema } from '@/lib/validation'
+import { LIMITS, flavorSchema, quantitySchema } from '@/lib/validation'
 import {
   closeWeek,
   createWeek,
@@ -86,6 +87,12 @@ const command = args.find((a) => !a.startsWith('--')) ?? 'help'
 const positional = args.filter((a) => !a.startsWith('--') && a !== command)
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 
+// Resend takes two messages a second. Going faster earns a 429, which costs that address
+// its email until someone runs the command again.
+const SEND_GAP_MS = 600
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 // Opening a week and telling the list are the same moment, so both commands end here.
 async function tellTheWaitingList(
   week: { id: string; pickupWeekendStart: string; ordersCloseAt: Date },
@@ -93,7 +100,7 @@ async function tellTheWaitingList(
 ) {
   const waiting = await listWaiting(again)
   // Nobody to tell is not a send, so opening a week on a dev machine still works.
-  if (waiting.length === 0) return { told: 0, waiting: 0 }
+  if (waiting.length === 0) return { told: 0, waiting: 0, dropped: [] }
 
   // The CLI reads .env.local, where the site URL is the dev server. That address is dead on
   // the phone of everyone on the list, so refuse the send instead of mailing a dead link.
@@ -105,13 +112,37 @@ async function tellTheWaitingList(
   // Read once, not once per address: the menu is the same for everyone on the list. A
   // flavor with nothing left is not news, so it is left out.
   const menu = (await getMenu(week.id)).filter((item) => item.remaining !== 0)
-  const told: string[] = []
-  for (const row of waiting) {
+  const dropped: string[] = []
+  let told = 0
+
+  // Paced sending looks like a hung command, and stopping it half way is how the list
+  // gets told twice.
+  console.log(`Telling ${waiting.length}, about ${Math.ceil((waiting.length * SEND_GAP_MS) / 1000)}s. Let it finish.`)
+
+  for (const [index, row] of waiting.entries()) {
+    if (index > 0) await pause(SEND_GAP_MS)
     // One address at a time, so a refused one cannot cost the rest their email.
-    if (await sendOpenNotice(row.email, week, row.token, menu, note)) told.push(row.id)
+    if (!(await sendOpenNotice(row.email, week, row.token, menu, note))) {
+      dropped.push(row.email)
+      continue
+    }
+    // Marked the moment it lands. Marking the whole batch at the end means a crash
+    // part way through mails everyone again on the next run.
+    await markNotified([row.id])
+    told++
   }
-  await markNotified(told)
-  return { told: told.length, waiting: waiting.length }
+
+  return { told, waiting: waiting.length, dropped }
+}
+
+// Says which addresses got nothing, by name: a count alone reads as a success when most
+// of the list was dropped. The next run tries them again, because they stay unmarked.
+function reportSend({ told, waiting, dropped }: { told: number; waiting: number; dropped: string[] }, none: string) {
+  if (waiting === 0) return console.log(none)
+  console.log(`Told ${told} of ${waiting}.`)
+  if (dropped.length === 0) return
+  console.log(`\n${dropped.length} got nothing. Run the command again to retry them:`)
+  for (const email of dropped) console.log(`  ${email}`)
 }
 
 function fail(message: string): never {
@@ -194,7 +225,8 @@ async function showWeek(week: Week) {
     console.log(`  ${String(row.quantityTotal).padStart(4)}  ${row.name}${inactive}  ${formatCents(row.priceCents)}${sold}`)
   }
 
-  console.log(`\nPickup slots (${slots.length} · ${slots.length * 5} pickups max)`)
+  const pickups = slots.reduce((sum, slot) => sum + slot.capacity, 0)
+  console.log(`\nPickup slots (${slots.length} · ${pickups} pickups max)`)
   if (slots.length === 0) console.log('  no slots yet')
   for (const slot of slots) console.log(slotLine(slot))
   console.log()
@@ -240,8 +272,7 @@ const commands: Record<string, () => Promise<void>> = {
     console.log(`${formatPickupWeekend(week.pickupWeekendStart)} is open. Orders close ${formatClosesAt(week.ordersCloseAt)}.`)
 
     if (args.includes('--quiet')) return console.log('Nobody told: --quiet.')
-    const { told, waiting } = await tellTheWaitingList(week)
-    console.log(waiting === 0 ? 'Nobody was waiting.' : `Told ${told} of ${waiting} waiting.`)
+    reportSend(await tellTheWaitingList(week), 'Nobody was waiting.')
   },
 
   async 'week:close'() {
@@ -265,8 +296,7 @@ const commands: Record<string, () => Promise<void>> = {
     if (!week) fail('No week is open. Run: npm run admin -- week:open')
 
     const again = args.includes('--again')
-    const { told, waiting } = await tellTheWaitingList(week, { again, note: flag('note') })
-    console.log(waiting === 0 ? 'Nobody is waiting.' : `Told ${told} of ${waiting}.`)
+    reportSend(await tellTheWaitingList(week, { again, note: flag('note') }), 'Nobody is waiting.')
   },
 
   async flavors() {
@@ -335,7 +365,9 @@ const commands: Record<string, () => Promise<void>> = {
       : ''
     console.log(`\n${all.length} message${all.length === 1 ? '' : 's'}${average}\n`)
     for (const item of all) {
-      const stars = item.rating ? '*'.repeat(item.rating).padEnd(5, '.') : '     '
+      const stars = item.rating
+        ? '*'.repeat(item.rating).padEnd(LIMITS.ratingMax, '.')
+        : ' '.repeat(LIMITS.ratingMax)
       console.log(`  ${stars}  ${item.name ?? 'anonymous'}`)
       console.log(`         ${item.message}`)
     }
@@ -364,8 +396,8 @@ const commands: Record<string, () => Promise<void>> = {
     if (minutesOf(to) < minutesOf(from)) fail(`${toInput} is before ${fromInput}`)
 
     const added: string[] = []
-    const last = toInput ? minutesOf(to) - 30 : minutesOf(from)
-    for (let m = minutesOf(from); m <= Math.max(minutesOf(from), last); m += 30) {
+    const last = toInput ? minutesOf(to) - SLOT_MINUTES : minutesOf(from)
+    for (let m = minutesOf(from); m <= Math.max(minutesOf(from), last); m += SLOT_MINUTES) {
       const time = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
       try {
         await addSlot(week.id, day, time)
@@ -381,9 +413,10 @@ const commands: Record<string, () => Promise<void>> = {
   async 'slots:rm'() {
     const [dayInput, timeInput] = positional
     if (!dayInput || !timeInput) fail('Usage: slots:rm <sat|sun> <time>')
+    const day = parseDay(dayInput)
     const week = await targetWeek()
-    await deleteSlot(await findSlotAt(week.id, parseDay(dayInput), parseTime(timeInput)))
-    console.log(`Removed the ${parseDay(dayInput) === 'sat' ? 'Saturday' : 'Sunday'} ${timeInput} slot.`)
+    await deleteSlot(await findSlotAt(week.id, day, parseTime(timeInput)))
+    console.log(`Removed the ${day === 'sat' ? 'Saturday' : 'Sunday'} ${timeInput} slot.`)
   },
 
   async seed() {

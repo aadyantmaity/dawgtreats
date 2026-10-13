@@ -1,7 +1,7 @@
 // A web animation cannot read a custom property, so the spring and duration from
-// app/globals.css are duplicated here.
-const SPRING = "cubic-bezier(0.34, 1.56, 0.64, 1)";
-const DURATION_MS = 260;
+// app/globals.css are duplicated here. Exported only so tests/tokens.test.ts holds them to it.
+export const SPRING = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+export const DURATION_MS = 260;
 
 // Only the bump this module started may be cancelled. `getAnimations()` would also return
 // the element's CSS transitions, and cancelling one of those changes how it looks.

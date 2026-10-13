@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { GET } from '@/app/api/orders/[code]/route'
-import { callerIp } from '@/lib/limits'
+import { callerIp, checkLimit } from '@/lib/limits'
 import { reserve } from '@/lib/orders'
 
 import { buyer, resetDatabase, seedWeek } from './helpers'
@@ -102,5 +102,17 @@ describe('who the limit counts', () => {
       headers: { 'x-forwarded-for': '1.1.1.1, 203.0.113.9' },
     })
     expect(callerIp(noRealIp)).toBe('203.0.113.9')
+  })
+
+  // One shared bucket for every unnamed caller spends the whole site's allowance on the
+  // first few requests, then refuses every customer at once.
+  it('names no caller when no header carries an address, and shares no bucket', async () => {
+    const reported = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    expect(callerIp(new Request('http://localhost'))).toBeNull()
+    expect(await checkLimit('checkout', null)).toEqual({ ok: true, retryAfterSeconds: 0 })
+
+    expect(reported).toHaveBeenCalledWith('rate_limit_without_caller', { name: 'checkout' })
+    reported.mockRestore()
   })
 })

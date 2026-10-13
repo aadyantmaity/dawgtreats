@@ -1,14 +1,20 @@
 import 'server-only'
 
+import { reportIssue } from '@/lib/errors'
 import type { MenuItem } from '@/lib/inventory'
 import { formatCents } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
+import { EMAIL_BACKDROP, PALETTE } from '@/lib/palette'
 import { PICKUP_PLACE, formatClosesAt, formatPickupWeekend, formatPt } from '@/lib/weeks'
 
 const INBOX = 'orders@dawgtreats.shop'
 const FROM = `Dawg Treats <${INBOX}>`
 // Mail to the inbox forwards to a real person, so alerts need no extra address.
 const OWNER = process.env.OWNER_EMAIL ?? INBOX
+
+// The sentence that sets what a customer is owed. Every message has to say the same
+// thing, so a change in the policy is a change in one place.
+const TERMS = 'Pickup only. No refunds or cancellations.'
 
 type Sent = { id: string }
 
@@ -67,12 +73,6 @@ function pickupWindow(slot: { startsAt: Date; endsAt: Date }): string {
 // Mail clients drop a stylesheet and most of modern CSS, so every rule here is inline
 // and the layout is tables. A flavor name can hold an ampersand, so nothing reaches the
 // markup unescaped.
-const INK_HEX = '#15130f'
-const IVORY_HEX = '#f3f1ec'
-const PAPER_HEX = '#fcfbf8'
-const LINE_HEX = '#ded8cb'
-const QUIET_HEX = '#5d564a'
-const FAINT_HEX = '#6e675c'
 const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 // Gmail drops @font-face, and a picture of the name only appears for someone whose
 // client fetches remote images, which many will not. So the name is text, and the
@@ -104,12 +104,12 @@ function shell(parts: { title: string; preheader: string; body: string }): strin
 :root{color-scheme:light;supported-color-schemes:light}
 </style>
 </head>
-<body bgcolor="#e7e4dd" style="margin:0;padding:0;background-color:#e7e4dd;">
+<body bgcolor="${EMAIL_BACKDROP}" style="margin:0;padding:0;background-color:${EMAIL_BACKDROP};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(parts.preheader)}</div>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#e7e4dd" style="background-color:#e7e4dd;padding:24px 12px;">
-<tr><td align="center" bgcolor="#e7e4dd" style="background-color:#e7e4dd;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${EMAIL_BACKDROP}" style="background-color:${EMAIL_BACKDROP};padding:24px 12px;">
+<tr><td align="center" bgcolor="${EMAIL_BACKDROP}" style="background-color:${EMAIL_BACKDROP};">
 <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560"><tr><td><![endif]-->
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${PAPER_HEX}" style="width:100%;max-width:560px;background-color:${PAPER_HEX};border:1px solid ${LINE_HEX};border-radius:18px;overflow:hidden;font-family:${SANS};">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${PALETTE.white}" style="width:100%;max-width:560px;background-color:${PALETTE.white};border:1px solid ${PALETTE.linen};border-radius:18px;overflow:hidden;font-family:${SANS};">
 ${parts.body}
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
@@ -119,21 +119,21 @@ ${parts.body}
 
 // The code is what someone holds up at the table, so it is the one thing that is big.
 function codeBlock(label: string, orderCode: string): string {
-  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 0;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${IVORY_HEX}" style="background-color:${IVORY_HEX};border-radius:14px;">
-    <tr><td align="center" bgcolor="${IVORY_HEX}" style="background-color:${IVORY_HEX};border-radius:14px;padding:18px;">
-      <div style="font-family:${SANS};font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:${FAINT_HEX};">${escapeHtml(label)}</div>
-      <div style="font-family:${DISPLAY};font-size:42px;letter-spacing:.1em;color:${INK_HEX};padding-top:4px;">${escapeHtml(orderCode)}</div>
+  return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:16px 22px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${PALETTE.ivory}" style="background-color:${PALETTE.ivory};border-radius:14px;">
+    <tr><td align="center" bgcolor="${PALETTE.ivory}" style="background-color:${PALETTE.ivory};border-radius:14px;padding:18px;">
+      <div style="font-family:${SANS};font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:${PALETTE.pebble};">${escapeHtml(label)}</div>
+      <div style="font-family:${DISPLAY};font-size:42px;letter-spacing:.1em;color:${PALETTE.ink};padding-top:4px;">${escapeHtml(orderCode)}</div>
     </td></tr>
   </table>
 </td></tr>`
 }
 
 function linkButton(href: string, label: string): string {
-  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 0;">
+  return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:16px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-    <td align="center" bgcolor="${INK_HEX}" style="border-radius:999px;">
-      <a href="${escapeHtml(href)}" style="display:block;padding:13px 20px;font-family:${SANS};font-size:16px;font-weight:600;color:${IVORY_HEX};text-decoration:none;">${escapeHtml(label)}</a>
+    <td align="center" bgcolor="${PALETTE.ink}" style="border-radius:999px;">
+      <a href="${escapeHtml(href)}" style="display:block;padding:13px 20px;font-family:${SANS};font-size:16px;font-weight:600;color:${PALETTE.ivory};text-decoration:none;">${escapeHtml(label)}</a>
     </td>
   </tr></table>
 </td></tr>`
@@ -141,7 +141,7 @@ function linkButton(href: string, label: string): string {
 
 // Each fact on its own line: these are read at a door, not in a chair.
 function footerLines(lines: string[]): string {
-  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 22px;font-family:${SANS};font-size:13px;line-height:1.6;color:${FAINT_HEX};">
+  return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:16px 22px 22px;font-family:${SANS};font-size:13px;line-height:1.6;color:${PALETTE.pebble};">
   ${lines.map((line) => escapeHtml(line)).join('<br>')}
 </td></tr>`
 }
@@ -151,8 +151,14 @@ function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] || name
 }
 
+// Every link in every message starts here. A trailing slash on the env var would
+// otherwise double the one that follows it.
+function siteUrl(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
+}
+
 function orderLink(orderCode: string): string {
-  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/order/${orderCode}`
+  return `${siteUrl()}/order/${orderCode}`
 }
 
 function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
@@ -179,7 +185,7 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     `Your order: ${orderLink(o.orderCode)}`,
     '',
     'Reply here if something comes up.',
-    'Pickup only. No refunds or cancellations.',
+    TERMS,
   ].join('\n')
 }
 
@@ -187,9 +193,9 @@ function confirmationHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderB
   const { order: o, lines, slot } = order
   const items = lines
     .map(
-      (l) => `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:8px 0;border-bottom:1px solid ${LINE_HEX};font-size:16px;color:${INK_HEX};">
+      (l) => `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;border-bottom:1px solid ${PALETTE.linen};font-size:16px;color:${PALETTE.ink};">
       ${l.quantity} &times; ${escapeHtml(l.name)}
-      <div style="font-size:15px;color:${QUIET_HEX};padding-top:2px;">${formatCents(l.unitPriceCents * l.quantity)}</div>
+      <div style="font-size:15px;color:${PALETTE.taupe};padding-top:2px;">${formatCents(l.unitPriceCents * l.quantity)}</div>
     </td></tr>`,
     )
     .join('')
@@ -198,23 +204,23 @@ function confirmationHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     title: `Dawg Treats order ${o.orderCode}`,
     preheader: `${o.orderCode} · pick up ${pickupDay(slot)}`,
     body: `
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:22px 22px 0;font-size:16px;line-height:1.5;color:${INK_HEX};">Thanks ${escapeHtml(firstName(o.name))}, your cookies are paid for.</td></tr>
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:14px 22px 0;">
-  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">${escapeHtml(pickupDay(slot))}</div>
-  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">${escapeHtml(pickupTimeTight(slot))}</div>
-  <div style="font-size:16px;color:${QUIET_HEX};padding-top:4px;">${escapeHtml(PICKUP_PLACE)}</div>
-  <div style="font-size:15px;color:${FAINT_HEX};padding-top:8px;">Need another time? Change it on your order page.</div>
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:22px 22px 0;font-size:16px;line-height:1.5;color:${PALETTE.ink};">Thanks ${escapeHtml(firstName(o.name))}, your cookies are paid for.</td></tr>
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:14px 22px 0;">
+  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${PALETTE.ink};">${escapeHtml(pickupDay(slot))}</div>
+  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${PALETTE.ink};">${escapeHtml(pickupTimeTight(slot))}</div>
+  <div style="font-size:16px;color:${PALETTE.taupe};padding-top:4px;">${escapeHtml(PICKUP_PLACE)}</div>
+  <div style="font-size:15px;color:${PALETTE.pebble};padding-top:8px;">Need another time? Change it on your order page.</div>
 </td></tr>
 ${codeBlock('Show this at pickup', o.orderCode)}
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;">
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:18px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     ${items}
-    <tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:10px 0;font-size:16px;font-weight:600;color:${INK_HEX};">Total ${formatCents(o.totalCents)}</td></tr>
+    <tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:10px 0;font-size:16px;font-weight:600;color:${PALETTE.ink};">Total ${formatCents(o.totalCents)}</td></tr>
   </table>
 </td></tr>
 ${linkButton(orderLink(o.orderCode), 'Your order')}
 ${footerLines([
-  'Pickup only. No refunds or cancellations.',
+  TERMS,
   '',
   'Reply here if something comes up.',
 ])}`,
@@ -289,6 +295,9 @@ export async function alertStrandedPayment(details: {
   paymentIntentId: string
   amountCents: number
 }): Promise<boolean> {
+  // Reported before the send, so the worst outcome on the site is on the record even
+  // when Resend is the thing that is down.
+  reportIssue('stranded_payment', details)
   try {
     const sent = await send({
       to: OWNER,
@@ -304,10 +313,9 @@ export async function alertStrandedPayment(details: {
         'Refund it in Stripe, or bake the cookies and mark the order paid by hand.',
       ].join('\n'),
     })
-    console.error('stranded_payment', details)
     return sent !== null
   } catch (error) {
-    console.error('stranded_payment_alert_failed', { ...details, error })
+    reportIssue('stranded_payment_alert_failed', { ...details, error })
     return false
   }
 }
@@ -345,15 +353,15 @@ function reminderHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderByCod
     title: `Dawg Treats pickup today ${o.orderCode}`,
     preheader: `${pickupTime(slot)} · ${o.orderCode}`,
     body: `
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:22px 22px 0;">
-  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">Today</div>
-  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${INK_HEX};">${escapeHtml(pickupTimeTight(slot))}</div>
-  <div style="font-size:16px;color:${QUIET_HEX};padding-top:6px;">${escapeHtml(PICKUP_PLACE)}</div>
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:22px 22px 0;">
+  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${PALETTE.ink};">Today</div>
+  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${PALETTE.ink};">${escapeHtml(pickupTimeTight(slot))}</div>
+  <div style="font-size:16px;color:${PALETTE.taupe};padding-top:6px;">${escapeHtml(PICKUP_PLACE)}</div>
 </td></tr>
 ${codeBlock('Show this at the table', o.orderCode)}
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:16px 22px 0;font-size:16px;line-height:1.5;color:${QUIET_HEX};">${items}</td></tr>
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:16px 22px 0;font-size:16px;line-height:1.5;color:${PALETTE.taupe};">${items}</td></tr>
 ${linkButton(orderLink(o.orderCode), 'Your order')}
-${footerLines(['Come any time in the window.', 'Pickup only. No refunds or cancellations.'])}`,
+${footerLines(['Come any time in the window.', TERMS])}`,
   })
 }
 
@@ -389,8 +397,7 @@ export type OpenNoticeItem = Pick<MenuItem, 'name' | 'priceCents' | 'imageUrl'>
 // A picture in an email needs a whole address, and the menu stores a path.
 function absolute(path: string): string {
   if (/^https?:\/\//.test(path)) return path
-  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
-  return `${site}/${path.replace(/^\//, '')}`
+  return `${siteUrl()}/${path.replace(/^\//, '')}`
 }
 
 // The price sits under the name, not across from it: a long name and a price in one row
@@ -399,25 +406,25 @@ function menuRow(item: OpenNoticeItem, last: boolean): string {
   const photo = item.imageUrl
     ? `<img src="${escapeHtml(absolute(item.imageUrl))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;object-fit:cover;">`
     : ''
-  return `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:12px 0;${last ? '' : `border-bottom:1px solid ${LINE_HEX};`}">
+  return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:12px 0;${last ? '' : `border-bottom:1px solid ${PALETTE.linen};`}">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-    ${photo ? `<td width="64" valign="middle" bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding-right:14px;">${photo}</td>` : ''}
-    <td valign="middle" bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};font-family:${SANS};font-size:16px;line-height:1.35;color:${INK_HEX};">
+    ${photo ? `<td width="64" valign="middle" bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding-right:14px;">${photo}</td>` : ''}
+    <td valign="middle" bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};font-family:${SANS};font-size:16px;line-height:1.35;color:${PALETTE.ink};">
       ${escapeHtml(item.name)}
-      <div style="font-size:15px;color:${QUIET_HEX};padding-top:2px;">${formatCents(item.priceCents)}</div>
+      <div style="font-size:15px;color:${PALETTE.taupe};padding-top:2px;">${formatCents(item.priceCents)}</div>
     </td>
   </tr></table>
 </td></tr>`
 }
 
 function openNoticeHtml(week: NotifiableWeek, menu: OpenNoticeItem[], stop: string, note?: string): string {
-  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
+  const site = siteUrl()
   return shell({
     title: 'New menu this week',
     preheader: note ?? `Orders close ${formatClosesAt(week.ordersCloseAt)}`,
     body: `
-${note ? `<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;font-family:${SANS};font-size:15px;line-height:1.45;color:${QUIET_HEX};">${escapeHtml(note)}</td></tr>` : ''}
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:18px 22px 0;">
+${note ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:18px 22px 0;font-family:${SANS};font-size:15px;line-height:1.45;color:${PALETTE.taupe};">${escapeHtml(note)}</td></tr>` : ''}
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:18px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${menu.map((item, index) => menuRow(item, index === menu.length - 1)).join('')}</table>
 </td></tr>
 ${linkButton(site, 'Order')}
@@ -425,16 +432,16 @@ ${footerLines([
   `Orders close ${formatClosesAt(week.ordersCloseAt)}.`,
   `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
   `${PICKUP_PLACE}.`,
-  'Pickup only. No refunds or cancellations.',
+  TERMS,
 ])}
-<tr><td bgcolor="${PAPER_HEX}" style="background-color:${PAPER_HEX};padding:0 22px 22px;font-family:${SANS};font-size:13px;color:${FAINT_HEX};">
-  <a href="${escapeHtml(stop)}" style="color:${FAINT_HEX};">Stop these emails</a>
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:0 22px 22px;font-family:${SANS};font-size:13px;color:${PALETTE.pebble};">
+  <a href="${escapeHtml(stop)}" style="color:${PALETTE.pebble};">Stop these emails</a>
 </td></tr>`,
   })
 }
 
 function openNoticeText(week: NotifiableWeek, menu: OpenNoticeItem[], stop: string, note?: string): string {
-  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
+  const site = siteUrl()
   return [
     ...(note ? [note, ''] : []),
     ...menu.flatMap((item) => [`  ${item.name}`, `  ${formatCents(item.priceCents)}`, '']),
@@ -443,7 +450,7 @@ function openNoticeText(week: NotifiableWeek, menu: OpenNoticeItem[], stop: stri
     `Orders close ${formatClosesAt(week.ordersCloseAt)}.`,
     `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
     `${PICKUP_PLACE}.`,
-    'Pickup only. No refunds or cancellations.',
+    TERMS,
     '',
     `Stop these emails: ${stop}`,
   ].join('\n')
@@ -458,7 +465,7 @@ export async function sendOpenNotice(
   menu: OpenNoticeItem[] = [],
   note?: string,
 ): Promise<boolean> {
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const site = siteUrl()
   const stop = `${site}/notify/unsubscribe?t=${encodeURIComponent(token)}`
   try {
     const sent = await send({

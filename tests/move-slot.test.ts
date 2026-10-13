@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { db } from '@/lib/db'
 import { orders, pickupSlots } from '@/lib/db/schema'
-import { listSlotsForOrder, markPaid, moveToSlot, reserve } from '@/lib/orders'
+import { listSlotsForOrder, markPaid, markReminderSent, moveToSlot, reserve } from '@/lib/orders'
 
 import { buyer, resetDatabase, seedWeek } from './helpers'
 
@@ -26,6 +26,9 @@ const booked = async (slotId: string) =>
 const slotOf = async (orderId: string) =>
   (await db.select().from(orders).where(eq(orders.id, orderId)))[0].pickupSlotId
 
+const reminderMark = async (orderId: string) =>
+  (await db.select().from(orders).where(eq(orders.id, orderId)))[0].reminderSentAt
+
 describe('moving a pickup to another time', () => {
   it('takes the new slot and gives the old one back', async () => {
     const order = await aPaidOrder()
@@ -36,6 +39,18 @@ describe('moving a pickup to another time', () => {
     expect(await slotOf(order.orderId)).toBe(order.slotIds[1])
     expect(await booked(order.slotIds[0])).toBe(0)
     expect(await booked(order.slotIds[1])).toBe(1)
+  })
+
+  // A reminder names a time, so the one already sent is wrong the moment the time moves.
+  it('clears a sent reminder, so the new time gets one of its own', async () => {
+    const order = await aPaidOrder()
+    expect(await markReminderSent(order.orderId)).toBe(true)
+
+    await moveToSlot(order.orderCode, order.slotIds[1])
+
+    expect(await reminderMark(order.orderId)).toBeNull()
+    // The claim is free again, so the next run sends the time the customer now has.
+    expect(await markReminderSent(order.orderId)).toBe(true)
   })
 
   // A slot that is full has somebody else's cookies behind every place in it.

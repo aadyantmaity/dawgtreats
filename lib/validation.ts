@@ -4,13 +4,19 @@ import { formatCents } from '@/lib/money'
 
 export const LIMITS = {
   nameMax: 60,
+  emailMax: 120,
   descriptionMax: 200,
   priceMaxCents: 10000,
   quantityMax: 1000,
   perFlavorMax: 24,
   perOrderMax: 24,
   messageMax: 500,
+  ratingMax: 5,
 } as const
+
+// Crockford's alphabet: no I, L, O or U, so a code read aloud is never mistyped. It lives
+// here because the lookup form checks a typed code and lib/orders cannot reach the browser.
+export const ORDER_CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 
 export const MESSAGES = {
   nameRequired: 'Name is required',
@@ -23,6 +29,7 @@ export const MESSAGES = {
   quantityTooHigh: `Quantities must be ${LIMITS.quantityMax} or fewer`,
   emailRequired: 'Email is required',
   emailFormat: 'That email address does not look right',
+  emailTooLong: 'That email address is too long',
   phoneRequired: 'Phone number is required',
   phoneFormat: 'Enter a 10-digit phone number',
   slotRequired: 'Choose a pickup time',
@@ -149,7 +156,7 @@ export function phoneError(value: string, required = true): string | null {
 
 const contact = {
   name: z.string().trim().min(1, 'Your name is required').max(LIMITS.nameMax, MESSAGES.nameTooLong),
-  email: z.email(MESSAGES.emailFormat).max(120, 'That email address is too long'),
+  email: z.email(MESSAGES.emailFormat).max(LIMITS.emailMax, MESSAGES.emailTooLong),
   phone: phoneSchema,
 }
 
@@ -180,7 +187,7 @@ export const checkoutSchema = z.object({
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
 export const feedbackSchema = z.object({
-  rating: z.int().min(1, MESSAGES.ratingRequired).max(5, MESSAGES.ratingRange),
+  rating: z.int().min(1, MESSAGES.ratingRequired).max(LIMITS.ratingMax, MESSAGES.ratingRange),
   message: z.string().trim().max(LIMITS.messageMax, MESSAGES.messageTooLong),
   name: z.string().trim().max(LIMITS.nameMax, MESSAGES.nameTooLong).transform((n) => n || null),
 })
@@ -192,5 +199,5 @@ export function messageError(value: string): string | null {
 // The form holds 0 for no stars picked, which the schema refuses. Naming it here keeps the
 // browser and the server refusing the same thing in the same words.
 export function ratingError(value: number): string | null {
-  return value >= 1 && value <= 5 ? null : MESSAGES.ratingRequired
+  return value >= 1 && value <= LIMITS.ratingMax ? null : MESSAGES.ratingRequired
 }

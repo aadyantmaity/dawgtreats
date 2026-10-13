@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { db } from '@/lib/db'
 import { batchItems, orders, payments, pickupSlots } from '@/lib/db/schema'
@@ -45,6 +45,51 @@ describe('marking an order paid', () => {
     const [payment] = await db.select().from(payments)
     expect(payment.stripePaymentIntentId).toBe('pi_1')
     expect(payment.amountCents).toBe(600)
+  })
+
+  // Short or over, the cookies are already reserved and the customer has paid something,
+  // so the order stands and the difference becomes a person's job rather than a silence.
+  it('still marks an order paid when the amount does not match, and says so', async () => {
+    const order = await anOrder()
+    const reported = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    expect(await markPaid(order.orderId, { paymentIntentId: 'pi_short', amountCents: 500 })).toBe(
+      'paid',
+    )
+
+    const [saved] = await db.select().from(orders).where(eq(orders.id, order.orderId))
+    expect(saved.status).toBe('paid')
+    const [payment] = await db.select().from(payments)
+    expect(payment.amountCents).toBe(500)
+    expect(reported).toHaveBeenCalledWith(
+      'paid_amount_mismatch',
+      expect.objectContaining({ owedCents: 600, paidCents: 500 }),
+    )
+    reported.mockRestore()
+  })
+
+  // The money arrived and nothing holds cookies for it. The row is what survives a failed
+  // email and a log nobody reads.
+  it('records a payment that lands on an order already given back', async () => {
+    const order = await anOrder()
+    await releaseOrder(order.orderId)
+    const reported = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    expect(
+      await markPaid(order.orderId, { paymentIntentId: 'pi_stranded', amountCents: 600 }),
+    ).toBe('no-longer-pending')
+
+    const [payment] = await db.select().from(payments)
+    expect(payment.stripePaymentIntentId).toBe('pi_stranded')
+    expect(payment.status).toBe('stranded')
+    expect(payment.amountCents).toBe(600)
+    const [saved] = await db.select().from(orders).where(eq(orders.id, order.orderId))
+    expect(saved.status).toBe('expired')
+    expect(reported).toHaveBeenCalledWith(
+      'paid_order_not_pending',
+      expect.objectContaining({ status: 'expired', amountCents: 600 }),
+    )
+    reported.mockRestore()
   })
 
   it('does nothing the second time, so a retried webhook cannot double up', async () => {
@@ -114,17 +159,34 @@ describe('finding orders the webhooks forgot', () => {
 })
 
 describe('where Stripe sends the customer back', () => {
-  it('uses the origin they came from', () => {
+  const site = process.env.NEXT_PUBLIC_SITE_URL
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('uses the origin they came from when it is one we can name', () => {
+    expect(returnOrigin(site!)).toBe(site)
+    // A dev server picks its own port, and this is never production.
     expect(returnOrigin('http://localhost:3100')).toBe('http://localhost:3100')
-    expect(returnOrigin('https://dawgtreats.vercel.app')).toBe('https://dawgtreats.vercel.app')
-    expect(returnOrigin('https://dawgtreats-git-main-x.vercel.app')).toBe(
-      'https://dawgtreats-git-main-x.vercel.app',
+  })
+
+  // Vercel names the deployment answering the request, so a preview sends the customer
+  // back to itself without every address ending in vercel.app being trusted.
+  it('uses a preview deployment only when it is the one answering', () => {
+    vi.stubEnv('VERCEL_URL', 'dawgtreats-abc123-x.vercel.app')
+
+    expect(returnOrigin('https://dawgtreats-abc123-x.vercel.app')).toBe(
+      'https://dawgtreats-abc123-x.vercel.app',
     )
+    expect(returnOrigin('https://dawgtreats-git-main-x.vercel.app')).toBe(site)
   })
 
   it('ignores an origin that is not ours, so payment cannot end on someone else’s page', () => {
-    const site = process.env.NEXT_PUBLIC_SITE_URL
     expect(returnOrigin('https://evil.example.com')).toBe(site)
+    // A project name is a prefix anyone can register, and a suffix anyone can prepend to.
+    expect(returnOrigin('https://notdawgtreats.vercel.app')).toBe(site)
+    expect(returnOrigin('https://dawgtreats.vercel.app.evil.com')).toBe(site)
     expect(returnOrigin('not a url')).toBe(site)
     expect(returnOrigin(null)).toBe(site)
   })

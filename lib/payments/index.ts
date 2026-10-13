@@ -3,9 +3,11 @@ import 'server-only'
 import Stripe from 'stripe'
 
 import { DomainError } from '@/lib/errors'
+import { HOLD_MINUTES } from '@/lib/orders'
 
-// Stripe refuses an expiry under 30 minutes away, so the session outlives the hold by a minute.
-const SESSION_MINUTES = 31
+// The session outlives the hold, so a customer never pays for cookies already given back.
+// Stripe also refuses an expiry under 30 minutes away, which the hold already satisfies.
+const SESSION_MINUTES = HOLD_MINUTES + 1
 
 export type CheckoutLine = { name: string; quantity: number; unitPriceCents: number }
 
@@ -26,18 +28,25 @@ function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000'
 }
 
-// Stripe sends the customer back here, so this allows only our own origins: a forged
-// Origin header must not land them on someone else's page after paying.
+// Vercel names the hostnames of the running deployment, so a preview can send the
+// customer back to itself without trusting every address that ends in vercel.app.
+function deploymentOrigins(): string[] {
+  return [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL]
+    .filter((host): host is string => Boolean(host))
+    .map((host) => `https://${host}`)
+}
+
+// A forged Origin must not land a paying customer, and their order code, on someone
+// else's site. Only the configured site, this deployment, and a dev server pass.
 export function returnOrigin(requested: string | null): string {
   if (!requested) return siteUrl()
   try {
     const url = new URL(requested)
-    const allowed =
-      url.origin === siteUrl() ||
-      url.hostname === 'localhost' ||
-      url.hostname === '127.0.0.1' ||
-      url.hostname.endsWith('.vercel.app')
-    return allowed ? url.origin : siteUrl()
+    const loopback =
+      process.env.NODE_ENV !== 'production' &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+    const named = url.origin === siteUrl() || deploymentOrigins().includes(url.origin)
+    return loopback || named ? url.origin : siteUrl()
   } catch {
     return siteUrl()
   }

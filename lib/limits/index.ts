@@ -3,13 +3,15 @@ import 'server-only'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
+import { reportIssue } from '@/lib/errors'
+
 // Vercel sets this itself and strips what the caller sent, unlike x-forwarded-for,
-// whose left-most entry a caller can forge.
-export function callerIp(request: Request): string {
+// whose left-most entry a caller can forge. Null means nothing here names the caller.
+export function callerIp(request: Request): string | null {
   return (
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ??
-    'local'
+    null
   )
 }
 
@@ -46,10 +48,26 @@ const limiters = {
 
 export type LimitName = keyof typeof limiters
 
+let reportedMissingCaller = false
+
 export async function checkLimit(
   name: LimitName,
-  key: string,
+  key: string | null,
 ): Promise<{ ok: boolean; retryAfterSeconds: number }> {
+  // An unnamed caller counts against nobody. One shared bucket would spend the whole
+  // site's allowance on the first few requests and then refuse every customer at once.
+  if (!key) {
+    // Every request would report, so the first one carries the news and the log keeps
+    // the rest. A flood of identical events costs the quota the real faults need.
+    if (!reportedMissingCaller) {
+      reportedMissingCaller = true
+      reportIssue('rate_limit_without_caller', { name })
+    } else {
+      console.error('rate_limit_without_caller', { name })
+    }
+    return { ok: true, retryAfterSeconds: 0 }
+  }
+
   const rate = limiters[name]
   // Nothing configured (local dev, tests): let the request through rather than block
   // every customer because a side service is missing.

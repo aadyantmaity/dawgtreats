@@ -4,23 +4,27 @@ import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents } from '@/lib/db/schema'
-import { DomainError } from '@/lib/errors'
-import type { CheckoutInput } from '@/lib/validation'
+import { DomainError, reportIssue } from '@/lib/errors'
+import { ORDER_CODE_ALPHABET, type CheckoutInput } from '@/lib/validation'
 import { addDays, getOrderableWeek, ptToUtc } from '@/lib/weeks'
 
 // Matches Stripe's minimum Checkout session expiry, so stock is released only once Stripe says the session is dead.
-const HOLD_MINUTES = 30
+export const HOLD_MINUTES = 30
 
-// Crockford's alphabet: no I, L, O or U, so a code read aloud is never mistyped.
-const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+// The webhook arrives inside the hold. Five minutes after it ends, it is lost, not late.
+const STUCK_MINUTES = HOLD_MINUTES + 5
 
 // Four characters leaves about a million codes. A guessed code only shows cookies
 // and a pickup time, never who ordered, and the lookup rate limit slows guessing.
 const CODE_LENGTH = 4
 
+// Two collisions in a row on a million codes means something other than luck is wrong,
+// so the third refusal goes back to the customer instead of looping.
+const CODE_ATTEMPTS = 3
+
 function newOrderCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH))
-  return Array.from(bytes, (byte) => CODE_ALPHABET[byte % CODE_ALPHABET.length]).join('')
+  return Array.from(bytes, (byte) => ORDER_CODE_ALPHABET[byte % ORDER_CODE_ALPHABET.length]).join('')
 }
 
 export type Reservation = {
@@ -70,7 +74,7 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
     0,
   )
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < CODE_ATTEMPTS; attempt++) {
     try {
       return await db.transaction(async (tx) => {
         for (const item of input.items) {
@@ -245,7 +249,7 @@ export async function markPaid(
       .update(orders)
       .set({ status: 'paid', paidAt: new Date() })
       .where(and(eq(orders.id, orderId), eq(orders.status, 'pending')))
-      .returning({ id: orders.id, orderCode: orders.orderCode })
+      .returning({ id: orders.id, orderCode: orders.orderCode, totalCents: orders.totalCents })
     if (!order) {
       const [existing] = await tx
         .select({ status: orders.status, orderCode: orders.orderCode })
@@ -254,10 +258,24 @@ export async function markPaid(
       if (existing?.status === 'paid' || existing?.status === 'ready' || existing?.status === 'picked_up') {
         return 'already-paid'
       }
-      console.error('paid_order_not_pending', {
+      // The money arrived and no cookies are held for it. The row outlives the alert,
+      // so the payment is still findable when the email fails and the log scrolls away.
+      if (existing) {
+        await tx
+          .insert(payments)
+          .values({
+            orderId,
+            stripePaymentIntentId: payment.paymentIntentId,
+            amountCents: payment.amountCents,
+            status: 'stranded',
+          })
+          .onConflictDoNothing({ target: payments.stripePaymentIntentId })
+      }
+      reportIssue('paid_order_not_pending', {
         orderCode: existing?.orderCode ?? null,
         status: existing?.status ?? 'missing',
         paymentIntentId: payment.paymentIntentId,
+        amountCents: payment.amountCents,
       })
       return 'no-longer-pending'
     }
@@ -271,6 +289,17 @@ export async function markPaid(
         status: 'succeeded',
       })
       .onConflictDoNothing({ target: payments.stripePaymentIntentId })
+
+    // The customer paid and the cookies are already theirs, so the order stays paid and a
+    // person settles the difference. Silence here would hide a short payment for good.
+    if (payment.amountCents !== order.totalCents) {
+      reportIssue('paid_amount_mismatch', {
+        orderCode: order.orderCode,
+        owedCents: order.totalCents,
+        paidCents: payment.amountCents,
+        paymentIntentId: payment.paymentIntentId,
+      })
+    }
 
     console.log('order_paid', { orderCode: order.orderCode, amountCents: payment.amountCents })
     return 'paid'
@@ -396,7 +425,12 @@ export async function moveToSlot(orderCode: string, slotId: string) {
       .set({ bookedCount: sql`greatest(${pickupSlots.bookedCount} - 1, 0)` })
       .where(eq(pickupSlots.id, order.pickupSlotId))
 
-    await tx.update(orders).set({ pickupSlotId: slotId }).where(eq(orders.id, order.id))
+    // A reminder names a time, so the one already sent is now wrong. Clearing the mark
+    // lets the next run send the time the customer actually has.
+    await tx
+      .update(orders)
+      .set({ pickupSlotId: slotId, reminderSentAt: null })
+      .where(eq(orders.id, order.id))
 
     console.log('order_slot_moved', { orderCode, slotId })
     return { startsAt: wanted.startsAt, endsAt: wanted.endsAt }
@@ -404,7 +438,7 @@ export async function moveToSlot(orderCode: string, slotId: string) {
 }
 
 // Anything still pending well past its hold: the webhook never arrived, or never will.
-export async function listStuckOrders(olderThanMinutes = 35) {
+export async function listStuckOrders(olderThanMinutes = STUCK_MINUTES) {
   return db
     .select({ id: orders.id, orderCode: orders.orderCode, stripeSessionId: orders.stripeSessionId })
     .from(orders)

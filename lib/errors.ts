@@ -31,6 +31,13 @@ export function errorResponse(error: unknown, context: string): Response {
   return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
 }
 
+// A fault with nobody waiting on the answer: the payment already happened, or a job is
+// halfway through. A log line alone is not a record, so this one also reaches Sentry.
+export function reportIssue(event: string, context: Record<string, unknown>): void {
+  console.error(event, context)
+  Sentry.captureException(new Error(event), { tags: { context: event }, extra: context })
+}
+
 export function messageFromBody(data: unknown, fallback: string): string {
   return data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
     ? data.error
