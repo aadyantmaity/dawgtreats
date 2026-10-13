@@ -338,32 +338,22 @@
     margin-left: -5px;
   }
 
-  /* The bar steps back while someone reads and comes forward when they reach for it. The
-     three parts move together, so the pill never looks pasted onto a shrinking bar. */
-  .nav-bar,
-  .nav-logo,
-  .nav-name {
+  /* The bar steps back while someone reads and comes forward when they reach for it.
+     Transform only: height and width animate on the main thread and have to be laid out
+     again every frame, which stutters on a phone and re-measures a bar that carries a
+     blurred backdrop. A scale costs the compositor one property and never reflows, so the
+     page below it cannot move either. */
+  .nav-bar {
+    transform-origin: top center;
     transition:
-      height var(--duration-motion) ease,
-      max-width var(--duration-motion) ease,
+      transform var(--duration-motion) ease,
       opacity var(--duration-motion) ease;
+    will-change: transform;
   }
 
-  /* Width rather than display: a name that vanishes outright makes the bar jump. The box
-     reaches 5px further left than the text starts, because the second line is pulled back
-     by that much and clipping starts at the box edge. */
-  .nav-name {
-    max-width: 8rem;
-    margin-left: -5px;
-    padding-left: 5px;
-    overflow: hidden;
-  }
-
-  /* Motion off: the bar still condenses, it just arrives there without the travel. */
+  /* Motion off: the bar still steps back, it just arrives there without the travel. */
   @media (prefers-reduced-motion: reduce) {
-    .nav-bar,
-    .nav-logo,
-    .nav-name {
+    .nav-bar {
       transition: none;
     }
   }
@@ -416,17 +406,8 @@
   }
 }
 
-/* Outside every layer on purpose: these have to outrank the height utilities on the same
-   elements, and layer order decides that before specificity ever gets a say. */
+/* Outside every layer on purpose: this has to outrank the utilities on the same element,
+   and layer order decides that before specificity ever gets a say. */
 header[data-condensed] .nav-bar {
-  height: var(--spacing-control);
-}
-
-header[data-condensed] .nav-logo {
-  height: var(--spacing-8);
-}
-
-header[data-condensed] .nav-name {
-  max-width: 0;
-  opacity: 0;
+  transform: scale(0.82);
 }
