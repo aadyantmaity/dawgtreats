@@ -42,7 +42,7 @@ export function NavIcon({ name }: { name: IconName }) {
   const Icon = ICONS[name];
   // A Tabler glyph is drawn inside its box with about 2px of air, so even padding reads
   // as left-heavy against a word that starts at its own edge. This takes that air back.
-  return <Icon aria-hidden className="nav-icon -ml-0.5 size-4 shrink-0" />;
+  return <Icon aria-hidden className="nav-icon -ml-0.5 size-4 shrink-0 bigmark:size-5 sm:size-4" />;
 }
 
 type Box = { left: number; width: number };
@@ -162,7 +162,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
     <div
       ref={row}
       data-covered={covered ? "" : undefined}
-      className="relative flex min-w-0 items-center gap-1 sm:gap-3"
+      className="relative flex min-w-0 items-center gap-3"
     >
       {pill && (
         <span

@@ -86,7 +86,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
   if (displayRows.length === 0) {
     return (
       <>
-        <CartNotices className="mt-6" />
+        <CartNotices className="mt-6 empty:mt-0" />
         <EmptyCart ordersOpen={ordersOpen} />
       </>
     );
@@ -94,7 +94,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
 
   return (
     <div className="mt-8 flex flex-col gap-6">
-      <CartNotices className="mt-6" />
+      <CartNotices className="mt-6 empty:mt-0" />
       <Card className="p-0">
         <ul className="divide-y divide-default">
           {displayRows.map((row) => {

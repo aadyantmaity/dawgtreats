@@ -60,11 +60,11 @@ function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean 
             // Only the first row is above the fold, and a preload for every flavor on the
             // menu competes with the ones that are, which costs the page its own LCP.
             priority={priority}
-            sizes="(min-width: 640px) 24rem, 6rem"
-            className="size-24 shrink-0 rounded-card object-cover sm:aspect-photo sm:size-auto sm:w-full"
+            sizes="(min-width: 640px) 24rem, 7rem"
+            className="aspect-photo w-thumb shrink-0 rounded-card object-cover sm:size-auto sm:w-full"
           />
         ) : (
-          <PhotoPlaceholder className="size-24 shrink-0 sm:aspect-photo sm:size-auto sm:w-full" />
+          <PhotoPlaceholder className="aspect-photo w-thumb shrink-0 sm:size-auto sm:w-full" />
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {/* Beside a thumbnail there is room for about twenty characters, and every name

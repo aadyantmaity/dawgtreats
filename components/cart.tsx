@@ -158,10 +158,12 @@ export function CartNotices({ className = "" }: { className?: string }) {
     // The region is on the page from the first render, empty. A live region that arrives
     // in the same commit as its text is announced by nothing, and this is the message that
     // has to be heard: it says stock moved and the cart was lowered to match.
-    // The spacing sits on the inner box so an empty region takes up no room.
-    <div role="status">
+    // Placement sits on the region itself, because the grid places this element and a
+    // caller's column span has to reach it. Spacing stays on the inner box, so an empty
+    // region still takes up no room of its own.
+    <div role="status" className={className}>
       {notices.length > 0 && (
-        <div className={`flex flex-col gap-1 ${className}`}>
+        <div className="flex flex-col gap-1">
           {notices.map((note) => (
             <p key={note} className="animate-rise text-urgent">
               {note}
@@ -213,7 +215,7 @@ export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | 
           number. The drawer is a list of names, so there it says its own. */}
       <IconShoppingCart
         aria-hidden
-        className={asTab || inDrawer ? "nav-icon size-4 shrink-0" : "size-5 shrink-0"}
+        className={asTab || inDrawer ? "nav-icon size-4 shrink-0 bigmark:size-5 sm:size-4" : "size-5 shrink-0"}
       />
       {inDrawer && "Cart"}
       {count > 0 && (

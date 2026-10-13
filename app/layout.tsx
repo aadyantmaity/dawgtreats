@@ -57,7 +57,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               aria-hidden
               className="absolute inset-0 rounded-pill border border-default bg-floating shadow-lg backdrop-blur-md"
             />
-            <div className="relative flex h-full items-center justify-start gap-5 pr-2 pl-3 sm:pr-3 sm:pl-5">
+            <div className="relative flex h-full items-center justify-start gap-5 pr-3 pl-4 sm:pl-5">
             <Link href="/" className="inline-flex min-h-control shrink-0 items-center gap-2 font-display text-base font-semibold whitespace-nowrap">
               {/* The mark carries the name beside it, so it is decoration to a reader
                   who cannot see it. next/image has nothing to optimise in a vector, and

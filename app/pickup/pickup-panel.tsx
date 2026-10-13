@@ -91,7 +91,7 @@ export async function PickupPanel() {
       <p className="mt-1 text-secondary">
         {all.length === 0
           ? "No orders yet."
-          : `${left} of ${all.length} still to hand over · ${cookies} cookies to bag`}
+          : `${left} of ${all.length} still to hand over · ${cookies} ${cookies === 1 ? "cookie" : "cookies"} to bag`}
       </p>
       {toBag.length > 0 && <Breakdown flavors={toBag} className="mt-2 text-secondary" />}
 

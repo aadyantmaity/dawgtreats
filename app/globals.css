@@ -24,6 +24,8 @@
      carry the row alone. Measured at the shared tab size: the labelled row needs 327px of
      bar, which needs a 432px window once the mark, the gap and the gutters are counted. */
   --breakpoint-tabtext: 27rem;
+  /* The narrowest phones cannot spare the four pixels a larger mark costs each tab. */
+  --breakpoint-bigmark: 22.5rem;
 
   /* Removing Tailwind's default colours means only the role tokens below compile. */
   --color-*: initial;
@@ -96,6 +98,8 @@
   /* The feedback panel: wide enough for a sentence, short enough to never fill a phone. */
   --spacing-panel: 22rem;
   --spacing-panel-max-h: 78vh;
+  /* The menu thumbnail on a phone, larger than the scale reaches. */
+  --spacing-thumb: 7rem;
   --spacing-menu: 16rem;
 
   --radius-*: initial;

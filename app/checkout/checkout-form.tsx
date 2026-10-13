@@ -298,7 +298,7 @@ export function CheckoutForm({
   if (rows.length === 0) {
     return (
       <>
-        <CartNotices className="mt-8" />
+        <CartNotices className="mt-8 empty:mt-0" />
         <EmptyCart ordersOpen />
       </>
     );
@@ -310,7 +310,7 @@ export function CheckoutForm({
       noValidate
       className="mt-8 grid gap-6 pb-24 sm:pb-0 lg:grid-cols-3 lg:items-start"
     >
-      <CartNotices className="mt-8 lg:col-span-2" />
+      <CartNotices className="mt-8 empty:mt-0 lg:col-span-2" />
       {/* Rendered twice: above the fields on a phone, beside them on a laptop. */}
       <OrderSummary rows={rows} total={total} className="lg:hidden" />
 
@@ -415,7 +415,7 @@ export function CheckoutForm({
         ) : (
           <span className="inline-flex items-center gap-2">
             <IconLock aria-hidden className="size-4" />
-            Pay for {count} cookies
+            Pay for {count} {count === 1 ? "cookie" : "cookies"}
           </span>
         )}
       </Button>

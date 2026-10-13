@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 // Reading is scrolling down, so the bar steps back; reaching for a tab starts with
@@ -15,6 +16,14 @@ const AFTER_RESIZE_MS = 400;
 const BETWEEN_FLIPS_MS = 250;
 
 export function NavCondense() {
+  const pathname = usePathname();
+
+  // A new page starts at the top, where the bar is never in the way, so it arrives open
+  // however it was left. Keyed on the path, so it also runs on a tab pressed twice.
+  useEffect(() => {
+    document.querySelector("header")?.removeAttribute("data-condensed");
+  }, [pathname]);
+
   useEffect(() => {
     const header = document.querySelector("header");
     if (!header) return;
