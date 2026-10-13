@@ -117,11 +117,19 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
     const left = Math.min(from.left, pill.left);
     const right = Math.max(from.left + from.width, pill.left + pill.width);
 
+    // The pill already sits where it is going, and the journey is told entirely in
+    // transforms: animating left and width lays the row out again on every frame, under a
+    // bar that carries a blurred backdrop, and a phone cannot keep up with that. With the
+    // origin on its left edge, translate puts the leading edge somewhere else and scale
+    // stretches the trailing one to meet it.
+    const step = (box: { left: number; width: number }) =>
+      `translateX(${box.left - pill.left}px) scaleX(${box.width / pill.width})`;
+
     const travel = el.animate(
       [
-        { left: `${from.left}px`, width: `${from.width}px` },
-        { left: `${left}px`, width: `${right - left}px`, offset: 0.45 },
-        { left: `${pill.left}px`, width: `${pill.width}px` },
+        { transform: step(from) },
+        { transform: step({ left, width: right - left }), offset: 0.45 },
+        { transform: "translateX(0px) scaleX(1)" },
       ],
       { duration: JOURNEY_MS, easing: JOURNEY_EASING },
     );
@@ -168,7 +176,7 @@ export function NavTabs({ tabs, children }: { tabs: NavTab[]; children?: ReactNo
         <span
           ref={pillRef}
           aria-hidden
-          className="absolute inset-y-1.5 rounded-pill bg-action sm:inset-y-0"
+          className="absolute inset-y-1.5 origin-left rounded-pill bg-action will-change-transform sm:inset-y-0"
           style={{ left: pill.left, width: pill.width }}
         />
       )}
