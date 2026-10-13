@@ -64,12 +64,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               className="absolute inset-0 rounded-pill border border-default bg-floating shadow-lg backdrop-blur-md"
             />
             <div className="relative flex h-full items-center justify-between gap-3 pr-3 pl-5 sm:gap-4">
-            <Link href="/" className="inline-flex min-h-control shrink-0 items-center gap-2 font-display text-base font-semibold whitespace-nowrap sm:text-xl">
-              {/* The mark carries the name beside it, so it is decoration to a reader
-                  who cannot see it. next/image has nothing to optimise in a vector, and
-                  one cached file beats the same paths in every page's HTML. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="" className="h-8 w-auto" />
+            <Link href="/" className="inline-flex min-h-control shrink-0 items-center font-display text-base font-semibold whitespace-nowrap sm:text-xl">
               Dawg Treats
             </Link>
             {/* The cart sits in the bar at every width: a part-finished order must never
