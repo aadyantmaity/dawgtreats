@@ -8,10 +8,31 @@ import { Card } from "@/components/ui/card";
 import { currentAdmin } from "@/lib/auth";
 import { formatCents } from "@/lib/money";
 import { listPickupDay, type PickupOrder } from "@/lib/orders";
-import { formatPt, formatPickupWeekend, listWeeks } from "@/lib/weeks";
+import {
+  addDays,
+  formatPt,
+  formatPickupWeekend,
+  listWeeks,
+  ptToUtc,
+  type WeekSummary,
+} from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pickup day" };
+
+// The weekend being handed over, not whichever week is open: the owner opens next week's
+// orders before this week's pickup, which used to send this screen to an empty list.
+function weekBeingPickedUp(weeks: WeekSummary[]): WeekSummary | undefined {
+  const now = new Date();
+  const earliestFirst = [...weeks].sort((a, b) =>
+    a.pickupWeekendStart.localeCompare(b.pickupWeekendStart),
+  );
+  // A weekend is still being picked up until Sunday night, so the first one that has not
+  // ended is today's, tomorrow's, or the next one coming.
+  const ended = (week: WeekSummary) =>
+    ptToUtc(addDays(week.pickupWeekendStart, 1), "23:59") < now;
+  return earliestFirst.find((week) => !ended(week)) ?? earliestFirst.at(-1);
+}
 
 // What a shut slot has to answer: how much to bake for it, and how much money it is.
 function summarise(orders: PickupOrder[]) {
@@ -52,7 +73,7 @@ export default async function PickupPage() {
   if (!(await currentAdmin())) notFound();
 
   const weeks = await listWeeks();
-  const week = weeks.find((w) => w.status === "open") ?? weeks[0];
+  const week = weekBeingPickedUp(weeks);
   if (!week) {
     return (
       <main className="mx-auto w-full max-w-2xl flex-1 animate-fade py-12">

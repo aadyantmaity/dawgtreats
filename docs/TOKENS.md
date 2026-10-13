@@ -14,7 +14,7 @@ Colours are named by the job they do, never by how they look. Components use rol
 | Class | Its job | Palette |
 | --- | --- | --- |
 | **Text** | | |
-| `text-primary` | Titles, body, values | ink `#15130f` |
+| `text-primary` | Titles, body, values | ink `#281c12` |
 | `text-secondary` | Subtext, labels, descriptions, nav | taupe `#5d564a` |
 | `text-tertiary` | Placeholders, hints, empty states, de-emphasised items | pebble `#6e675c` |
 | `text-on-action` | Text on a primary button | ivory `#f3f1ec` |
@@ -30,17 +30,19 @@ Colours are named by the job they do, never by how they look. Components use rol
 | `bg-subtle` | Neutral badge | ivory `#f3f1ec` |
 | `bg-hover` | Hovered rows, highlighted option | ivory `#f3f1ec` |
 | `bg-placeholder` | Photo placeholder | sand `#e6e0d2` |
-| `bg-action` | Primary button (the primary colour) | ink `#15130f` |
+| `bg-action` | Primary button (the primary colour) | ink `#281c12` |
 | `bg-disabled` | Disabled control | oat `#e9e3d6` |
 | `bg-success` | Success badge | sage-100 `#e3efe2` |
 | `bg-warning` | Warning badge | honey-100 `#f3e8d2` |
 | `bg-scrim` | Behind a panel that covers the page, such as the phone menu | ink at 45% |
+| `bg-floating` | The header bar, which floats clear of the page so the page shows through it | white at 82% |
+| `bg-quiet` | A control inside the floating bar, marked by its fill because a border there would double the bar's own | ink at 6% |
 | **Borders** (also `divide-*`) | | |
 | `border-default` | Hairlines, card and input edges | linen `#ded8cb` |
-| `border-focus` | Focused, open or selected field | ink `#15130f` |
+| `border-focus` | Focused, open or selected field | ink `#281c12` |
 | `border-error` | Invalid field | rust `#9c4a21` |
 | **Outlines** | | |
-| `outline-focus` | Keyboard focus ring | ink `#15130f` |
+| `outline-focus` | Keyboard focus ring | ink `#281c12` |
 
 Pebble sits darker than its plain palette-scaled value (`#948c7d`) so that `text-tertiary`
 clears 4.5:1 on `bg-page`; see the contrast note below.
@@ -80,9 +82,17 @@ For values that repeat with a meaning, so they can change in one place.
 | --- | --- | --- |
 | `h-control`, `size-control` | 44px | Inputs, selects, steppers, medium buttons |
 | `h-control-sm` | 36px | Small buttons |
-| `size-fab` | 56px | The floating feedback button, which a thumb reaches rather than a cursor |
-| `max-h-menu` | 256px | Dropdown list before it scrolls |
+| `size-fab`, `h-fab` | 56px | The floating feedback button, which a thumb reaches rather than a cursor, and the phone pay bar |
+| `h-bar` | 64px | The floating header bar |
+| `top-under-bar` | 72px | Where the phone drawer and its scrim start |
+| `w-panel` | 352px | The feedback panel |
+| `max-h-panel-max-h` | 78vh | The same panel's ceiling, so it never fills a phone |
+| `max-h-menu`, `w-menu` | 256px | A dropdown list before it scrolls, and the phone drawer's width |
 | `aspect-photo` | 4:3 | Flavor photos |
+
+`under-bar` is the one derived token: it is `calc(var(--spacing-bar) + var(--spacing-2))`, the
+bar plus the gap it floats in, so a taller bar moves the drawer with it. A drawer that begins
+under the bar's own edge covers it.
 
 ## Radii
 

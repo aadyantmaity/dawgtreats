@@ -3,6 +3,8 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
+import { PALETTE } from "@/lib/palette";
+
 // A favicon is read at 16px, where the mark's thin lines close up, so it sits on the
 // page colour at full bleed rather than inside a badge that steals half the room.
 export const size = { width: 64, height: 64 };
@@ -20,7 +22,7 @@ export default async function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#e6e0d2",
+          background: PALETTE.sand,
         }}
       >
         <img

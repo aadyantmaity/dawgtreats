@@ -45,7 +45,7 @@ function Allergens({ flavor }: { flavor: MenuItem }) {
   );
 }
 
-function FlavorCard({ flavor }: { flavor: MenuItem }) {
+function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean }) {
   return (
     <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-5">
       {/* A phone puts the photo beside the name. Full width, three cookies are five
@@ -57,8 +57,9 @@ function FlavorCard({ flavor }: { flavor: MenuItem }) {
             alt={flavor.name}
             width={600}
             height={450}
-            // Both cards are above the fold on a laptop, so neither should wait for lazy loading.
-            priority
+            // Only the first row is above the fold, and a preload for every flavor on the
+            // menu competes with the ones that are, which costs the page its own LCP.
+            priority={priority}
             sizes="(min-width: 640px) 24rem, 6rem"
             className="size-24 shrink-0 rounded-card object-cover sm:aspect-photo sm:size-auto sm:w-full"
           />
@@ -93,7 +94,7 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
   return (
     <article className="relative flex flex-col gap-3 rounded-card bg-surface p-4">
       {/* The outline is drawn rather than bordered, so the dashes can have air between
-          them. The radius repeats rounded-card, because an SVG cannot read a CSS one. */}
+          them. The radius repeats rounded-card: an attribute cannot read a custom property. */}
       <svg
         aria-hidden
         className="dotted-edge pointer-events-none absolute inset-0 size-full overflow-visible"
@@ -189,8 +190,8 @@ export default async function MenuPage() {
         <>
           {forSale.length > 0 && (
             <div className={`mt-10 grid items-start gap-5 sm:gap-12 ${columns}`}>
-              {forSale.map((flavor) => (
-                <FlavorCard key={flavor.id} flavor={flavor} />
+              {forSale.map((flavor, index) => (
+                <FlavorCard key={flavor.id} flavor={flavor} priority={index < 2} />
               ))}
             </div>
           )}

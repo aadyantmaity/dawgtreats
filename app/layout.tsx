@@ -4,6 +4,7 @@ import { DM_Sans, Shantell_Sans } from "next/font/google";
 import Link from "next/link";
 import { CartLink } from "@/components/cart";
 import { NavMenu } from "@/components/nav-menu";
+import { NAV_CUTOVER } from "@/components/nav-chrome";
 import { NavTabs, type NavTab } from "@/components/nav-tabs";
 import { FeedbackFab } from "@/components/feedback-fab";
 import { viewerIsAdmin } from "@/lib/auth";
@@ -82,7 +83,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 be behind a menu someone has to open first. */}
             <nav className="flex min-w-0 items-center gap-1 sm:gap-3">
               {/* The cart rides in the tab row, so the pill travels to it like any tab. */}
-              <div className={wide ? "hidden min-w-0 lg:block" : "hidden min-w-0 md:block"}>
+              <div className={NAV_CUTOVER[wide ? "wide" : "narrow"].row}>
                 <NavTabs tabs={[...tabs, ...adminTabs]}>
                   {/* Four of these are places and the last one is a basket. The rule says
                       so, and the pill still travels across it. */}
@@ -92,7 +93,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               </div>
               <NavMenu tabs={tabs} adminTabs={adminTabs} wide={wide} />
               {/* A phone has no tab row to join. */}
-              <div className={wide ? "lg:hidden" : "md:hidden"}>
+              <div className={NAV_CUTOVER[wide ? "wide" : "narrow"].drawer}>
                 <CartLink />
               </div>
             </nav>

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { COUNTING_SINCE, funnel } from "@/lib/analytics";
 import { currentAdmin } from "@/lib/auth";
 import { listFeedback } from "@/lib/feedback";
+import { LIMITS } from "@/lib/validation";
 import { formatPt } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ const DEVICE_WORDS: Record<string, string> = {
   unknown: "Counted before this was recorded",
 };
 
-const STARS = [1, 2, 3, 4, 5];
+const STARS = Array.from({ length: LIMITS.ratingMax }, (_, index) => index + 1);
 
 const ORDER_WORDS: Record<string, string> = {
   paid: "Paid",
@@ -27,9 +28,11 @@ const ORDER_WORDS: Record<string, string> = {
   picked_up: "Picked up",
 };
 
+// Every star below is hidden, so the label is the whole rating. It needs the role: ARIA
+// ignores a label on a plain span, and the rating reached a screen reader as nothing.
 function Stars({ rating }: { rating: number }) {
   return (
-    <span aria-label={`${rating} out of 5`} className="text-base leading-none">
+    <span role="img" aria-label={`${rating} out of ${LIMITS.ratingMax}`} className="text-base leading-none">
       {STARS.map((star) => (
         <span key={star} aria-hidden className={star <= rating ? "text-rating" : "text-tertiary"}>
           ★

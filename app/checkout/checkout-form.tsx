@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { CartNotices, EmptyCart, reconcile, useCart } from "@/components/cart";
 import { track } from "@/lib/analytics/track";
@@ -28,33 +28,26 @@ const LOW_SPOTS = 2;
 
 type Row = MenuItem & { quantity: number };
 
-type Reserved = { orderCode: string; totalCents: number; reservedUntil: string; pickupStartsAt: string };
-
-function isReserved(data: unknown): data is Reserved {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    typeof (data as Reserved).orderCode === "string" &&
-    typeof (data as Reserved).totalCents === "number"
-  );
-}
-
 // A dropdown hides most pickup times behind a tap. It also arrives with one already chosen.
 function SlotPicker({
   slots,
   value,
   onChange,
   invalid,
+  errorId,
 }: {
   slots: SlotChoice[];
   value: string;
   onChange: (id: string) => void;
   invalid: boolean;
+  errorId: string;
 }) {
   const days = [...new Set(slots.map((slot) => slot.day))];
 
   return (
-    <fieldset aria-invalid={invalid || undefined}>
+    // The refusal is a sibling of this group, so the group has to point at it: otherwise
+    // someone who moves back to the times never hears why they were refused.
+    <fieldset aria-invalid={invalid || undefined} aria-describedby={invalid ? errorId : undefined}>
       <legend className="sr-only">Pickup time</legend>
       {days.map((day) => (
         <div key={day} className="mt-4 first:mt-0">
@@ -183,6 +176,7 @@ export function CheckoutForm({
   const { lines, count, clear } = useCart();
   const router = useRouter();
   const submitting = useRef(false);
+  const slotErrorId = useId();
   const leaving = useRef(false);
 
   useEffect(() => reconcile(menu), [menu]);
@@ -200,7 +194,6 @@ export function CheckoutForm({
   const [phone, setPhone] = useState(formatPhoneInput(contact.phone));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [reserved, setReserved] = useState<Reserved | null>(null);
   const [touched, setTouched] = useState({ name: false, email: false, phone: false });
   const [seenSlots, setSeenSlots] = useState(slots);
   if (seenSlots !== slots) {
@@ -291,10 +284,6 @@ export function CheckoutForm({
         window.location.assign(data.url);
         return;
       }
-      if (isReserved(data)) {
-        clear();
-        setReserved(data);
-      }
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
     } finally {
@@ -305,31 +294,7 @@ export function CheckoutForm({
     }
   }
 
-  if (reserved) {
-    return (
-      <Card title="Your cookies are held" className="mt-8">
-        <div className="flex flex-col gap-3">
-          <p className="text-secondary">
-            Order code <span className="font-semibold text-primary tabular-nums">{reserved.orderCode}</span>
-          </p>
-          <p className="text-secondary">
-            Total {formatCents(reserved.totalCents)} · held until{" "}
-            {new Date(reserved.reservedUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-          </p>
-          <p className="text-sm text-tertiary">
-            Card payment arrives in the next step of the build. Until then this order stays unpaid and its
-            cookies are released when the hold expires.
-          </p>
-          <Link href="/" className="inline-flex min-h-control items-center underline">
-            Back to the menu
-          </Link>
-        </div>
-      </Card>
-    );
-  }
-
   // Rendered in both states: an emptied cart is exactly when someone needs telling why.
-
   if (rows.length === 0) {
     return (
       <>
@@ -361,9 +326,15 @@ export function CheckoutForm({
             <p className="mb-4 text-sm text-tertiary">
               Each pickup window is {slotMinutes} minutes long. All times are Pacific.
             </p>
-            <SlotPicker slots={slots} value={slotId} onChange={setSlotId} invalid={Boolean(slotRefused)} />
+            <SlotPicker
+              slots={slots}
+              value={slotId}
+              onChange={setSlotId}
+              invalid={Boolean(slotRefused)}
+              errorId={slotErrorId}
+            />
             {slotRefused && (
-              <p className="mt-3 text-sm text-error" role="alert">
+              <p id={slotErrorId} className="mt-3 text-sm text-error" role="alert">
                 {MESSAGES.slotRequired}
               </p>
             )}
@@ -393,7 +364,7 @@ export function CheckoutForm({
             error={shown("email")}
             attempt={attempt}
             autoComplete="email"
-            maxLength={120}
+            maxLength={LIMITS.emailMax}
             hint="I&apos;ll send your order code here."
           />
           <Input

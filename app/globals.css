@@ -4,7 +4,7 @@
 :root {
   --palette-ivory: #f3f1ec;
   --palette-white: #fcfbf8;
-  --palette-ink: #15130f;
+  --palette-ink: #281c12;
   --palette-linen: #ded8cb;
   --palette-taupe: #5d564a;
   /* The deeper palette's own grey failed contrast on this ground.
@@ -85,9 +85,9 @@
   /* The floating bar. Shorter than the old full-width one, because a pill with air
      around it reads as taller than it is. */
   --spacing-bar: 4rem;
-  /* Where the drawer starts: the bar, plus the gap it floats in. Tied to the bar by
-     hand, because a drawer that begins under its own edge covers it. */
-  --spacing-under-bar: 4.5rem;
+  /* Where the drawer starts: the bar, plus the gap it floats in. Derived, because a
+     drawer that begins under its own edge covers it. */
+  --spacing-under-bar: calc(var(--spacing-bar) + var(--spacing-2));
   /* The feedback panel: wide enough for a sentence, short enough to never fill a phone. */
   --spacing-panel: 22rem;
   --spacing-panel-max-h: 78vh;

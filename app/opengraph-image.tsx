@@ -3,6 +3,8 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
+import { PALETTE, rgba } from "@/lib/palette";
+
 // The picture shown wherever the site is pasted: a message, a chat, a post.
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -36,8 +38,9 @@ export default async function OpengraphImage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "rgba(21,19,15,0.56)",
-            color: "#f6f3ee",
+            // Heavier than the page's own scrim: these words sit over a photograph.
+            background: rgba(PALETTE.ink, 0.56),
+            color: PALETTE.ivory,
             fontFamily: "Display",
             fontSize: 104,
           }}

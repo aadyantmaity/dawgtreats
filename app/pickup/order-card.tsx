@@ -7,6 +7,7 @@ import { pickedUpAction, readyAction, undoAction } from "@/app/pickup/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/loading";
+import { Message } from "@/components/ui/message";
 import { formatPhone } from "@/lib/validation";
 
 type Order = {
@@ -28,17 +29,27 @@ export function OrderCard({ order }: { order: Order }) {
   const [pending, startTransition] = useTransition();
   // Remembers which button was pressed, so only that one shows the wait.
   const [running, setRunning] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   const run = (name: string, action: (id: string) => Promise<void>) => () => {
     setRunning(name);
+    setFailed(null);
     startTransition(async () => {
-      await action(order.id);
-      setRunning(null);
+      try {
+        await action(order.id);
+      } catch (error) {
+        // Every action re-checks the admin, so a lapsed session throws here. Uncaught, it
+        // replaced the whole list with an error page while someone waited at the table.
+        console.error("pickup_action_failed", { orderCode: order.orderCode, name, error });
+        setFailed("That didn't save. Check you're still signed in, then try again.");
+      } finally {
+        setRunning(null);
+      }
     });
   };
 
   return (
     <li
-      className={`flex flex-col gap-3 p-4 transition-opacity sm:flex-row sm:items-center sm:gap-5 ${
+      className={`flex flex-col gap-3 p-4 transition-opacity sm:flex-row sm:flex-wrap sm:items-center sm:gap-5 ${
         order.status === "picked_up" ? "opacity-60" : ""
       }`}
     >
@@ -102,6 +113,12 @@ export function OrderCard({ order }: { order: Order }) {
           </Button>
         )}
       </div>
+
+      {failed && (
+        <Message tone="error" className="basis-full text-sm">
+          {failed}
+        </Message>
+      )}
     </li>
   );
 }
