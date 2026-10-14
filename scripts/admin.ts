@@ -7,9 +7,9 @@ import { flavors, orders, weeks } from '@/lib/db/schema'
 import { setRole } from '@/lib/auth'
 import { listFeedback } from '@/lib/feedback'
 import { DomainError } from '@/lib/errors'
-import { sendOpenNotice } from '@/lib/email'
+import { sendLastCall, sendOpenNotice } from '@/lib/email'
 import { createFlavor, listFlavors, updateFlavor, type Flavor } from '@/lib/flavors'
-import { countWaiting, listWaiting, markNotified } from '@/lib/notify'
+import { countWaiting, listWaiting, listWaitingWithoutOrder, markNotified } from '@/lib/notify'
 import {
   SLOT_MINUTES,
   addSlot,
@@ -76,6 +76,12 @@ Waiting list
   notify:send [--again] [--note=]           tell them the open week is open, once each
                                            --again also tells the people already told
                                            --note= puts one line at the top of the email
+  notify:nudge [--yes] [--to=] [--note=]   last call to everyone on the list with nothing
+                                           coming this weekend. Prints who, and sends
+                                           nothing until --yes
+                                           --to= sends one copy there and nobody else
+                                           --skip= leaves these addresses out, comma separated
+                                           --note= puts one line under the headline
 
 Test data
   seed                                     flavors, quantities and slots for the upcoming week
@@ -93,6 +99,15 @@ const SEND_GAP_MS = 600
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// The CLI reads .env.local, where the site URL is the dev server. That address is dead on
+// the phone of everyone on the list, so refuse the send instead of mailing a dead link.
+function requireLiveLinks() {
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  if (!/^https:\/\//.test(site)) {
+    fail(`NEXT_PUBLIC_SITE_URL is "${site || 'unset'}", so every link in the email is dead. Run it again as: NEXT_PUBLIC_SITE_URL=https://dawgtreats.shop npm run admin -- ${command}`)
+  }
+}
+
 // Opening a week and telling the list are the same moment, so both commands end here.
 async function tellTheWaitingList(
   week: { id: string; pickupWeekendStart: string; ordersCloseAt: Date },
@@ -102,12 +117,7 @@ async function tellTheWaitingList(
   // Nobody to tell is not a send, so opening a week on a dev machine still works.
   if (waiting.length === 0) return { told: 0, waiting: 0, dropped: [] }
 
-  // The CLI reads .env.local, where the site URL is the dev server. That address is dead on
-  // the phone of everyone on the list, so refuse the send instead of mailing a dead link.
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? ''
-  if (!/^https:\/\//.test(site)) {
-    fail(`NEXT_PUBLIC_SITE_URL is "${site || 'unset'}", so every link in the email is dead. Run it again as: NEXT_PUBLIC_SITE_URL=https://dawgtreats.shop npm run admin -- ${command}`)
-  }
+  requireLiveLinks()
 
   // Read once, not once per address: the menu is the same for everyone on the list. A
   // flavor with nothing left is not news, so it is left out.
@@ -297,6 +307,60 @@ const commands: Record<string, () => Promise<void>> = {
 
     const again = args.includes('--again')
     reportSend(await tellTheWaitingList(week, { again, note: flag('note') }), 'Nobody is waiting.')
+  },
+
+  async 'notify:nudge'() {
+    const week = await getOrderableWeek()
+    if (!week) fail('No week is open, so a last call has nothing to point at.')
+    requireLiveLinks()
+
+    // A sold-out flavor is not news, and a last call with nothing left to sell is spam.
+    const menu = (await getMenu(week.id)).filter((item) => item.remaining !== 0)
+    if (menu.length === 0) fail('Everything is sold out, so there is nothing to last-call.')
+
+    const note = flag('note')
+    const to = flag('to')
+
+    // One copy to one address, for a look at the message before the list gets it. The
+    // token is the real one when that address is on the list, so the test also proves
+    // the unsubscribe link works.
+    if (to) {
+      const token = (await listWaiting(true)).find((row) => row.email.toLowerCase() === to.toLowerCase())?.token
+      if (!token) console.log(`${to} is not on the list, so the unsubscribe link is a dead token.`)
+      const sent = await sendLastCall(to, week, token ?? 'preview', menu, note)
+      return console.log(sent ? `Sent one to ${to}.` : `${to} got nothing. Check the Resend key.`)
+    }
+
+    // Named by hand, for the week someone asks to be left out of this one send.
+    const skip = new Set((flag('skip') ?? '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean))
+    const all = await listWaitingWithoutOrder(week.id)
+    const waiting = all.filter((row) => !skip.has(row.email.toLowerCase()))
+    if (all.length === 0) return console.log('Everyone on the list already ordered this week.')
+
+    // A misspelled address in --skip silently mails someone who asked to be left out, so
+    // every name that matched nothing is reported before anything is sent.
+    const unmatched = [...skip].filter((email) => !all.some((row) => row.email.toLowerCase() === email))
+    if (unmatched.length > 0) fail(`--skip names ${unmatched.join(', ')}, which nobody on the list matches. Check the spelling.`)
+    if (waiting.length === 0) return console.log('Everyone left on the list was skipped.')
+    if (skip.size > 0) console.log(`Skipping ${skip.size}: ${[...skip].join(', ')}\n`)
+
+    // Nothing here marks a row, so a second run mails the same people again. The list is
+    // printed and the send waits for --yes, because that is the only guard there is.
+    if (!args.includes('--yes')) {
+      console.log(`${waiting.length} would get a last call:`)
+      for (const row of waiting) console.log(`  ${row.email}`)
+      return console.log('\nNothing sent. Run it again with --yes.')
+    }
+
+    console.log(`Telling ${waiting.length}, about ${Math.ceil((waiting.length * SEND_GAP_MS) / 1000)}s. Let it finish.`)
+    const dropped: string[] = []
+    let told = 0
+    for (const [index, row] of waiting.entries()) {
+      if (index > 0) await pause(SEND_GAP_MS)
+      if (await sendLastCall(row.email, week, row.token, menu, note)) told++
+      else dropped.push(row.email)
+    }
+    reportSend({ told, waiting: waiting.length, dropped }, 'Nobody is waiting.')
   },
 
   async flavors() {

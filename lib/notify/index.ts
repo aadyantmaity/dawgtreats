@@ -3,7 +3,7 @@ import 'server-only'
 import { asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
-import { notifyRequests } from '@/lib/db/schema'
+import { notifyRequests, orders } from '@/lib/db/schema'
 
 // Asking twice is not an error, and a second row would mean a second email. Someone who
 // was already told and asks again is waiting for the next batch, so the mark is cleared.
@@ -63,4 +63,22 @@ export async function markNotified(ids: string[]): Promise<void> {
     .update(notifyRequests)
     .set({ notifiedAt: new Date() })
     .where(inArray(notifyRequests.id, ids))
+}
+
+// Who asked to be told and has nothing coming this weekend. An expired order left nothing
+// coming, so it does not count. A nudge to someone who already ordered reads as the shop
+// forgetting them, and addresses differ only by case, so both sides are lowered.
+export async function listWaitingWithoutOrder(weekId: string) {
+  return db
+    .select({ id: notifyRequests.id, email: notifyRequests.email, token: notifyRequests.token })
+    .from(notifyRequests)
+    .where(
+      sql`not exists (
+        select 1 from ${orders}
+        where lower(${orders.email}) = lower(${notifyRequests.email})
+          and ${orders.weekId} = ${weekId}
+          and ${orders.status} <> 'expired'
+      )`,
+    )
+    .orderBy(asc(notifyRequests.createdAt))
 }

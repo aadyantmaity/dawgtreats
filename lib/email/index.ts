@@ -416,7 +416,7 @@ function absolute(path: string): string {
 
 // The price sits under the name, not across from it: a long name and a price in one row
 // are squeezed together on a phone, where most of these are read.
-function menuRow(item: OpenNoticeItem, last: boolean): string {
+function menuRow(item: OpenNoticeItem, last: boolean, note = ''): string {
   const photo = item.imageUrl
     ? `<img src="${escapeHtml(absolute(item.imageUrl))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;object-fit:cover;">`
     : ''
@@ -425,7 +425,7 @@ function menuRow(item: OpenNoticeItem, last: boolean): string {
     ${photo ? `<td width="64" valign="middle" bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding-right:14px;">${photo}</td>` : ''}
     <td valign="middle" bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};font-family:${SANS};font-size:16px;line-height:1.35;color:${PALETTE.ink};">
       ${escapeHtml(item.name)}
-      <div style="font-size:15px;color:${PALETTE.taupe};padding-top:2px;">${formatCents(item.priceCents)}</div>
+      <div style="font-size:15px;color:${PALETTE.taupe};padding-top:2px;">${formatCents(item.priceCents)}${note ? ` &middot; ${escapeHtml(note)}` : ''}</div>
     </td>
   </tr></table>
 </td></tr>`
@@ -498,6 +498,104 @@ export async function sendOpenNotice(
     return sent !== null
   } catch (error) {
     console.error('open_notice_failed', { error })
+    return false
+  }
+}
+
+export type LastCallItem = OpenNoticeItem & { remaining: number | null }
+
+// "Closes Thu, Oct 15" is a date the reader has to work out. "Closes tomorrow" is not,
+// and a last call is only worth sending while one of these words is still true.
+function closesWhen(ordersCloseAt: Date): string {
+  const day = (at: Date) => formatPt(at, { year: 'numeric', month: '2-digit', day: '2-digit' })
+  const now = new Date()
+  const close = day(ordersCloseAt)
+  if (close === day(now)) return 'tonight'
+  if (close === day(new Date(now.getTime() + 86_400_000))) return 'tomorrow'
+  return `on ${formatPt(ordersCloseAt, { weekday: 'long' })}`
+}
+
+// How many are left is the whole reason to open this message, so it sits with the price.
+function leftNote(remaining: number | null): string {
+  if (remaining === null) return ''
+  return remaining === 1 ? '1 left' : `${remaining} left`
+}
+
+function lastCallHtml(week: NotifiableWeek, menu: LastCallItem[], stop: string, note?: string): string {
+  const site = siteUrl()
+  const when = closesWhen(week.ordersCloseAt)
+  return shell({
+    title: `Orders close ${when}`,
+    preheader: note ?? `Orders close ${formatClosesAt(week.ordersCloseAt)}`,
+    body: `
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:22px 22px 0;">
+  <div style="font-family:${DISPLAY};font-size:22px;line-height:1.35;color:${PALETTE.ink};">Orders close ${escapeHtml(when)}</div>
+  <div style="font-size:16px;color:${PALETTE.taupe};padding-top:4px;">${escapeHtml(formatClosesAt(week.ordersCloseAt))}</div>
+</td></tr>
+${note ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:14px 22px 0;font-family:${SANS};font-size:16px;line-height:1.5;color:${PALETTE.ink};">${escapeHtml(note)}</td></tr>` : ''}
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:14px 22px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${menu
+    .map((item, index) => menuRow(item, index === menu.length - 1, leftNote(item.remaining)))
+    .join('')}</table>
+</td></tr>
+${linkButton(site, 'Order before it closes')}
+${footerLines([
+  `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
+  `${PICKUP_PLACE}.`,
+  TERMS,
+])}
+<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:0 22px 22px;font-family:${SANS};font-size:13px;color:${PALETTE.pebble};">
+  <a href="${escapeHtml(stop)}" style="color:${PALETTE.pebble};">Stop these emails</a>
+</td></tr>`,
+  })
+}
+
+function lastCallText(week: NotifiableWeek, menu: LastCallItem[], stop: string, note?: string): string {
+  const site = siteUrl()
+  return [
+    `Orders close ${closesWhen(week.ordersCloseAt)}, ${formatClosesAt(week.ordersCloseAt)}.`,
+    '',
+    ...(note ? [note, ''] : []),
+    ...menu.flatMap((item) => {
+      const left = leftNote(item.remaining)
+      return [`  ${item.name}`, `  ${formatCents(item.priceCents)}${left ? ` - ${left}` : ''}`, '']
+    }),
+    `Order: ${site}`,
+    '',
+    `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
+    `${PICKUP_PLACE}.`,
+    TERMS,
+    '',
+    `Stop these emails: ${stop}`,
+  ].join('\n')
+}
+
+// The second and last message of the week, for someone on the list with nothing coming.
+// Never throws: one bad address must not stop the rest of the list.
+export async function sendLastCall(
+  email: string,
+  week: NotifiableWeek,
+  token: string,
+  menu: LastCallItem[],
+  note?: string,
+): Promise<boolean> {
+  const site = siteUrl()
+  const stop = `${site}/notify/unsubscribe?t=${encodeURIComponent(token)}`
+  try {
+    const sent = await send({
+      to: email,
+      subject: `Last call - orders close ${closesWhen(week.ordersCloseAt)}`,
+      html: lastCallHtml(week, menu, stop, note),
+      headers: {
+        'List-Unsubscribe': `<${site}/api/notify/unsubscribe?t=${encodeURIComponent(token)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+      text: lastCallText(week, menu, stop, note),
+    })
+    console.log('last_call_sent', { messageId: sent?.id ?? null })
+    return sent !== null
+  } catch (error) {
+    console.error('last_call_failed', { error })
     return false
   }
 }
