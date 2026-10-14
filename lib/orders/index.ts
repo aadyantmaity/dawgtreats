@@ -208,6 +208,8 @@ export type PublicOrder = {
   pickupStartsAt: Date
   pickupEndsAt: Date
   lines: { name: string; quantity: number; unitPriceCents: number }[]
+  /** Whether an account already holds it. */
+  claimed: boolean
 }
 
 // The order code is the only thing guarding a guest's order, so this never returns
@@ -223,7 +225,21 @@ export async function getPublicOrder(orderCode: string): Promise<PublicOrder | n
     pickupStartsAt: found.slot.startsAt,
     pickupEndsAt: found.slot.endsAt,
     lines: found.lines,
+    claimed: found.order.userId !== null,
   }
+}
+
+// An order placed as a guest has no account behind it. Whoever is looking at it has its
+// code, which is the same proof the page already accepts for changing a pickup time, so
+// they may keep it — but only while nobody else has, which stops a shared code becoming a
+// way to take someone's order away from them.
+export async function claimOrder(orderCode: string, accountId: string): Promise<boolean> {
+  const [kept] = await db
+    .update(orders)
+    .set({ userId: accountId })
+    .where(and(eq(orders.orderCode, orderCode.toUpperCase()), sql`${orders.userId} is null`))
+    .returning({ id: orders.id })
+  return Boolean(kept)
 }
 
 // A Stripe retry of the same event does nothing: the second insert finds nothing new to write.

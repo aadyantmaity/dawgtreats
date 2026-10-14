@@ -19,6 +19,10 @@ export default async function LookupPage() {
           Your code is in your confirmation email, like 4X7K. Check spam if it&apos;s not there.
         </p>
         <LookupForm />
+        <p className="mt-8 text-sm text-tertiary">
+          Signed in, your orders are listed here without a code. Orders you place while
+          signed in are saved to your account.
+        </p>
       </main>
     );
   }

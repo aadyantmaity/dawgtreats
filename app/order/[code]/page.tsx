@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ChangeSlot, type SlotChoice } from "@/app/order/[code]/change-slot";
+import { KeepOrder } from "@/app/order/[code]/keep-order";
 import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
+import { currentAccount } from "@/lib/auth";
 import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
 import { getPublicOrder, listSlotsForOrder } from "@/lib/orders";
 import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
@@ -34,6 +36,8 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   // The public shape, so a name or phone number cannot reach this page by accident.
   const order = await findOrder(code);
   if (!order) notFound();
+
+  const account = await currentAccount();
 
   const choices: SlotChoice[] = (await listSlotsForOrder(order.orderCode)).map((slot) => ({
     id: slot.id,
@@ -83,6 +87,10 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
           <span className="tabular-nums">{formatCents(order.totalCents)}</span>
         </div>
       </Card>
+
+      {!order.claimed && order.status !== "pending" && (
+        <KeepOrder orderCode={order.orderCode} signedIn={Boolean(account)} />
+      )}
 
       <Link href="/" className="mt-6 inline-flex min-h-control items-center underline">
         Back to the menu
