@@ -128,6 +128,19 @@ export async function updateAccount(
   return updated
 }
 
+// A sign-in that fails on this side never gets back to the browser that opened it, so the
+// per-flow verifier it left behind is never cleared and the next one stacks on top. The
+// ring that holds them is bounded, so a pile of dead slots is what evicts a live one.
+// Called once the flow is over, whichever way it went: nothing pending is still wanted.
+export async function sweepStaleSignIns(): Promise<number> {
+  const store = await cookies()
+  const dead = store
+    .getAll()
+    .filter(({ name }) => /^sb-.+-flow-[A-Za-z0-9_-]+-code-verifier$/.test(name) || name.endsWith('-flows-code-verifier'))
+  for (const { name } of dead) store.delete(name)
+  return dead.length
+}
+
 // Every redirect out of an auth route is relative. Building one from `request.url` sends
 // the browser to the host the server is bound to, and `next dev --hostname 0.0.0.0` binds
 // to 0.0.0.0, so a sign-out started on localhost landed on a host with no session cookie.

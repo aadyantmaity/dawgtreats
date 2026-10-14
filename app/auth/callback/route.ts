@@ -1,4 +1,4 @@
-import { claimGuestOrders, currentAccount, redirectTo, supabaseServer } from '@/lib/auth'
+import { claimGuestOrders, currentAccount, redirectTo, supabaseServer, sweepStaleSignIns } from '@/lib/auth'
 
 // Where Google sends people back. Only relative paths, so this cannot bounce them off-site.
 function safeNext(next: string | null): string {
@@ -15,9 +15,11 @@ export async function GET(request: Request) {
   const supabase = await supabaseServer()
   const { error } = await supabase.auth.exchangeCodeForSession(code)
   if (error) {
-    console.error('[auth callback]', error.message)
+    console.error('[auth callback]', error.message, { swept: await sweepStaleSignIns() })
     return redirectTo('/?signin=failed')
   }
+
+  await sweepStaleSignIns()
 
   const account = await currentAccount()
   if (account) {
