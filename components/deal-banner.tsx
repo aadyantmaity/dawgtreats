@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { useCart } from "@/components/cart";
 import type { MenuItem } from "@/lib/inventory";
+import { bump } from "@/lib/motion";
 import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
 
 // The deal is priced on the whole cart, so this collects nothing: it says the offer exists
@@ -20,12 +23,21 @@ export function DealBanner({ menu }: { menu: MenuItem[] }) {
   const intoTheNext = cookies % DEAL_SIZE;
   const toGo = intoTheNext === 0 ? DEAL_SIZE : DEAL_SIZE - intoTheNext;
 
-  const said =
-    deal.savedCents > 0 && intoTheNext === 0
-      ? `Saving ${formatCents(deal.savedCents)}`
-      : cookies === 0
-        ? "Pick any three"
-        : `${toGo} more ${toGo === 1 ? "cookie" : "cookies"}`;
+  const saving = deal.savedCents > 0 && intoTheNext === 0;
+  const said = saving
+    ? `Saving ${formatCents(deal.savedCents)}`
+    : cookies === 0
+      ? "Pick any three"
+      : `${toGo} more ${toGo === 1 ? "cookie" : "cookies"}`;
+
+  // The set just closed, so the figure marks itself. Only a rise is worth a bump: a cookie
+  // taken back out lowers the saving, which is not news to celebrate.
+  const savedRef = useRef<HTMLSpanElement>(null);
+  const wasSaved = useRef(deal.savedCents);
+  useEffect(() => {
+    if (deal.savedCents > wasSaved.current) bump(savedRef.current, 1.14);
+    wasSaved.current = deal.savedCents;
+  }, [deal.savedCents]);
 
   return (
     <section className="mt-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-card border border-default bg-surface p-5">
@@ -36,7 +48,12 @@ export function DealBanner({ menu }: { menu: MenuItem[] }) {
         <p className="mt-1 text-sm text-secondary">Any three cookies, any combo you like!</p>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-secondary">{said}</span>
+        <span
+          ref={savedRef}
+          className={`text-sm ${saving ? "font-semibold text-success" : "text-secondary"}`}
+        >
+          {said}
+        </span>
         <span aria-hidden className="flex gap-1">
           {Array.from({ length: DEAL_SIZE }, (_, slot) => (
             <span
