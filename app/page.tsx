@@ -5,6 +5,7 @@ import { AddToCart } from "@/components/cart";
 import { CartTray } from "@/components/cart-tray";
 import { NotifyForm } from "@/components/notify-form";
 import { TrackView } from "@/lib/analytics/track";
+import { Message } from "@/components/ui/message";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { currentAccount } from "@/lib/auth";
 import { getMenu, type MenuItem } from "@/lib/inventory";
@@ -142,7 +143,10 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
 // one down to about 270px and the photo stops being the point of the card.
 const columns = "sm:grid-cols-2";
 
-export default async function MenuPage() {
+export default async function MenuPage({ searchParams }: PageProps<"/">) {
+  // The auth callback sends a failed sign-in here. Without this it lands on an ordinary
+  // menu and reads as a button that did nothing.
+  const signinFailed = (await searchParams).signin === "failed";
   const week = await getOrderableWeek();
   const menu = await getMenu(week?.id ?? null);
   const account = week ? null : await currentAccount();
@@ -155,6 +159,11 @@ export default async function MenuPage() {
   return (
     <main className="w-full flex-1 animate-fade py-12">
       <TrackView name="menu_viewed" />
+      {signinFailed && (
+        <Message tone="error" className="mb-6">
+          Sign-in didn&apos;t go through. Try again.
+        </Message>
+      )}
       <h1 className="text-4xl font-semibold">
         {week ? "This week's bake" : "The menu"}
       </h1>
