@@ -127,3 +127,11 @@ export async function updateAccount(
   const [updated] = await db.update(users).set(patch).where(eq(users.id, accountId)).returning()
   return updated
 }
+
+// Every redirect out of an auth route is relative. Building one from `request.url` sends
+// the browser to the host the server is bound to, and `next dev --hostname 0.0.0.0` binds
+// to 0.0.0.0, so a sign-out started on localhost landed on a host with no session cookie.
+// The browser resolves a relative Location against the address it actually asked for.
+export function redirectTo(path: string): Response {
+  return new Response(null, { status: 303, headers: { Location: path } })
+}

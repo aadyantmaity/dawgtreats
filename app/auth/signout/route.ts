@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
-import { supabaseServer } from '@/lib/auth'
+import { redirectTo, supabaseServer } from '@/lib/auth'
 
-export async function POST(request: Request) {
+export async function POST() {
   const supabase = await supabaseServer()
   await supabase.auth.signOut()
-  return NextResponse.redirect(new URL('/', new URL(request.url).origin), { status: 303 })
+  // Every page is rendered against whoever is signed in, so the whole tree goes, not
+  // just the one being left.
+  revalidatePath('/', 'layout')
+  return redirectTo('/')
 }
