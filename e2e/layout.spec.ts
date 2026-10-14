@@ -202,11 +202,11 @@ test("the checkout chooses no pickup time for you", async ({ page }) => {
   await expect(page.getByRole("radio", { checked: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: /^Pay for/ }).click();
-  await expect(page.getByText("Choose a pickup time")).toBeVisible();
+  await expect(page.getByText("Pickup time is required")).toBeVisible();
   await expect(page, "an order with no pickup time left the checkout").toHaveURL(/\/checkout$/);
 
   await page.locator("label:has(input[name='pickup-slot'])").first().click();
-  await expect(page.getByText("Choose a pickup time")).toHaveCount(0);
+  await expect(page.getByText("Pickup time is required")).toHaveCount(0);
 
   // A full slot is listed rather than hidden, so the weekend has no holes in it, but it
   // cannot be chosen. scripts/seed-test-fixtures.ts books the last one solid.
@@ -249,16 +249,27 @@ test("the floating Pay bar stays flat until the checkout is ready", async ({ pag
   await page.goto("/checkout");
   await settled(page);
 
-  // The bar's own button, not the one at the end of the form.
-  const bar = page.getByRole("button", { name: "Pay", exact: true });
-  await expect(bar).toBeDisabled();
+  // The bar is the only Pay on a phone, so it presses throughout: a form that goes dead
+  // can never say what is missing. Flat or live is the colour, not the disabled state.
+  const bar = page.getByRole("button", { name: /^Pay for/ });
+  const paint = () =>
+    page.locator("div.fixed.bottom-6 > div").evaluate((el) => getComputedStyle(el).backgroundColor);
+
+  const flat = await paint();
+  await expect(bar).toBeEnabled();
 
   await page.locator("label:has(input[name='pickup-slot'])").first().click();
-  await expect(bar, "a pickup time alone is not a complete form").toBeDisabled();
+  // The colour is a transition, so a read taken straight after a click catches it part
+  // way. This one has to prove the bar did not light up, so it waits the transition out.
+  await page.waitForTimeout(500);
+  expect(await paint(), "a pickup time alone is not a complete form").toBe(flat);
 
   await page.getByLabel("Name").fill("Alex Rivera");
   await page.getByLabel("Email").fill("alex@example.com");
   await page.getByLabel("Phone").fill("4255550142");
+  await expect
+    .poll(paint, { message: "the bar never lit up for a form that was ready" })
+    .not.toBe(flat);
   await expect(bar).toBeEnabled();
 });
 

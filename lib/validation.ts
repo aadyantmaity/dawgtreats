@@ -32,7 +32,7 @@ export const MESSAGES = {
   emailTooLong: 'That email address is too long',
   phoneRequired: 'Phone number is required',
   phoneFormat: 'Enter a 10-digit phone number',
-  slotRequired: 'Choose a pickup time',
+  slotRequired: 'Pickup time is required',
   ratingRequired: 'Pick a rating first',
   ratingRange: 'A rating is one to five stars',
   messageTooLong: `Keep it to ${LIMITS.messageMax} characters or fewer`,
