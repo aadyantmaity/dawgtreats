@@ -198,7 +198,7 @@ export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
       })
       .from(flavors)
       .where(eq(flavors.active, true))
-      .orderBy(asc(flavors.createdAt))
+      .orderBy(asc(flavors.createdAt), asc(flavors.id))
     return rows.map((row) => ({ ...row, remaining: null }))
   }
 
@@ -218,7 +218,7 @@ export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
     .where(and(eq(flavors.active, true), gt(batchItems.quantityTotal, 0)))
     // The menu reads in the order the flavors were added, so a new one joins the end
     // rather than jumping the queue on the first letter of its name.
-    .orderBy(asc(flavors.createdAt))
+    .orderBy(asc(flavors.createdAt), asc(flavors.id))
 
   return rows.map(({ quantityRemaining, ...row }) => ({ ...row, remaining: Math.max(0, quantityRemaining) }))
 }
