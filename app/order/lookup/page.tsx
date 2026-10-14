@@ -2,6 +2,7 @@ import { IconChevronDown } from "@tabler/icons-react";
 
 import { LookupForm } from "@/app/order/lookup/lookup-form";
 import { OrderList } from "@/components/order-list";
+import { SignInWithGoogle } from "@/components/sign-in";
 import { currentAccount } from "@/lib/auth";
 import { listOrdersForAccount } from "@/lib/orders";
 
@@ -19,10 +20,18 @@ export default async function LookupPage() {
           Your code is in your confirmation email, like 4X7K. Check spam if it&apos;s not there.
         </p>
         <LookupForm />
-        <p className="mt-8 text-sm text-tertiary">
-          Signed in, your orders are listed here without a code. Orders you place while
-          signed in are saved to your account.
-        </p>
+        {/* Signing in claims the guest orders whose address matches the account exactly,
+            and most people type a different one at checkout. So this promises the orders
+            they place from here on, which is the part that always holds. */}
+        <div className="mt-10 rounded-card border border-default bg-surface p-5">
+          <p className="font-medium">Make an account</p>
+          <p className="mt-1 text-sm text-secondary">
+            Then every order you place is listed here, and you never need a code again.
+          </p>
+          <div className="mt-4">
+            <SignInWithGoogle next="/order/lookup" />
+          </div>
+        </div>
       </main>
     );
   }
