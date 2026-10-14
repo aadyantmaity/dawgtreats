@@ -24,7 +24,7 @@ test.beforeAll(async ({ browser }) => {
   // is to add a real flavor to a real cart and read back what the app itself wrote.
   const page = await browser.newPage();
   await page.goto("/");
-  await page.getByRole("button", { name: "Add" }).first().click();
+  await page.getByRole("button", { name: "Add", exact: true }).first().click();
   seedFlavorId = await page.evaluate((key) => {
     const raw = window.localStorage.getItem(key);
     const lines = raw ? JSON.parse(raw) : [];
