@@ -2,8 +2,16 @@ import Link from "next/link";
 
 import { CheckoutForm, type SlotChoice } from "@/app/checkout/checkout-form";
 import { currentAccount } from "@/lib/auth";
-import { SLOT_MINUTES, getMenu, listSlots } from "@/lib/inventory";
-import { PICKUP_PLACE, formatClosesAt, formatPickupWeekend, formatPt, getOrderableWeek } from "@/lib/weeks";
+import { getMenu, listSlots } from "@/lib/inventory";
+import {
+  PICKUP_PLACE,
+  formatClosesAt,
+  formatPickupWeekend,
+  formatPt,
+  formatSlotRange,
+  getOrderableWeek,
+  ptZone,
+} from "@/lib/weeks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Checkout" };
@@ -27,7 +35,7 @@ export default async function CheckoutPage() {
   const choices: SlotChoice[] = slots.map((slot) => ({
     id: slot.id,
     day: formatPt(slot.startsAt, { weekday: "long" }),
-    startsAt: formatPt(slot.startsAt, { hour: "numeric", minute: "2-digit" }),
+    window: formatSlotRange(slot.startsAt, slot.endsAt),
     spotsLeft: slot.capacity - slot.bookedCount,
   }));
 
@@ -42,8 +50,9 @@ export default async function CheckoutPage() {
       <CheckoutForm
         menu={menu}
         slots={choices}
-        slotMinutes={SLOT_MINUTES}
+        zone={ptZone(slots[0]?.startsAt ?? week.ordersCloseAt)}
         contact={{ name: account?.name ?? "", email: account?.email ?? "", phone: account?.phone ?? "" }}
+        signedIn={Boolean(account)}
       />
     </main>
   );

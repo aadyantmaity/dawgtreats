@@ -6,6 +6,9 @@ type InputProps = ComponentProps<"input"> & {
   label?: string;
   error?: string;
   hint?: string;
+  /** Ring the field as well as saying why. An empty field says it is required from the
+   * start, which is a label, not something the person has got wrong yet. */
+  invalid?: boolean;
   // Bump on every refused submit. Without it the field never shakes, because `error`
   // alone cannot tell a refusal from a keystroke: it changes while someone is still typing.
   attempt?: number;
@@ -17,6 +20,8 @@ export function Input({
   hint,
   attempt,
   id,
+  required,
+  invalid,
   className = "",
   ...props
 }: InputProps) {
@@ -49,7 +54,8 @@ export function Input({
       )}
       <input
         id={inputId}
-        aria-invalid={error ? true : undefined}
+        required={required}
+        aria-invalid={(invalid ?? Boolean(error)) || undefined}
         aria-describedby={message ? messageId : undefined}
         className={`h-control w-full rounded-control border border-default bg-surface text-base text-primary placeholder:text-tertiary transition-colors ease-spring focus:border-focus focus:outline-none disabled:bg-disabled disabled:text-disabled disabled:transition-none aria-invalid:border-error aria-invalid:transition-none px-4 ${className}`}
         {...props}

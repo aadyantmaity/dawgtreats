@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { CartNotices, EmptyCart, reconcile, useCart } from "@/components/cart";
 import { track } from "@/lib/analytics/track";
 import { Button } from "@/components/ui/button";
+import { SignInWithGoogle } from "@/components/sign-in";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/loading";
@@ -20,7 +21,8 @@ import { IconCalendarX, IconLock } from "@tabler/icons-react";
 export type SlotChoice = {
   id: string;
   day: string;
-  startsAt: string;
+  /** The whole window, both ends, as "12:00\u201312:30 PM". */
+  window: string;
   spotsLeft: number;
 };
 
@@ -52,7 +54,10 @@ function SlotPicker({
       {days.map((day) => (
         <div key={day} className="mt-4 first:mt-0">
           <p className="mb-2 text-sm text-secondary">{day}</p>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {/* A window needs both its ends and a meridiem, which measures 102px. Three across
+              on a phone leaves 61px for it and four on a laptop leaves 107px, and a chip
+              that wraps is a chip taller than the one beside it. */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {slots
               .filter((slot) => slot.day === day)
               .map((slot) => {
@@ -60,7 +65,7 @@ function SlotPicker({
                 return (
                   <label
                     key={slot.id}
-                    className={`group flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-2 py-2 transition ease-spring has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
+                    className={`group flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-1 py-2 transition ease-spring sm:px-2 has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
                       full
                         ? "cursor-default border-default bg-disabled text-disabled"
                         : "border-default bg-surface hover:bg-hover"
@@ -75,7 +80,7 @@ function SlotPicker({
                       onChange={() => onChange(slot.id)}
                       className="sr-only"
                     />
-                    <span className="text-sm font-medium whitespace-nowrap">{slot.startsAt}</span>
+                    <span className="text-xs font-medium min-[360px]:text-sm">{slot.window}</span>
                     {/* The count sets its own colour, so on the chosen chip it would stay
                         grey on ink. Chosen wins. */}
                     <span
@@ -124,38 +129,47 @@ function OrderSummary({
   );
 }
 
-// On a phone the Pay button sits two screens below the last field. The bar goes flat
-// until the form is ready, and the button in the form is the one that names the gaps.
+// On a phone this is the only Pay there is. It goes flat until the form is ready, but it
+// still presses: a dead button is a dead end, and submitting is what names the gaps.
 function PayBar({
   count,
   total,
   ready,
+  blocked,
   pending,
 }: {
   count: number;
   total: number;
   ready: boolean;
+  blocked: boolean;
   pending: boolean;
 }) {
   return (
     <div className="fixed inset-x-6 bottom-6 z-40 sm:hidden">
+      {/* The inner pill is 12px shorter than the bar, so the padding that keeps it off the
+          right edge is half that: any less and it rides over the bar's own curve. */}
       <div
-        className={`flex h-fab items-center justify-between gap-3 rounded-pill pl-5 transition-colors ${
+        className={`flex h-fab items-center justify-between gap-3 rounded-pill pr-1.5 pl-5 transition-colors ${
           ready ? "bg-action text-on-action shadow-lg" : "bg-disabled text-disabled"
         }`}
       >
-        <span className="text-sm whitespace-nowrap">
-          <span className="tabular-nums">{count}</span> {count === 1 ? "cookie" : "cookies"} ·{" "}
-          {formatCents(total)}
-        </span>
+        {/* The count moved into the button beside it, so this says the money and nothing else. */}
+        <span className="text-sm tabular-nums whitespace-nowrap">{formatCents(total)}</span>
         <button
           type="submit"
-          disabled={!ready}
-          className={`inline-flex h-control shrink-0 items-center rounded-pill px-5 text-sm font-medium transition-colors ${
+          disabled={blocked}
+          className={`inline-flex h-control shrink-0 items-center gap-2 rounded-pill px-4 text-sm font-medium whitespace-nowrap transition-colors ${
             ready ? "bg-page text-primary" : "bg-disabled text-disabled"
           }`}
         >
-          {pending ? <Spinner className="size-4" /> : "Pay"}
+          {pending ? (
+            <Spinner className="size-4" />
+          ) : (
+            <>
+              <IconLock aria-hidden className="size-4" />
+              Pay for {count} {count === 1 ? "cookie" : "cookies"}
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -165,13 +179,15 @@ function PayBar({
 export function CheckoutForm({
   menu,
   slots,
-  slotMinutes,
+  zone,
   contact,
+  signedIn,
 }: {
   menu: MenuItem[];
   slots: SlotChoice[];
-  slotMinutes: number;
+  zone: string;
   contact: { name: string; email: string; phone: string };
+  signedIn: boolean;
 }) {
   const { lines, count, clear } = useCart();
   const router = useRouter();
@@ -208,9 +224,12 @@ export function CheckoutForm({
     phone: phoneError(phone),
   };
   const incomplete = Object.values(fieldErrors).some(Boolean) || !slotId;
-  // A field stays quiet until it is left or the form is submitted, then tracks every keystroke.
+  const empty = { name: !name.trim(), email: !email.trim(), phone: !phone.trim() };
+  // An empty field says it is required from the start, the same as the pickup times do.
+  // A half-typed one is a different matter: it waits to be left before it complains about
+  // the shape of what is there.
   const shown = (field: keyof typeof fieldErrors) =>
-    touched[field] ? (fieldErrors[field] ?? undefined) : undefined;
+    touched[field] || empty[field] ? (fieldErrors[field] ?? undefined) : undefined;
   const touch = (field: keyof typeof fieldErrors) => () =>
     setTouched((was) => ({ ...was, [field]: true }));
 
@@ -310,12 +329,11 @@ export function CheckoutForm({
       noValidate
       className="mt-8 grid gap-6 pb-24 sm:pb-0 lg:grid-cols-3 lg:items-start"
     >
-      <CartNotices className="mt-8 empty:mt-0 lg:col-span-2" />
+      <CartNotices className="order-1 mt-8 empty:mt-0 lg:col-span-2" />
       {/* Rendered twice: above the fields on a phone, beside them on a laptop. */}
-      <OrderSummary rows={rows} total={total} className="lg:hidden" />
+      <OrderSummary rows={rows} total={total} className="order-2 lg:hidden" />
 
-      <div className="flex flex-col gap-6 lg:col-span-2">
-      <Card title="Pickup time">
+      <Card title="Pickup time" className="order-3 lg:col-span-2">
         {open.length === 0 ? (
           <p className="flex items-start gap-2 text-secondary">
             <IconCalendarX aria-hidden className="mt-0.5 size-4 shrink-0" />
@@ -324,7 +342,7 @@ export function CheckoutForm({
         ) : (
           <>
             <p className="mb-4 text-sm text-tertiary">
-              Each pickup window is {slotMinutes} minutes long. All times are Pacific.
+              All times are {zone}.
             </p>
             <SlotPicker
               slots={slots}
@@ -333,8 +351,16 @@ export function CheckoutForm({
               invalid={Boolean(slotRefused)}
               errorId={slotErrorId}
             />
-            {slotRefused && (
-              <p id={slotErrorId} className="mt-3 text-sm text-error" role="alert">
+            {/* A group of radios is never left, so a blur cannot bring this on the way the
+                contact fields get theirs. It stands from the start, quiet, and turns into
+                a refusal once Pay has been pressed. */}
+            {!slotId && (
+              <p
+                id={slotErrorId}
+                className="mt-3 text-sm text-error"
+                // Only a refusal interrupts a screen reader. On arrival this is a label.
+                role={slotRefused ? "alert" : undefined}
+              >
                 {MESSAGES.slotRequired}
               </p>
             )}
@@ -342,14 +368,16 @@ export function CheckoutForm({
         )}
       </Card>
 
-      <Card title="Where to find you">
+      <Card title="Where to find you" className="order-4 lg:order-5 lg:col-span-2">
         <div className="flex flex-col gap-4">
           <Input
             label="Name"
+            required
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={touch("name")}
             error={shown("name")}
+            invalid={Boolean(fieldErrors.name) && (touched.name || attempt > 0)}
             attempt={attempt}
             placeholder="Alex Rivera"
             autoComplete="name"
@@ -357,23 +385,28 @@ export function CheckoutForm({
           />
           <Input
             label="Email"
+            required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onBlur={touch("email")}
             error={shown("email")}
+            invalid={Boolean(fieldErrors.email) && (touched.email || attempt > 0)}
             attempt={attempt}
             autoComplete="email"
             maxLength={LIMITS.emailMax}
+            placeholder="alex@uw.edu"
             hint="I&apos;ll send your order code here."
           />
           <Input
             label="Phone"
+            required
             type="tel"
             value={phone}
             onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
             onBlur={touch("phone")}
             error={shown("phone")}
+            invalid={Boolean(fieldErrors.phone) && (touched.phone || attempt > 0)}
             attempt={attempt}
             autoComplete="tel"
             inputMode="tel"
@@ -382,9 +415,9 @@ export function CheckoutForm({
         </div>
       </Card>
 
-      </div>
-
-      <div className="flex flex-col gap-6 lg:sticky lg:top-6">
+      {/* Last on a phone, where the sticky bar already carries Pay, and beside the pickup
+          card on a laptop. */}
+      <div className="order-6 flex flex-col gap-6 lg:order-4">
       <OrderSummary rows={rows} total={total} className="max-lg:hidden" />
       {shortfalls.length > 0 && (
         <div className="flex flex-col gap-2" role="status">
@@ -406,7 +439,13 @@ export function CheckoutForm({
         </Message>
       )}
 
-      <Button type="submit" size="md" disabled={blocked}>
+      <Button
+        type="submit"
+        size="md"
+        variant={!blocked && !incomplete ? "primary" : "muted"}
+        disabled={blocked}
+        className="max-sm:hidden"
+      >
         {pending ? (
           <span className="inline-flex items-center gap-2">
             <Spinner className="size-4" />
@@ -420,13 +459,26 @@ export function CheckoutForm({
         )}
       </Button>
 
-      <p className="text-sm text-tertiary">
-        Your cookies are held for 30 minutes once you press Pay. Max {LIMITS.perOrderMax} per order. No
-        refunds or cancellations.
-      </p>
+      <p className="text-sm text-tertiary">No refunds or cancellations.</p>
+
       </div>
 
-      <PayBar count={count} total={total} ready={!blocked && !incomplete} pending={pending} />
+      {/* An aside to the checkout, never a step in it: beside the fields it would fill on a
+          laptop, and before Pay on a phone. Signing in leaves the page, so the cart lives in
+          storage and comes back. */}
+      {!signedIn && (
+        <div className="order-5 rounded-card border border-default bg-surface p-5 lg:order-6">
+          <p className="font-medium">Make an account</p>
+          <p className="mt-1 text-sm text-secondary">
+            Then every order you place is listed on the orders page.
+          </p>
+          <div className="mt-4">
+            <SignInWithGoogle next="/checkout" />
+          </div>
+        </div>
+      )}
+
+      <PayBar count={count} total={total} ready={!blocked && !incomplete} blocked={blocked} pending={pending} />
     </form>
   );
 }
