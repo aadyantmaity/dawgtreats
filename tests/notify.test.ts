@@ -4,10 +4,20 @@ import { DELETE, POST } from '@/app/api/notify/route'
 import { POST as oneClick } from '@/app/api/notify/unsubscribe/route'
 import { currentAccount } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { notifyRequests } from '@/lib/db/schema'
-import { countWaiting, isWaiting, listWaiting, markNotified, removeByToken } from '@/lib/notify'
+import { notifyRequests, orders } from '@/lib/db/schema'
+import {
+  addNotifyRequest,
+  countWaiting,
+  isWaiting,
+  listWaiting,
+  listWaitingWithoutOrder,
+  markNotified,
+  removeByToken,
+} from '@/lib/notify'
 
-import { resetDatabase } from './helpers'
+import { markPaid, reserve } from '@/lib/orders'
+
+import { buyer, resetDatabase, seedWeek } from './helpers'
 
 // The only mock here: the route asks who is signed in, and a real session would mean
 // standing up Supabase. Everything else runs against the database.
@@ -181,5 +191,64 @@ describe('asking again after being told', () => {
 
     expect(await countWaiting()).toBe(1)
     expect(await rows()).toHaveLength(1)
+  })
+})
+
+describe('who still has nothing coming', () => {
+  async function waitingEmails(weekId: string) {
+    return (await listWaitingWithoutOrder(weekId)).map((row) => row.email)
+  }
+
+  it('leaves out the people who already ordered this week, whatever case they typed', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 10 }, capacity: 5 })
+    await addNotifyRequest('BUYER@example.com')
+    await addNotifyRequest('nothingyet@uw.edu')
+
+    const { orderId } = await reserve({
+      ...buyer,
+      pickupSlotId: week.slotIds[0],
+      items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }],
+    })
+    await markPaid(orderId, { paymentIntentId: 'pi_nudge', amountCents: 300 })
+
+    expect(await waitingEmails(week.weekId)).toEqual(['nothingyet@uw.edu'])
+  })
+
+  // An expired order left this person with nothing, so a last call is exactly what they need.
+  it('keeps someone whose only order expired', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 10 }, capacity: 5 })
+    await addNotifyRequest(buyer.email)
+    await reserve({
+      ...buyer,
+      pickupSlotId: week.slotIds[0],
+      items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }],
+    })
+    await db.update(orders).set({ status: 'expired' })
+
+    expect(await waitingEmails(week.weekId)).toEqual([buyer.email])
+  })
+
+  // Last week's buyer is this week's lapsed customer, which is the whole point of the message.
+  it('keeps someone who ordered a different week', async () => {
+    const past = await seedWeek({ stock: { Snickerdoodle: 10 }, capacity: 5 })
+    const open = await seedWeek({ stock: { Snickerdoodle: 10 }, capacity: 5 })
+    await addNotifyRequest(buyer.email)
+    const { orderId } = await reserve({
+      ...buyer,
+      pickupSlotId: past.slotIds[0],
+      items: [{ flavorId: past.flavorIds.Snickerdoodle, quantity: 1 }],
+    })
+    await markPaid(orderId, { paymentIntentId: 'pi_past', amountCents: 300 })
+
+    expect(await waitingEmails(open.weekId)).toEqual([buyer.email])
+  })
+
+  // Someone told about the open week still gets the last call: being told is not ordering.
+  it('keeps someone already told about this week', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 10 }, capacity: 5 })
+    await addNotifyRequest('told@uw.edu')
+    await markNotified((await listWaiting()).map((row) => row.id))
+
+    expect(await waitingEmails(week.weekId)).toEqual(['told@uw.edu'])
   })
 })
