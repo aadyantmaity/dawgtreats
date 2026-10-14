@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '@/lib/db'
 import { batchItems, orderItems, orders, pickupSlots } from '@/lib/db/schema'
 import { DomainError } from '@/lib/errors'
+import { DEAL_CENTS } from '@/lib/money'
 import { reserve } from '@/lib/orders'
 
 import { buyer, resetDatabase, seedWeek } from './helpers'
@@ -135,14 +136,29 @@ describe('what an order records', () => {
       items: [{ flavorId: flavorIds.Snickerdoodle, quantity: 3 }],
     })
 
-    expect(reservation.totalCents).toBe(900)
+    // Three cookies are a set, so the order is charged the set price rather than 3 × $3.
+    expect(reservation.totalCents).toBe(DEAL_CENTS)
     const [order] = await db.select().from(orders)
     expect(order.status).toBe('pending')
-    expect(order.totalCents).toBe(900)
+    expect(order.totalCents).toBe(DEAL_CENTS)
     expect(order.paidAt).toBeNull()
 
+    // The price each cookie was sold at is still frozen on the line, which is what the
+    // receipt and any later re-pricing read.
     const [item] = await db.select().from(orderItems)
     expect(item.unitPriceCents).toBe(300)
+  })
+
+  it('charges list price for a basket too small to be a set', async () => {
+    const { flavorIds, slotIds } = await seedWeek({ stock: { Snickerdoodle: 10 } })
+
+    const reservation = await reserve({
+      ...buyer,
+      pickupSlotId: slotIds[0],
+      items: [{ flavorId: flavorIds.Snickerdoodle, quantity: 2 }],
+    })
+
+    expect(reservation.totalCents).toBe(600)
   })
 
   it('holds the cookies for 30 minutes', async () => {

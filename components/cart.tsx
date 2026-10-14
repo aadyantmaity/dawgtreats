@@ -145,6 +145,19 @@ export function useCart() {
           : [...lines, { flavorId, quantity }],
       );
     },
+    // Several flavors in one write. Calling setQuantity once per flavor rebuilds the cart
+    // from this render's lines every time, so each call undoes the one before it and only
+    // the last flavor survives.
+    addMany: (picks: { flavorId: string; quantity: number }[]) => {
+      const next = lines.map((line) => ({ ...line }));
+      for (const pick of picks) {
+        if (pick.quantity <= 0) continue;
+        const held = next.find((line) => line.flavorId === pick.flavorId);
+        if (held) held.quantity += pick.quantity;
+        else next.push({ flavorId: pick.flavorId, quantity: pick.quantity });
+      }
+      write(next);
+    },
     clear: () => write(EMPTY),
   };
 }

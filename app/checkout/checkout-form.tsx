@@ -13,7 +13,7 @@ import { Spinner } from "@/components/ui/loading";
 import { Message } from "@/components/ui/message";
 import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
-import { formatCents } from "@/lib/money";
+import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
 import { LIMITS, MESSAGES, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
 import { IconCalendarX, IconLock } from "@tabler/icons-react";
 
@@ -98,10 +98,14 @@ function SlotPicker({
 function OrderSummary({
   rows,
   total,
+  saved,
+  sets,
   className,
 }: {
   rows: Row[];
   total: number;
+  saved: number;
+  sets: number;
   className: string;
 }) {
   return (
@@ -116,6 +120,15 @@ function OrderSummary({
           </li>
         ))}
       </ul>
+      {saved > 0 && (
+        <div className="mt-2 flex justify-between gap-4 text-sm text-success">
+          <span>
+            {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
+            {sets > 1 ? ` × ${sets}` : ""}
+          </span>
+          <span className="tabular-nums">−{formatCents(saved)}</span>
+        </div>
+      )}
       <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">
         <span>Total</span>
         <span className="tabular-nums">{formatCents(total)}</span>
@@ -222,7 +235,10 @@ export function CheckoutForm({
     const item = onMenu.get(line.flavorId);
     return item ? [{ ...item, quantity: line.quantity }] : [];
   });
-  const total = rows.reduce((sum, row) => sum + row.priceCents * row.quantity, 0);
+  const deal = priceOrder(
+    rows.map((row) => ({ name: row.name, quantity: row.quantity, unitPriceCents: row.priceCents })),
+  );
+  const total = deal.totalCents;
   const shortfalls = rows.flatMap((row) =>
     row.remaining !== null && row.quantity > row.remaining
       ? [`${row.name}: only ${row.remaining} left. Lower it in your cart to continue.`]
@@ -312,7 +328,7 @@ export function CheckoutForm({
     >
       <CartNotices className="mt-8 empty:mt-0 lg:col-span-2" />
       {/* Rendered twice: above the fields on a phone, beside them on a laptop. */}
-      <OrderSummary rows={rows} total={total} className="lg:hidden" />
+      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="lg:hidden" />
 
       <div className="flex flex-col gap-6 lg:col-span-2">
       <Card title="Pickup time">
@@ -385,7 +401,7 @@ export function CheckoutForm({
       </div>
 
       <div className="flex flex-col gap-6 lg:sticky lg:top-6">
-      <OrderSummary rows={rows} total={total} className="max-lg:hidden" />
+      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="max-lg:hidden" />
       {shortfalls.length > 0 && (
         <div className="flex flex-col gap-2" role="status">
           {shortfalls.map((note) => (

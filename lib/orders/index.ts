@@ -5,6 +5,7 @@ import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents } from '@/lib/db/schema'
 import { DomainError, reportIssue } from '@/lib/errors'
+import { priceOrder } from '@/lib/money'
 import { ORDER_CODE_ALPHABET, type CheckoutInput } from '@/lib/validation'
 import { addDays, getOrderableWeek, ptToUtc } from '@/lib/weeks'
 
@@ -69,9 +70,14 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
     throw new DomainError('Something on the menu changed. Refresh and try again.', 409)
   }
   const byId = new Map(priced.map((flavor) => [flavor.id, flavor]))
-  const totalCents = input.items.reduce(
-    (sum, item) => sum + byId.get(item.flavorId)!.priceCents * item.quantity,
-    0,
+  // Priced here and nowhere else: the browser sends flavors and counts, never money, so
+  // the deal is applied to what the menu says today rather than to anything it was told.
+  const { totalCents } = priceOrder(
+    input.items.map((item) => ({
+      name: byId.get(item.flavorId)!.name,
+      quantity: item.quantity,
+      unitPriceCents: byId.get(item.flavorId)!.priceCents,
+    })),
   )
 
   for (let attempt = 0; attempt < CODE_ATTEMPTS; attempt++) {

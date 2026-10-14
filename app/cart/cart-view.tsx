@@ -13,7 +13,7 @@ import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { Stepper } from "@/components/ui/stepper";
 import type { MenuItem } from "@/lib/inventory";
 import { bump } from "@/lib/motion";
-import { formatCents } from "@/lib/money";
+import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
 import { LIMITS, cartLimit } from "@/lib/validation";
 import { IconClock } from "@tabler/icons-react";
 
@@ -79,7 +79,9 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
   const rowIds = new Set(rows.map((row) => row.id));
   const displayRows = [...rows, ...[...leaving.values()].filter((row) => !rowIds.has(row.id))];
 
-  const total = rows.reduce((sum, row) => sum + row.priceCents * row.quantity, 0);
+  const deal = priceOrder(
+    rows.map((row) => ({ name: row.name, quantity: row.quantity, unitPriceCents: row.priceCents })),
+  );
 
   // Rendered in both states: an emptied cart is exactly when someone needs telling why.
 
@@ -148,12 +150,23 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
         </ul>
       </Card>
 
+      {deal.savedCents > 0 && (
+        <div className="flex items-center justify-between text-sm text-success">
+          <span>
+            {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
+            {deal.sets > 1 ? ` × ${deal.sets}` : ""}
+          </span>
+          <span className="tabular-nums">−{formatCents(deal.savedCents)}</span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <span className="text-secondary">
-          <span className="font-semibold text-primary tabular-nums">{count}</span> cookies
+          <span className="font-semibold text-primary tabular-nums">{count}</span>{" "}
+          {count === 1 ? "cookie" : "cookies"}
         </span>
         <span ref={totalRef} className="text-lg font-semibold tabular-nums">
-          {formatCents(total)}
+          {formatCents(deal.totalCents)}
         </span>
       </div>
 

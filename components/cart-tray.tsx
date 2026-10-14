@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { useCart } from "@/components/cart";
 import type { MenuItem } from "@/lib/inventory";
-import { formatCents } from "@/lib/money";
+import { priceOrder, formatCents } from "@/lib/money";
 
 // A phone only: a laptop already shows the cart in the bar with room to spare. The total
 // comes from the menu because the cart itself holds quantities, never prices.
@@ -15,7 +15,9 @@ export function CartTray({ menu }: { menu: MenuItem[] }) {
   // "1 cookie · $0.00" is worse than saying nothing.
   const priced = lines.filter((line) => priceOf.has(line.flavorId));
   const count = priced.reduce((sum, line) => sum + line.quantity, 0);
-  const total = priced.reduce((sum, line) => sum + priceOf.get(line.flavorId)! * line.quantity, 0);
+  const { totalCents: total } = priceOrder(
+    priced.map((line) => ({ name: line.flavorId, quantity: line.quantity, unitPriceCents: priceOf.get(line.flavorId)! })),
+  );
   const waiting = count > 0;
 
   return (

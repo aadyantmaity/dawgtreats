@@ -18,3 +18,16 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://dawgtreats.shop/api/cron/reminders)
           echo "$response"
+
+  # The same run against staging, which sends nothing: no mail key is set there, so the
+  # job proves the path works without a customer ever hearing from it.
+  staging:
+    runs-on: ubuntu-24.04
+    if: vars.STAGING_URL != ''
+    steps:
+      - name: Run the reminder pass on staging
+        run: |
+          response=$(curl -sS --fail-with-body -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.STAGING_CRON_SECRET }}" \
+            "${{ vars.STAGING_URL }}/api/cron/reminders")
+          echo "$response"

@@ -16,3 +16,16 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://dawgtreats.shop/api/cron/sweep)
           echo "$response"
+
+  # Staging holds stock the same way, so it needs sweeping the same way. Skipped entirely
+  # until STAGING_URL names a site, so the schedule is harmless before staging exists.
+  staging:
+    runs-on: ubuntu-24.04
+    if: vars.STAGING_URL != ''
+    steps:
+      - name: Reconcile stuck orders on staging
+        run: |
+          response=$(curl -sS --fail-with-body -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.STAGING_CRON_SECRET }}" \
+            "${{ vars.STAGING_URL }}/api/cron/sweep")
+          echo "$response"

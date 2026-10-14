@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ChangeSlot, type SlotChoice } from "@/app/order/[code]/change-slot";
 import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
-import { formatCents } from "@/lib/money";
+import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
 import { getPublicOrder, listSlotsForOrder } from "@/lib/orders";
 import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
 import { cache } from "react";
@@ -43,6 +43,9 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   }));
 
   const { lines } = order;
+  // Re-priced from what each line was sold at, so an order keeps its own arithmetic even
+  // after the menu changes.
+  const { savedCents: saved, sets } = priceOrder(lines);
   const pickup = `${formatPt(order.pickupStartsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(order.pickupStartsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(order.pickupEndsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
   return (
@@ -66,6 +69,15 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
             </li>
           ))}
         </ul>
+        {saved > 0 && (
+          <div className="mt-2 flex justify-between gap-4 text-sm text-success">
+            <span>
+              {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
+              {sets > 1 ? ` × ${sets}` : ""}
+            </span>
+            <span className="tabular-nums">−{formatCents(saved)}</span>
+          </div>
+        )}
         <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">
           <span>Total</span>
           <span className="tabular-nums">{formatCents(order.totalCents)}</span>
