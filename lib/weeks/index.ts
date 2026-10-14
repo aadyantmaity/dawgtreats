@@ -61,6 +61,25 @@ export function formatPickupWeekend(pickupWeekendStart: string): string {
   return `Sat ${day(sat)} or Sun ${day(sun)}`
 }
 
+// Both ends of a pickup window share a meridiem, and a chip on a 320px phone has room
+// for one. "12:00 PM" and "12:30 PM" becomes "12:00-12:30 PM".
+export function formatSlotRange(startsAt: Date, endsAt: Date): string {
+  const time = (at: Date) => formatPt(at, { hour: 'numeric', minute: '2-digit' })
+  const from = time(startsAt)
+  const to = time(endsAt)
+  const meridiem = from.slice(-3)
+  return `${to.endsWith(meridiem) ? from.slice(0, -3) : from}\u2013${to}`
+}
+
+// "PDT" or "PST", whichever the pickup falls in. Said once, so no chip has to carry it.
+export function ptZone(at: Date): string {
+  return (
+    new Intl.DateTimeFormat('en-US', { timeZone: PT, timeZoneName: 'short' })
+      .formatToParts(at)
+      .find((part) => part.type === 'timeZoneName')?.value ?? 'PT'
+  )
+}
+
 export function formatClosesAt(ordersCloseAt: Date): string {
   return formatPt(ordersCloseAt, {
     weekday: 'short',

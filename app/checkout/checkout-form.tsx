@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { CartNotices, EmptyCart, reconcile, useCart } from "@/components/cart";
 import { track } from "@/lib/analytics/track";
 import { Button } from "@/components/ui/button";
+import { SignInWithGoogle } from "@/components/sign-in";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/loading";
@@ -20,7 +21,8 @@ import { IconCalendarX, IconLock } from "@tabler/icons-react";
 export type SlotChoice = {
   id: string;
   day: string;
-  startsAt: string;
+  /** The whole window, both ends, as "12:00\u201312:30 PM". */
+  window: string;
   spotsLeft: number;
 };
 
@@ -52,7 +54,9 @@ function SlotPicker({
       {days.map((day) => (
         <div key={day} className="mt-4 first:mt-0">
           <p className="mb-2 text-sm text-secondary">{day}</p>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {/* Two across on a phone. A window needs both its ends and a meridiem, and three
+              across leaves 61px for text that measures 102px, so every chip wrapped. */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {slots
               .filter((slot) => slot.day === day)
               .map((slot) => {
@@ -60,7 +64,7 @@ function SlotPicker({
                 return (
                   <label
                     key={slot.id}
-                    className={`group flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-2 py-2 transition ease-spring has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
+                    className={`group flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-1 py-2 transition ease-spring sm:px-2 has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
                       full
                         ? "cursor-default border-default bg-disabled text-disabled"
                         : "border-default bg-surface hover:bg-hover"
@@ -75,7 +79,7 @@ function SlotPicker({
                       onChange={() => onChange(slot.id)}
                       className="sr-only"
                     />
-                    <span className="text-sm font-medium whitespace-nowrap">{slot.startsAt}</span>
+                    <span className="text-sm font-medium">{slot.window}</span>
                     {/* The count sets its own colour, so on the chosen chip it would stay
                         grey on ink. Chosen wins. */}
                     <span
@@ -178,13 +182,15 @@ function PayBar({
 export function CheckoutForm({
   menu,
   slots,
-  slotMinutes,
+  zone,
   contact,
+  signedIn,
 }: {
   menu: MenuItem[];
   slots: SlotChoice[];
-  slotMinutes: number;
+  zone: string;
   contact: { name: string; email: string; phone: string };
+  signedIn: boolean;
 }) {
   const { lines, count, clear } = useCart();
   const router = useRouter();
@@ -326,12 +332,11 @@ export function CheckoutForm({
       noValidate
       className="mt-8 grid gap-6 pb-24 sm:pb-0 lg:grid-cols-3 lg:items-start"
     >
-      <CartNotices className="mt-8 empty:mt-0 lg:col-span-2" />
+      <CartNotices className="order-1 mt-8 empty:mt-0 lg:col-span-2" />
       {/* Rendered twice: above the fields on a phone, beside them on a laptop. */}
-      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="lg:hidden" />
+      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="order-2 lg:hidden" />
 
-      <div className="flex flex-col gap-6 lg:col-span-2">
-      <Card title="Pickup time">
+      <Card title="Pickup time" className="order-3 lg:col-span-2">
         {open.length === 0 ? (
           <p className="flex items-start gap-2 text-secondary">
             <IconCalendarX aria-hidden className="mt-0.5 size-4 shrink-0" />
@@ -340,7 +345,7 @@ export function CheckoutForm({
         ) : (
           <>
             <p className="mb-4 text-sm text-tertiary">
-              Each pickup window is {slotMinutes} minutes long. All times are Pacific.
+              All times are {zone}.
             </p>
             <SlotPicker
               slots={slots}
@@ -358,7 +363,7 @@ export function CheckoutForm({
         )}
       </Card>
 
-      <Card title="Where to find you">
+      <Card title="Where to find you" className="order-4 lg:order-5 lg:col-span-2">
         <div className="flex flex-col gap-4">
           <Input
             label="Name"
@@ -381,6 +386,7 @@ export function CheckoutForm({
             attempt={attempt}
             autoComplete="email"
             maxLength={LIMITS.emailMax}
+            placeholder="alex@uw.edu"
             hint="I&apos;ll send your order code here."
           />
           <Input
@@ -398,9 +404,9 @@ export function CheckoutForm({
         </div>
       </Card>
 
-      </div>
-
-      <div className="flex flex-col gap-6 lg:sticky lg:top-6">
+      {/* Last on a phone, where the sticky bar already carries Pay, and beside the pickup
+          card on a laptop. */}
+      <div className="order-6 flex flex-col gap-6 lg:order-4">
       <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="max-lg:hidden" />
       {shortfalls.length > 0 && (
         <div className="flex flex-col gap-2" role="status">
@@ -437,10 +443,25 @@ export function CheckoutForm({
       </Button>
 
       <p className="text-sm text-tertiary">
-        Your cookies are held for 30 minutes once you press Pay. Max {LIMITS.perOrderMax} per order. No
-        refunds or cancellations.
+        Max {LIMITS.perOrderMax} per order. No refunds or cancellations.
       </p>
+
       </div>
+
+      {/* An aside to the checkout, never a step in it: beside the fields it would fill on a
+          laptop, and before Pay on a phone. Signing in leaves the page, so the cart lives in
+          storage and comes back. */}
+      {!signedIn && (
+        <div className="order-5 rounded-card border border-default bg-surface p-5 lg:order-6">
+          <p className="font-medium">Make an account</p>
+          <p className="mt-1 text-sm text-secondary">
+            Then every order you place is listed on the orders page.
+          </p>
+          <div className="mt-4">
+            <SignInWithGoogle next="/checkout" />
+          </div>
+        </div>
+      )}
 
       <PayBar count={count} total={total} ready={!blocked && !incomplete} pending={pending} />
     </form>
