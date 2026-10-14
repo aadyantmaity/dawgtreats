@@ -18,7 +18,9 @@ const csp = [
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
-  "upgrade-insecure-requests",
+  // Chrome exempts localhost and 127.0.0.1 from the upgrade, but not 0.0.0.0, where it
+  // asks for every script and stylesheet over https and the dev server answers 503.
+  ...(dev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const nextConfig: NextConfig = {
