@@ -3,7 +3,7 @@ import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
 import { CartTray } from "@/components/cart-tray";
-import { DealCard } from "@/components/deal-card";
+import { DealBanner } from "@/components/deal-banner";
 import { NotifyForm } from "@/components/notify-form";
 import { TrackView } from "@/lib/analytics/track";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
@@ -189,11 +189,9 @@ export default async function MenuPage() {
         <p className="mt-10 text-secondary">Nothing on the menu yet. Check back soon.</p>
       ) : (
         <>
+          {forSale.length > 0 && <DealBanner menu={forSale} />}
           {forSale.length > 0 && (
-            <div className={`mt-10 grid items-stretch gap-5 sm:gap-12 ${columns}`}>
-              {/* First, because it is the cheapest way to buy the cookies below it. The
-                  deal applies to any three in the cart whether it is used or not. */}
-              <DealCard menu={forSale} />
+            <div className={`mt-5 grid items-start gap-5 sm:gap-12 ${columns}`}>
               {forSale.map((flavor, index) => (
                 <FlavorCard key={flavor.id} flavor={flavor} priority={index < 2} />
               ))}
