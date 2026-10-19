@@ -206,7 +206,10 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
         <p className="mt-10 text-secondary">Nothing on the menu yet. Check back soon.</p>
       ) : (
         <>
-          {forSale.length > 0 && <DealBanner menu={forSale} />}
+          {/* Nothing can be bought while the week is shut, so an offer on three of them is
+              not news. Shut, every flavor reports null stock rather than zero, which is why
+              the count alone kept it on the page. */}
+          {week && forSale.length > 0 && <DealBanner menu={forSale} />}
           {forSale.length > 0 && (
             <div className="mt-5 rounded-card bg-ground p-4 sm:p-6">
               <div className={`grid gap-4 sm:gap-6 ${columns}`}>
