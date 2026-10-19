@@ -50,7 +50,13 @@ function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean 
         {/* Beside the cookie this is a column of its own, so the button sits under the name
             rather than across the card. Wider, it dissolves and its two halves become rows
             of the card, which is why they carry their own order there. */}
-        <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 sm:contents">
+        {/* Shut, the name is all this column holds, so it sits against the middle of the
+            cookie rather than at the top of a column of nothing. */}
+        <div
+          className={`flex min-w-0 flex-1 flex-col gap-3 sm:contents ${
+            flavor.remaining === null ? "justify-center" : "justify-between"
+          }`}
+        >
           <div className="sm:order-1">
             <h2 className="font-sans text-lg font-semibold">{flavor.name}</h2>
             {/* The price moved into the button, which is the thing that acts on it. What is
