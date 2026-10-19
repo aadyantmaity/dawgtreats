@@ -5,6 +5,7 @@ import { and, asc, count, eq, gt, isNotNull, or, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { batchItems, flavors, orders, pickupSlots, weeks } from '@/lib/db/schema'
 import { DomainError } from '@/lib/errors'
+import { MENU_ORDER } from '@/lib/flavors'
 import { addDays, ptToUtc } from '@/lib/weeks'
 
 export const SLOT_MINUTES = 30
@@ -198,7 +199,7 @@ export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
       })
       .from(flavors)
       .where(eq(flavors.active, true))
-      .orderBy(asc(flavors.createdAt), asc(flavors.id))
+      .orderBy(...MENU_ORDER)
     return rows.map((row) => ({ ...row, remaining: null }))
   }
 
@@ -216,9 +217,7 @@ export async function getMenu(weekId: string | null): Promise<MenuItem[]> {
     .from(flavors)
     .innerJoin(batchItems, and(eq(batchItems.flavorId, flavors.id), eq(batchItems.weekId, weekId)))
     .where(and(eq(flavors.active, true), gt(batchItems.quantityTotal, 0)))
-    // The menu reads in the order the flavors were added, so a new one joins the end
-    // rather than jumping the queue on the first letter of its name.
-    .orderBy(asc(flavors.createdAt), asc(flavors.id))
+    .orderBy(...MENU_ORDER)
 
   return rows.map(({ quantityRemaining, ...row }) => ({ ...row, remaining: Math.max(0, quantityRemaining) }))
 }

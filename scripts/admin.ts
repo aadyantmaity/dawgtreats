@@ -8,7 +8,7 @@ import { setRole } from '@/lib/auth'
 import { listFeedback } from '@/lib/feedback'
 import { DomainError } from '@/lib/errors'
 import { sendLastCall, sendOpenNotice } from '@/lib/email'
-import { createFlavor, listFlavors, updateFlavor, type Flavor } from '@/lib/flavors'
+import { createFlavor, listFlavors, moveFlavor, updateFlavor, type Flavor } from '@/lib/flavors'
 import { countWaiting, listWaiting, listWaitingWithoutOrder, markNotified } from '@/lib/notify'
 import {
   SLOT_MINUTES,
@@ -55,6 +55,7 @@ Flavors
                                            --image is a file in public/, e.g. flavors/chocolate-chip.jpg
                                            --allergens adds to wheat, eggs, milk and honey, e.g. "soy"
                                            --may-contain is what a packet warns about, e.g. "peanuts"
+  flavor:move <name> <place>               move it to that place on the menu, counting from 1
   flavor:off <name>                        hide from the menu
   flavor:on <name>                         show again
 
@@ -366,9 +367,11 @@ const commands: Record<string, () => Promise<void>> = {
   async flavors() {
     const all = await listFlavors()
     if (all.length === 0) return console.log('No flavors yet. Run: npm run admin -- flavor:add "Snickerdoodle" 3.00')
-    for (const flavor of all) {
-      const state = flavor.active ? '    ' : 'off '
-      console.log(`${state}${formatCents(flavor.priceCents).padStart(7)}  ${flavor.name}${flavor.description ? `  — ${flavor.description}` : ''}`)
+    for (const [index, flavor] of all.entries()) {
+      // Numbered, because that number is what flavor:move takes. Only the ones on the
+      // menu have a place on it.
+      const place = flavor.active ? `${index + 1}.`.padStart(3) : ' off'
+      console.log(`${place} ${formatCents(flavor.priceCents).padStart(7)}  ${flavor.name}${flavor.description ? `  — ${flavor.description}` : ''}`)
     }
   },
 
@@ -397,6 +400,19 @@ const commands: Record<string, () => Promise<void>> = {
     }
     const updated = await updateFlavor(flavor.id, patch)
     console.log(`Updated ${updated.name}: ${formatCents(updated.priceCents)}${updated.description ? ` — ${updated.description}` : ''}`)
+  },
+
+  async 'flavor:move'() {
+    const [name, place] = positional
+    if (!name || !place) fail('Usage: flavor:move <name> <place>')
+    const position = Number(place)
+    if (!Number.isInteger(position)) fail('The place is a whole number, counting from 1.')
+    const flavor = await findFlavor(name)
+    const ordered = await moveFlavor(flavor.id, position)
+    console.log(`Moved ${flavor.name} to ${position}. The menu now reads:`)
+    for (const [index, item] of ordered.filter((item) => item.active).entries()) {
+      console.log(`${`${index + 1}.`.padStart(3)} ${item.name}`)
+    }
   },
 
   async 'flavor:off'() {

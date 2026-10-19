@@ -41,6 +41,9 @@ export const flavors = pgTable('flavors', {
   allergens: text('allergens'),
   mayContain: text('may_contain'),
   active: boolean('active').notNull().default(true),
+  // Where the flavor sits on the menu. Held apart from created_at so a flavor can be
+  // moved without the row claiming it was added at a time it was not.
+  sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

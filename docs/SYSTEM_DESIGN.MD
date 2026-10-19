@@ -40,7 +40,7 @@ Postgres. Money in integer cents, timestamps in UTC, displayed in PT.
 | Table | Holds | Key fields |
 | --- | --- | --- |
 | `users` | People with Google accounts | `id`, `supabase_uid`, `email`, `name`, `phone`, `role` (customer \| admin) |
-| `flavors` | The menu | `id`, `name`, `description`, `price_cents`, `image_url`, `allergens?`, `may_contain?`, `active` |
+| `flavors` | The menu | `id`, `name`, `description`, `price_cents`, `image_url`, `allergens?`, `may_contain?`, `active`, `sort_order` |
 | `weeks` | One round of baking | `id`, `pickup_weekend_start`, `orders_close_at`, `status` (draft \| open \| closed) |
 | `batch_items` | Per-flavor stock for a week | `week_id`, `flavor_id`, `quantity_total`, `quantity_remaining` |
 | `pickup_slots` | 30-minute windows | `week_id`, `starts_at`, `ends_at`, `capacity`, `booked_count` |
@@ -59,6 +59,9 @@ Constraints:
 - Check: `quantity_remaining >= 0`, `booked_count <= capacity`, `rating is null or rating between 1 and 5`.
 - Unique: `order_code`, `stripe_session_id`, `stripe_payment_intent_id`, `stripe_event_id`, `(week_id, flavor_id)`, `pickup_weekend_start`.
 - `unit_price_cents` freezes price at purchase; flavors are deactivated, never deleted.
+- `sort_order` is where a flavor sits on the menu, counting from 1, and `flavor:move` sets it.
+  It is held apart from `created_at` so a flavor can be moved without the row claiming it
+  was added at a time it was not. A new flavor takes the next place, at the end.
 - `order_code` is random and non-sequential: it is the only thing guarding a guest's order page.
 
 ## Checkout flow
