@@ -18,6 +18,9 @@ Colours are named by the job they do, never by how they look. Components use rol
 | `text-secondary` | Subtext, labels, descriptions, nav | taupe `#5d564a` |
 | `text-tertiary` | Placeholders, hints, empty states, de-emphasised items | pebble `#6e675c` |
 | `text-on-action` | Text on a primary button | ivory `#f3f1ec` |
+| `text-on-ground` | Text set straight on the dark ground | ivory `#f3f1ec` |
+| `text-on-ground-quiet` | Subtext on the ground | ivory at 68% over ink |
+| `text-success-on-ground` | Success text on the ground, where sage-700 goes black | sage-100 `#e3efe2` |
 | `text-disabled` | Text of a disabled control | pebble `#6e675c` |
 | `text-error` | Error messages | rust `#9c4a21` |
 | `text-urgent` | Low stock ("7 left"); same colour as errors for now | rust `#9c4a21` |
@@ -31,6 +34,8 @@ Colours are named by the job they do, never by how they look. Components use rol
 | `bg-hover` | Hovered rows, highlighted option | ivory `#f3f1ec` |
 | `bg-placeholder` | Photo placeholder | sand `#e6e0d2` |
 | `bg-action` | Primary button (the primary colour) | ink `#281c12` |
+| `bg-ground` | The field the menu cards and the deal sit on | ink `#281c12` |
+| `bg-on-ground-faint` | An unfilled dot on the ground, where `bg-quiet` disappears | ivory at 22% |
 | `bg-disabled` | Disabled control | oat `#e9e3d6` |
 | `bg-success` | Success badge | sage-100 `#e3efe2` |
 | `bg-warning` | Warning badge | honey-100 `#f3e8d2` |

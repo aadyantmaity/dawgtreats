@@ -1,4 +1,3 @@
-import { IconChevronDown } from "@tabler/icons-react";
 import Image from "next/image";
 
 import { AddToCart } from "@/components/cart";
@@ -29,61 +28,63 @@ function Stock({ remaining }: { remaining: number | null }) {
   );
 }
 
+// Stated, not hidden behind a press. Closed, the row said "Allergens" on every card and
+// nothing else, so it cost the same height as the sentence it was holding back.
 function Allergens({ flavor }: { flavor: MenuItem }) {
+  const mayContain = mayContainLine(flavor.mayContain);
+
   return (
-    <details className="group border-t border-default pt-3">
-      <summary className="disclosure text-sm text-secondary transition-colors ease-spring hover:text-primary">
-        Allergens
-        <IconChevronDown
-          aria-hidden
-          className="size-4 shrink-0 transition-transform ease-spring group-open:rotate-180"
-        />
-      </summary>
-      <p className="mt-2 text-sm text-tertiary">{allergenLine(flavor.allergens)}</p>
-      {mayContainLine(flavor.mayContain) && (
-        <p className="mt-1 text-sm text-tertiary">{mayContainLine(flavor.mayContain)}</p>
-      )}
-    </details>
+    <div className="border-t border-default pt-3 text-sm text-tertiary">
+      <p>{allergenLine(flavor.allergens)}</p>
+      {mayContain && <p className="mt-1">{mayContain}</p>}
+    </div>
   );
 }
 
 function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean }) {
   return (
-    <article className="flex flex-col gap-4 rounded-card border border-default bg-surface p-5">
-      {/* A phone puts the photo beside the name. Full width, three cookies are five
-          screenfuls, and the menu stops being a list you can read at a glance. */}
-      <div className="flex items-center gap-4 sm:flex-col sm:items-stretch">
-        {flavor.imageUrl ? (
-          <Image
-            src={flavor.imageUrl}
-            alt={flavor.name}
-            width={600}
-            height={450}
-            // Only the first row is above the fold, and a preload for every flavor on the
-            // menu competes with the ones that are, which costs the page its own LCP.
-            priority={priority}
-            sizes="(min-width: 640px) 24rem, 7rem"
-            className="aspect-photo w-24 shrink-0 rounded-card object-cover bigmark:w-thumb sm:size-auto sm:w-full"
-          />
-        ) : (
-          <PhotoPlaceholder className="aspect-photo w-24 shrink-0 bigmark:w-thumb sm:size-auto sm:w-full" />
-        )}
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          {/* Beside a thumbnail there is room for about twenty characters, and every name
-              here is longer. The price drops below so the name keeps the width. */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-            <h2 className="font-sans text-lg font-semibold">{flavor.name}</h2>
-            <span className="tabular-nums">{formatCents(flavor.priceCents)}</span>
-          </div>
-          {flavor.description && <p className="text-sm text-secondary">{flavor.description}</p>}
+    <article className="flex flex-col gap-3 rounded-card bg-surface p-4">
+      {/* A phone puts the cookie beside the name, because stacked it is a screenful per
+          flavor and the bake stops being something you can take in at once. */}
+      <div className="flex items-center gap-4 sm:flex-1 sm:flex-col sm:items-stretch sm:gap-3">
+        <div className="flex min-w-0 flex-1 flex-col sm:flex-none">
+          <h2 className="font-sans text-lg font-semibold">{flavor.name}</h2>
+          {/* The price moved into the button, which is the thing that acts on it. What is
+              left under the name is the one number that changes while you look at it. */}
+          <Stock remaining={flavor.remaining} />
+        </div>
+        {/* The heading stays first in the markup and the cookie moves ahead of it only on
+            screen, so the card still reads name-then-photo however it is laid out.
+            Wider, it takes what the rest of the card leaves, so a name that wraps to two
+            lines costs the cookie its height instead of making the card taller. */}
+        <div className="order-first flex size-thumb shrink-0 items-center justify-center sm:order-none sm:size-auto sm:w-full sm:flex-1 sm:px-4">
+          {flavor.imageUrl ? (
+            <Image
+              src={flavor.imageUrl}
+              alt={flavor.name}
+              width={1000}
+              height={1000}
+              // Only the first row is above the fold, and a preload for every flavor on the
+              // menu competes with the ones that are, which costs the page its own LCP.
+              priority={priority}
+              sizes="(min-width: 640px) 24rem, 7rem"
+              className="cookie-cutout aspect-square w-full object-contain"
+            />
+          ) : (
+            <PhotoPlaceholder className="aspect-square w-full" />
+          )}
         </div>
       </div>
       {/* Nothing is for sale while the week is shut, and an empty row still holds its
           height. Fixed height when it does show, so a card never grows on a press. */}
       {flavor.remaining !== null && (
-        <div className="flex min-h-control items-center justify-between gap-3">
-          <Stock remaining={flavor.remaining} />
-          <AddToCart flavorId={flavor.id} name={flavor.name} remaining={flavor.remaining} />
+        <div className="flex min-h-control items-center justify-end">
+          <AddToCart
+            flavorId={flavor.id}
+            name={flavor.name}
+            priceCents={flavor.priceCents}
+            remaining={flavor.remaining}
+          />
         </div>
       )}
       <Allergens flavor={flavor} />
@@ -114,18 +115,20 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
         />
       </svg>
       <div className="flex items-center gap-4">
-        {flavor.imageUrl ? (
-          <Image
-            src={flavor.imageUrl}
-            alt={flavor.name}
-            width={96}
-            height={96}
-            sizes="3rem"
-            className="size-12 shrink-0 rounded-control-sm object-cover opacity-60"
-          />
-        ) : (
-          <PhotoPlaceholder className="size-12 shrink-0 rounded-control-sm" />
-        )}
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-control-sm bg-quiet p-1 opacity-60">
+          {flavor.imageUrl ? (
+            <Image
+              src={flavor.imageUrl}
+              alt={flavor.name}
+              width={96}
+              height={96}
+              sizes="3rem"
+              className="cookie-cutout size-full object-contain"
+            />
+          ) : (
+            <PhotoPlaceholder className="size-full" />
+          )}
+        </div>
         <div className="flex min-w-0 flex-1 flex-col">
           {/* An h3, so heading navigation groups these under the one that explains them. */}
           <h3 className="font-sans text-base font-semibold text-tertiary">{flavor.name}</h3>
@@ -134,14 +137,14 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
           </span>
         </div>
       </div>
-      <AddToCart flavorId={flavor.id} name={flavor.name} remaining={0} />
+      <AddToCart flavorId={flavor.id} name={flavor.name} priceCents={flavor.priceCents} remaining={0} />
       <Allergens flavor={flavor} />
     </article>
   );
 }
 
-// Two across, whatever the count. The column is 848px wide, so a third card takes each
-// one down to about 270px and the photo stops being the point of the card.
+// Two across, whatever the count. The column is 976px wide, so a third card takes each one
+// down to about 309px and the cookie stops being the point of the card.
 const columns = "sm:grid-cols-2";
 
 export default async function MenuPage({ searchParams }: PageProps<"/">) {
@@ -200,10 +203,12 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
         <>
           {forSale.length > 0 && <DealBanner menu={forSale} />}
           {forSale.length > 0 && (
-            <div className={`mt-5 grid items-start gap-5 sm:gap-12 ${columns}`}>
-              {forSale.map((flavor, index) => (
-                <FlavorCard key={flavor.id} flavor={flavor} priority={index < 2} />
-              ))}
+            <div className="mt-5 rounded-card bg-ground p-4 sm:p-6">
+              <div className={`grid gap-4 sm:gap-6 ${columns}`}>
+                {forSale.map((flavor, index) => (
+                  <FlavorCard key={flavor.id} flavor={flavor} priority={index < 2} />
+                ))}
+              </div>
             </div>
           )}
           {forSale.length === 0 && (
@@ -218,7 +223,7 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
                 Sold out this week
                 <span aria-hidden className="flex-1 border-t border-default" />
               </h2>
-              <div className={`mt-5 grid items-start gap-5 sm:gap-12 ${columns}`}>
+              <div className={`mt-5 grid items-start gap-8 sm:gap-12 ${columns}`}>
                 {soldOut.map((flavor) => (
                   <SoldOutCard key={flavor.id} flavor={flavor} />
                 ))}

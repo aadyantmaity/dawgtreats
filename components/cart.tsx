@@ -10,6 +10,7 @@ import { NAV_DRAWER_ROW, NAV_TAB } from "@/components/nav-chrome";
 import { useNavPill } from "@/components/nav-tabs";
 import { Stepper } from "@/components/ui/stepper";
 import { track } from "@/lib/analytics/track";
+import { formatCents } from "@/lib/money";
 import { bump } from "@/lib/motion";
 import { LIMITS, cartLimit } from "@/lib/validation";
 
@@ -293,10 +294,12 @@ function SoldOutInterest({ name }: { name: string }) {
 export function AddToCart({
   flavorId,
   name,
+  priceCents,
   remaining,
 }: {
   flavorId: string;
   name: string;
+  priceCents: number;
   remaining: number | null;
 }) {
   const { count, quantityOf, setQuantity } = useCart();
@@ -323,7 +326,12 @@ export function AddToCart({
           }}
         >
           <IconPlus aria-hidden className="size-4" />
-          Add
+          {/* One span, so the button's own gap only separates the mark from the words and
+              the price stays attached to what it is the price of. */}
+          <span>
+            Add <span aria-hidden className="text-on-action/50">&middot;</span>{" "}
+            <span className="tabular-nums">{formatCents(priceCents)}</span>
+          </span>
         </Button>
         {note && <p className="text-sm text-secondary">{note}</p>}
       </div>

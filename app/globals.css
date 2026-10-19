@@ -21,9 +21,11 @@
 
 @theme {
   /* Below this the words beside the marks no longer fit beside the cart, so the marks
-     carry the row alone. Measured at the shared tab size: the labelled row needs 327px of
-     bar, which needs a 432px window once the mark, the gap and the gutters are counted. */
-  --breakpoint-tabtext: 27rem;
+     carry the row alone. Measured at the shared tab size with the cart at its widest, a
+     two-digit count: the labelled row needs 475px of bar, which needs a 507px window once
+     the mark, the gap and the gutters are counted. Set below that, the cart hangs off the
+     right of the bar, and nothing scrolls or clips to bring it back. */
+  --breakpoint-tabtext: 32rem;
   /* The narrowest phones cannot spare the four pixels a larger mark costs each tab. */
   --breakpoint-bigmark: 22.5rem;
 
@@ -34,6 +36,11 @@
   --text-color-secondary: var(--palette-taupe);
   --text-color-tertiary: var(--palette-pebble);
   --text-color-on-action: var(--palette-ivory);
+  /* The ground is the one dark surface on the site, so anything set straight on it needs
+     its own three: a plain one, a quieter one for subtext, and a success that still reads. */
+  --text-color-on-ground: var(--palette-ivory);
+  --text-color-on-ground-quiet: color-mix(in srgb, var(--palette-ivory) 68%, var(--palette-ink));
+  --text-color-success-on-ground: var(--palette-sage-100);
   --text-color-disabled: var(--palette-pebble);
   --text-color-error: var(--palette-rust);
   --text-color-urgent: var(--palette-rust);
@@ -46,6 +53,12 @@
   --background-color-subtle: var(--palette-ivory);
   --background-color-hover: var(--palette-ivory);
   --background-color-placeholder: var(--palette-sand);
+  /* The field the menu cards sit on. The cards carry the page colour and this carries the
+     brand, so no flavor needs a colour of its own to be told apart from the one beside it. */
+  --background-color-ground: var(--palette-ink);
+  /* An unfilled dot or rule on the ground. Ink at 6% disappears there, so this is let
+     down with the ground instead of over it. */
+  --background-color-on-ground-faint: color-mix(in srgb, var(--palette-ivory) 22%, transparent);
   --background-color-action: var(--palette-ink);
   --background-color-disabled: var(--palette-oat);
   --background-color-success: var(--palette-sage-100);
@@ -305,6 +318,16 @@
   [aria-expanded='true'] .nav-toggle-line:last-child {
     translate: 0 -3.25px;
     rotate: -45deg;
+  }
+
+  /* The cookie photos are cut out, so nothing holds them to the card. The shadow is the
+     only thing that says the cookie is sitting on the surface rather than pasted over it,
+     and it follows the cut-out edge because a filter reads the alpha, where box-shadow
+     would draw the rectangle instead. Two passes: a tight one for the contact edge and a
+     wide soft one for the body. */
+  .cookie-cutout {
+    filter: drop-shadow(0 2px 3px rgb(40 28 18 / 0.16))
+            drop-shadow(0 14px 22px rgb(40 28 18 / 0.14));
   }
 
   /* A dashed border is drawn with the gaps as short as the dashes, which reads as a line.

@@ -40,17 +40,17 @@ export function DealBanner({ menu }: { menu: MenuItem[] }) {
   }, [deal.savedCents]);
 
   return (
-    <section className="mt-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-card border border-default bg-surface p-5">
+    <section className="mt-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-card bg-ground p-5 text-on-ground">
       <div>
         <p className="font-sans text-lg font-semibold">
           {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
         </p>
-        <p className="mt-1 text-sm text-secondary">Any three cookies, any combo you like!</p>
+        <p className="mt-1 text-sm text-on-ground-quiet">Any three cookies, any combo you like!</p>
       </div>
       <div className="flex items-center gap-3">
         <span
           ref={savedRef}
-          className={`text-sm ${saving ? "font-semibold text-success" : "text-secondary"}`}
+          className={`text-sm ${saving ? "font-semibold text-success-on-ground" : "text-on-ground-quiet"}`}
         >
           {said}
         </span>
@@ -60,8 +60,8 @@ export function DealBanner({ menu }: { menu: MenuItem[] }) {
               key={slot}
               className={`size-3 rounded-pill ${
                 slot < (intoTheNext === 0 && cookies > 0 ? DEAL_SIZE : intoTheNext)
-                  ? "bg-action"
-                  : "bg-subtle"
+                  ? "bg-surface"
+                  : "bg-on-ground-faint"
               }`}
             />
           ))}

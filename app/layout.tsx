@@ -48,7 +48,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             drawer is one of them, so this has to outrank the floating feedback button. */}
         <header className="sticky top-2 z-50 mt-2">
           <NavCondense />
-          <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
+          <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
             <div className="nav-bar relative mx-auto h-bar w-fit max-w-full">
             {/* The blur is on its own layer rather than on the bar. A backdrop filter is
                 the containing block for every fixed thing inside it, and the drawer below
@@ -88,7 +88,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         {/* One column for the whole site, the same width as the bar above it. A page
             narrower than the bar sits in the middle of it, not against one edge. */}
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 sm:px-6">
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 sm:px-6">
           {children}
         </div>
         <FeedbackFab />
