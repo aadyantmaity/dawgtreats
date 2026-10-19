@@ -46,18 +46,35 @@ function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean 
     <article className="flex flex-col gap-3 rounded-card bg-surface p-4">
       {/* A phone puts the cookie beside the name, because stacked it is a screenful per
           flavor and the bake stops being something you can take in at once. */}
-      <div className="flex items-center gap-4 sm:flex-1 sm:flex-col sm:items-stretch sm:gap-3">
-        <div className="flex min-w-0 flex-1 flex-col sm:flex-none">
-          <h2 className="font-sans text-lg font-semibold">{flavor.name}</h2>
-          {/* The price moved into the button, which is the thing that acts on it. What is
-              left under the name is the one number that changes while you look at it. */}
-          <Stock remaining={flavor.remaining} />
+      <div className="flex items-stretch gap-4 sm:flex-1 sm:flex-col sm:gap-3">
+        {/* Beside the cookie this is a column of its own, so the button sits under the name
+            rather than across the card. Wider, it dissolves and its two halves become rows
+            of the card, which is why they carry their own order there. */}
+        <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 sm:contents">
+          <div className="sm:order-1">
+            <h2 className="font-sans text-lg font-semibold">{flavor.name}</h2>
+            {/* The price moved into the button, which is the thing that acts on it. What is
+                left under the name is the one number that changes while you look at it. */}
+            <Stock remaining={flavor.remaining} />
+          </div>
+          {/* Nothing is for sale while the week is shut, and an empty row still holds its
+              height. Fixed height when it does show, so a card never grows on a press. */}
+          {flavor.remaining !== null && (
+            <div className="flex min-h-control items-center justify-end sm:order-3">
+              <AddToCart
+                flavorId={flavor.id}
+                name={flavor.name}
+                priceCents={flavor.priceCents}
+                remaining={flavor.remaining}
+              />
+            </div>
+          )}
         </div>
         {/* The heading stays first in the markup and the cookie moves ahead of it only on
             screen, so the card still reads name-then-photo however it is laid out.
             Wider, it takes what the rest of the card leaves, so a name that wraps to two
             lines costs the cookie its height instead of making the card taller. */}
-        <div className="order-first flex size-thumb shrink-0 items-center justify-center sm:order-none sm:size-auto sm:w-full sm:flex-1 sm:px-4">
+        <div className="order-first flex w-thumb shrink-0 items-center justify-center sm:order-2 sm:w-full sm:flex-1 sm:px-4">
           {flavor.imageUrl ? (
             <Image
               src={flavor.imageUrl}
@@ -67,7 +84,7 @@ function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean 
               // Only the first row is above the fold, and a preload for every flavor on the
               // menu competes with the ones that are, which costs the page its own LCP.
               priority={priority}
-              sizes="(min-width: 640px) 24rem, 7rem"
+              sizes="(min-width: 640px) 24rem, 8.75rem"
               className="cookie-cutout aspect-square w-full object-contain"
             />
           ) : (
@@ -75,18 +92,6 @@ function FlavorCard({ flavor, priority }: { flavor: MenuItem; priority: boolean 
           )}
         </div>
       </div>
-      {/* Nothing is for sale while the week is shut, and an empty row still holds its
-          height. Fixed height when it does show, so a card never grows on a press. */}
-      {flavor.remaining !== null && (
-        <div className="flex min-h-control items-center justify-end">
-          <AddToCart
-            flavorId={flavor.id}
-            name={flavor.name}
-            priceCents={flavor.priceCents}
-            remaining={flavor.remaining}
-          />
-        </div>
-      )}
       <Allergens flavor={flavor} />
     </article>
   );

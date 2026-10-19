@@ -314,10 +314,13 @@ export function AddToCart({
   // that had simply run low.
   const limit = cartLimit({ quantity, remaining }, count);
 
+  // Beside the cookie on a phone the button has a column of its own, so it takes the
+  // width. In a row of its own it does not.
   if (quantity === 0) {
     return (
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex w-full flex-col items-stretch gap-1 sm:w-auto sm:items-end">
         <Button
+          className="w-full sm:w-auto"
           onClick={() => {
             if (limit.max === 0) return setNote(limit.reached);
             setQuantity(flavorId, 1);
