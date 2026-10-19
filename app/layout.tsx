@@ -6,6 +6,7 @@ import { CartLink } from "@/components/cart";
 import { NavCondense } from "@/components/nav-condense";
 import { NavTabs, type NavTab } from "@/components/nav-tabs";
 import { FeedbackFab } from "@/components/feedback-fab";
+import { getOrderableWeek } from "@/lib/weeks";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -28,6 +29,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Nothing can be bought while the week is shut, so the basket has nothing to hold.
+  const week = await getOrderableWeek();
   const tabs: NavTab[] = [
     { href: "/", label: "Home", icon: "home" },
     { href: "/order/lookup", label: "Orders", icon: "orders" },
@@ -69,16 +72,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <span>Treats</span>
               </span>
             </Link>
-            {/* The cart sits in the bar at every width: a part-finished order must never
-                be behind a menu someone has to open first. */}
+            {/* While a week is open the cart sits in the bar at every width: a
+                part-finished order must never be behind a menu someone has to open first. */}
             <nav className="flex min-w-0 items-center gap-1 sm:gap-3">
               {/* The cart rides in the tab row, so the pill travels to it like any tab. */}
               <div className="min-w-0">
                 <NavTabs tabs={tabs}>
                   {/* Four of these are places and the last one is a basket. The rule says
                       so, and the pill still travels across it. */}
-                  <span aria-hidden className="nav-rule h-5 w-0 shrink-0 border-l" />
-                  <CartLink variant="tab" />
+                  {week && (
+                    <>
+                      <span aria-hidden className="nav-rule h-5 w-0 shrink-0 border-l" />
+                      <CartLink variant="tab" />
+                    </>
+                  )}
                 </NavTabs>
               </div>
             </nav>

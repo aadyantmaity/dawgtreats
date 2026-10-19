@@ -244,7 +244,7 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
       <p className="mt-12 text-sm text-tertiary">
         Pickup only, Saturday or Sunday. No refunds or cancellations.
       </p>
-      <CartTray menu={menu} />
+      {week && <CartTray menu={menu} />}
     </main>
   );
 }
