@@ -79,8 +79,17 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
   const rowIds = new Set(rows.map((row) => row.id));
   const displayRows = [...rows, ...[...leaving.values()].filter((row) => !rowIds.has(row.id))];
 
+  // The last row leaving takes the summary and the button with it, so the block leaves as
+  // one thing. Collapsing the row inside a card that then disappears in a single frame is
+  // what made this read as a glitch rather than a transition.
+  const emptying = rows.length === 0 && displayRows.length > 0;
+
+  // Priced from what is on screen while it leaves. Priced from the cart, the figures would
+  // drop to "0 cookies  $0.00" under a row that is still visibly there.
+  const priced = emptying ? displayRows : rows;
+  const shownCount = priced.reduce((sum, row) => sum + row.quantity, 0);
   const deal = priceOrder(
-    rows.map((row) => ({ name: row.name, quantity: row.quantity, unitPriceCents: row.priceCents })),
+    priced.map((row) => ({ name: row.name, quantity: row.quantity, unitPriceCents: row.priceCents })),
   );
 
   // Rendered in both states: an emptied cart is exactly when someone needs telling why.
@@ -95,7 +104,13 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
   }
 
   return (
-    <div className="mt-8 flex flex-col gap-6">
+    <div
+      onAnimationEnd={(event) => {
+        if (!emptying || event.target !== event.currentTarget) return;
+        for (const id of leaving.keys()) finishLeaving(id);
+      }}
+      className={`mt-8 flex flex-col gap-6 ${emptying ? "overflow-hidden animate-leave" : ""}`}
+    >
       <CartNotices className="mt-6 empty:mt-0" />
       <Card className="p-0">
         <ul className="divide-y divide-default">
@@ -106,9 +121,11 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
               <li
                 key={row.id}
                 onAnimationEnd={(e) => {
-                  if (isLeaving && e.target === e.currentTarget) finishLeaving(row.id);
+                  if (isLeaving && !emptying && e.target === e.currentTarget) finishLeaving(row.id);
                 }}
-                className={`flex flex-col gap-4 p-5 sm:flex-row sm:flex-wrap sm:items-center ${isLeaving ? "overflow-hidden animate-leave" : ""}`}
+                className={`flex flex-col gap-4 p-5 sm:flex-row sm:flex-wrap sm:items-center ${
+                  isLeaving && !emptying ? "overflow-hidden animate-leave" : ""
+                }`}
               >
                 {/* A phone gives the name its own line. Sharing one with the stepper and the
                     total left it about a hundred pixels, and every name here wrapped to three. */}
@@ -137,7 +154,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
                     max={limit.max}
                     onChange={(next, from) => handleQuantityChange(row, Number(next || "0"), from)}
                   />
-                  <span className="w-20 text-right tabular-nums">
+                  <span className="w-20 text-right">
                     {formatCents(row.priceCents * row.quantity)}
                   </span>
                 </div>
@@ -156,16 +173,16 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
             {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
             {deal.sets > 1 ? ` × ${deal.sets}` : ""}
           </span>
-          <span className="tabular-nums">−{formatCents(deal.savedCents)}</span>
+          <span>−{formatCents(deal.savedCents)}</span>
         </div>
       )}
 
       <div className="flex items-center justify-between">
         <span className="text-secondary">
-          <span className="font-semibold text-primary tabular-nums">{count}</span>{" "}
-          {count === 1 ? "cookie" : "cookies"}
+          <span className="font-semibold text-primary">{shownCount}</span>{" "}
+          {shownCount === 1 ? "cookie" : "cookies"}
         </span>
-        <span ref={totalRef} className="text-lg font-semibold tabular-nums">
+        <span ref={totalRef} className="text-lg font-semibold">
           {formatCents(deal.totalCents)}
         </span>
       </div>

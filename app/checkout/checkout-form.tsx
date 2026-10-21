@@ -14,7 +14,7 @@ import { Spinner } from "@/components/ui/loading";
 import { Message } from "@/components/ui/message";
 import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
-import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
+import { DEAL_CENTS, DEAL_SIZE, WEEKDAY_CENTS, formatCents, priceOrder } from "@/lib/money";
 import { LIMITS, MESSAGES, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
 import { IconCalendarX, IconLock } from "@tabler/icons-react";
 
@@ -24,6 +24,8 @@ export type SlotChoice = {
   /** The whole window, both ends, as "12:00\u201312:30 PM". */
   window: string;
   spotsLeft: number;
+  /** Collected the day it is ordered, which is what the fee is for. */
+  weekday: boolean;
 };
 
 const LOW_SPOTS = 2;
@@ -44,58 +46,59 @@ function SlotPicker({
   invalid: boolean;
   errorId: string;
 }) {
-  const days = [...new Set(slots.map((slot) => slot.day))];
-
   return (
     // The refusal is a sibling of this group, so the group has to point at it: otherwise
     // someone who moves back to the times never hears why they were refused.
     <fieldset aria-invalid={invalid || undefined} aria-describedby={invalid ? errorId : undefined}>
       <legend className="sr-only">Pickup time</legend>
-      {days.map((day) => (
-        <div key={day} className="mt-4 first:mt-0">
-          <p className="mb-2 text-sm text-secondary">{day}</p>
-          {/* A window needs both its ends and a meridiem, which measures 102px. Three across
-              on a phone leaves 61px for it and four on a laptop leaves 107px, and a chip
-              that wraps is a chip taller than the one beside it. */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {slots
-              .filter((slot) => slot.day === day)
-              .map((slot) => {
-                const full = slot.spotsLeft <= 0;
-                return (
-                  <label
-                    key={slot.id}
-                    className={`group flex min-h-control cursor-pointer flex-col items-center justify-center rounded-control-sm border px-1 py-2 transition ease-spring sm:px-2 has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
-                      full
-                        ? "cursor-default border-default bg-disabled text-disabled"
-                        : "border-default bg-surface hover:bg-hover"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="pickup-slot"
-                      value={slot.id}
-                      checked={slot.id === value}
-                      disabled={full}
-                      onChange={() => onChange(slot.id)}
-                      className="sr-only"
-                    />
-                    <span className="text-xs font-medium min-[360px]:text-sm">{slot.window}</span>
-                    {/* The count sets its own colour, so on the chosen chip it would stay
-                        grey on ink. Chosen wins. */}
-                    <span
-                      className={`text-xs group-has-checked:text-on-action ${
-                        full || slot.spotsLeft > LOW_SPOTS ? "text-tertiary" : "text-urgent"
-                      }`}
-                    >
-                      {full ? "full" : `${slot.spotsLeft} ${slot.spotsLeft === 1 ? "spot" : "spots"}`}
-                    </span>
-                  </label>
-                );
-              })}
-          </div>
-        </div>
-      ))}
+      {/* A window is a row, not a chip. There are a handful of them and each carries a day,
+          a span of hours and what it costs, which is more than fits in a tile two inches
+          wide. Grouping by day on top of that left a lone chip under every heading. */}
+      <div className="flex flex-col gap-2">
+        {slots.map((slot) => {
+          const full = slot.spotsLeft <= 0;
+          return (
+            <label
+              key={slot.id}
+              className={`group flex min-h-control cursor-pointer items-center justify-between gap-3 rounded-control-sm border px-4 py-3 transition ease-spring has-checked:border-transparent has-checked:bg-action has-checked:text-on-action has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
+                full
+                  ? "cursor-default border-default bg-disabled text-disabled"
+                  : "border-default bg-surface hover:bg-hover"
+              }`}
+            >
+              <input
+                type="radio"
+                name="pickup-slot"
+                value={slot.id}
+                checked={slot.id === value}
+                disabled={full}
+                onChange={() => onChange(slot.id)}
+                className="sr-only"
+              />
+              <span className="flex min-w-0 flex-col">
+                <span className="text-sm font-medium">
+                  {slot.day} {slot.window}
+                </span>
+                {/* The row already names the day, so the charge does not have to. */}
+                {slot.weekday && (
+                  <span className="text-xs text-secondary group-has-checked:text-on-action">
+                    +{formatCents(WEEKDAY_CENTS)}
+                  </span>
+                )}
+              </span>
+              {/* The count sets its own colour, so on the chosen row it would stay grey on
+                  ink. Chosen wins. */}
+              <span
+                className={`shrink-0 text-xs group-has-checked:text-on-action ${
+                  full || slot.spotsLeft > LOW_SPOTS ? "text-tertiary" : "text-urgent"
+                }`}
+              >
+                {full ? "full" : `${slot.spotsLeft} ${slot.spotsLeft === 1 ? "spot" : "spots"}`}
+              </span>
+            </label>
+          );
+        })}
+      </div>
     </fieldset>
   );
 }
@@ -105,12 +108,14 @@ function OrderSummary({
   total,
   saved,
   sets,
+  fee,
   className,
 }: {
   rows: Row[];
   total: number;
   saved: number;
   sets: number;
+  fee: number;
   className: string;
 }) {
   return (
@@ -121,22 +126,34 @@ function OrderSummary({
             <span>
               {row.quantity} × {row.name}
             </span>
-            <span className="tabular-nums">{formatCents(row.priceCents * row.quantity)}</span>
+            <span>{formatCents(row.priceCents * row.quantity)}</span>
           </li>
         ))}
       </ul>
-      {saved > 0 && (
-        <div className="mt-2 flex justify-between gap-4 text-sm text-success">
-          <span>
-            {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
-            {sets > 1 ? ` × ${sets}` : ""}
-          </span>
-          <span className="tabular-nums">−{formatCents(saved)}</span>
+      {/* Charges first, then what comes off, in the same order the order page sets them, so
+          a total is read the same way twice. */}
+      {(saved > 0 || fee > 0) && (
+        <div className="mt-2 flex flex-col gap-2">
+          {fee > 0 && (
+            <div className="flex justify-between gap-4 text-secondary">
+              <span>Weekday pickup</span>
+              <span>+{formatCents(fee)}</span>
+            </div>
+          )}
+          {saved > 0 && (
+            <div className="flex justify-between gap-4 text-success">
+              <span>
+                {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
+                {sets > 1 ? ` × ${sets}` : ""}
+              </span>
+              <span>−{formatCents(saved)}</span>
+            </div>
+          )}
         </div>
       )}
       <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">
         <span>Total</span>
-        <span className="tabular-nums">{formatCents(total)}</span>
+        <span>{formatCents(total)}</span>
       </div>
     </Card>
   );
@@ -167,7 +184,7 @@ function PayBar({
         }`}
       >
         {/* The count moved into the button beside it, so this says the money and nothing else. */}
-        <span className="text-sm tabular-nums whitespace-nowrap">{formatCents(total)}</span>
+        <span className="text-sm whitespace-nowrap">{formatCents(total)}</span>
         <button
           type="submit"
           disabled={blocked}
@@ -195,12 +212,14 @@ export function CheckoutForm({
   zone,
   contact,
   signedIn,
+  freeCookieToSpend,
 }: {
   menu: MenuItem[];
   slots: SlotChoice[];
   zone: string;
   contact: { name: string; email: string; phone: string };
   signedIn: boolean;
+  freeCookieToSpend: boolean;
 }) {
   const { lines, count, clear } = useCart();
   const router = useRouter();
@@ -223,6 +242,7 @@ export function CheckoutForm({
   const [phone, setPhone] = useState(formatPhoneInput(contact.phone));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [freeCookie, setFreeCookie] = useState(false);
   const [touched, setTouched] = useState({ name: false, email: false, phone: false });
   const [seenSlots, setSeenSlots] = useState(slots);
   if (seenSlots !== slots) {
@@ -254,8 +274,13 @@ export function CheckoutForm({
     const item = onMenu.get(line.flavorId);
     return item ? [{ ...item, quantity: line.quantity }] : [];
   });
+  // The fee follows the chosen window, so the total moves the moment a same-day one is
+  // picked. The server prices it again from the window it actually books; this is only so
+  // the number on screen is never a surprise at Stripe.
+  const weekday = slots.some((slot) => slot.id === slotId && slot.weekday);
   const deal = priceOrder(
     rows.map((row) => ({ name: row.name, quantity: row.quantity, unitPriceCents: row.priceCents })),
+    weekday,
   );
   const total = deal.totalCents;
   const shortfalls = rows.flatMap((row) =>
@@ -300,6 +325,7 @@ export function CheckoutForm({
           email,
           phone,
           pickupSlotId: slotId,
+          freeCookie,
           items: rows.map((row) => ({ flavorId: row.id, quantity: row.quantity })),
         }),
       });
@@ -347,7 +373,7 @@ export function CheckoutForm({
     >
       <CartNotices className="order-1 mt-8 empty:mt-0 lg:col-span-2" />
       {/* Rendered twice: above the fields on a phone, beside them on a laptop. */}
-      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="order-2 lg:hidden" />
+      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} fee={deal.feeCents} className="order-2 lg:hidden" />
 
       <Card title="Pickup time" className="order-3 lg:col-span-2">
         {open.length === 0 ? (
@@ -434,7 +460,7 @@ export function CheckoutForm({
       {/* Last on a phone, where the sticky bar already carries Pay, and beside the pickup
           card on a laptop. */}
       <div className="order-6 flex flex-col gap-6 lg:order-4">
-      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} className="max-lg:hidden" />
+      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} fee={deal.feeCents} className="max-lg:hidden" />
       {shortfalls.length > 0 && (
         <div className="flex flex-col gap-2" role="status">
           {shortfalls.map((note) => (
@@ -478,6 +504,26 @@ export function CheckoutForm({
       <p className="text-sm text-tertiary">No refunds or cancellations.</p>
 
       </div>
+
+      {/* Nothing comes off the total, so this is not part of the money: it is a note to
+          whoever packs the bag. Asked for rather than given, because a cookie nobody wanted
+          still spends the one they had. */}
+      {freeCookieToSpend && (
+        <label className="order-5 flex cursor-pointer items-start gap-3 rounded-card border border-default bg-surface p-5 lg:order-6">
+          <input
+            type="checkbox"
+            checked={freeCookie}
+            onChange={(event) => setFreeCookie(event.target.checked)}
+            className="mt-0.5 size-5 shrink-0 accent-action"
+          />
+          <span>
+            <span className="font-medium">Use your free cookie</span>
+            <span className="mt-1 block text-sm text-secondary">
+              A surprise flavor. One per account.
+            </span>
+          </span>
+        </label>
+      )}
 
       {/* An aside to the checkout, never a step in it: beside the fields it would fill on a
           laptop, and before Pay on a phone. Signing in leaves the page, so the cart lives in

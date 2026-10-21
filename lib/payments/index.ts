@@ -58,8 +58,12 @@ export async function createCheckoutSession(order: {
   orderCode: string
   email: string
   lines: CheckoutLine[]
+  pickupFeeCents: number
   origin?: string | null
 }): Promise<{ sessionId: string; url: string }> {
+  // The fee comes from the order rather than from a second look at the window: these line
+  // items have to add up to the total the order was reserved at, and that total was fixed
+  // when the window was booked.
   const deal = priceOrder(order.lines)
   const origin = returnOrigin(order.origin ?? null)
 
@@ -96,6 +100,18 @@ export async function createCheckoutSession(order: {
           product_data: { name: line.name },
         },
       })),
+      ...(order.pickupFeeCents > 0
+        ? [
+            {
+              quantity: 1,
+              price_data: {
+                currency: 'usd' as const,
+                unit_amount: order.pickupFeeCents,
+                product_data: { name: 'Weekday pickup' },
+              },
+            },
+          ]
+        : []),
     ],
     success_url: `${origin}/order/${order.orderCode}?paid=1`,
     cancel_url: `${origin}/order/${order.orderCode}`,

@@ -25,6 +25,7 @@ export async function POST(request: Request) {
         orderCode: reservation.orderCode,
         email: input.email,
         lines: reservation.lines,
+        pickupFeeCents: reservation.pickupFeeCents,
         origin: request.headers.get('origin'),
       })
       await attachSession(reservation.orderId, session.sessionId)

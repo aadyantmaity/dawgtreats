@@ -8,7 +8,30 @@ import { DomainError } from '@/lib/errors'
 import { MENU_ORDER } from '@/lib/flavors'
 import { addDays, ptToUtc } from '@/lib/weeks'
 
-export const SLOT_MINUTES = 30
+// A pickup window runs from the time it is given to the time it is given, so the whole
+// weekend is two or three choices rather than a dozen half hours. The day names are the
+// ones a week can carry: the weekend it is baked for, and the evenings before orders close.
+export const PICKUP_DAYS = {
+  mon: -5,
+  tue: -4,
+  wed: -3,
+  thu: -2,
+  sat: 0,
+  sun: 1,
+} as const
+
+export type PickupDay = keyof typeof PICKUP_DAYS
+
+// The evenings before the weekend. All this decides is how many people a window of that
+// kind holds; what it costs to collect from is isWeekdayPickup's question, read off the
+// day the window lands on.
+export function isEvening(day: PickupDay): boolean {
+  return PICKUP_DAYS[day] < 0
+}
+
+// How many pickups a window holds when none is given. A weekday evening is one person at
+// a time in a dorm doorway; the weekend is a queue you stand in.
+export const DEFAULT_CAPACITY = { weekend: 15, evening: 7 } as const
 
 export type InventoryRow = {
   flavorId: string
@@ -94,7 +117,10 @@ export async function setBatchQuantities(
   })
 }
 
-export async function listSlots(weekId: string): Promise<Slot[]> {
+// `upcomingOnly` is for the checkout: a window that has already ended is still a row, and
+// without this someone could book a pickup that happened on Monday. The admin wants the
+// whole list, past windows included, because it is a record of the week.
+export async function listSlots(weekId: string, upcomingOnly = false): Promise<Slot[]> {
   return db
     .select({
       id: pickupSlots.id,
@@ -107,14 +133,26 @@ export async function listSlots(weekId: string): Promise<Slot[]> {
     })
     .from(pickupSlots)
     .leftJoin(orders, eq(orders.pickupSlotId, pickupSlots.id))
-    .where(eq(pickupSlots.weekId, weekId))
+    .where(
+      upcomingOnly
+        ? and(eq(pickupSlots.weekId, weekId), gt(pickupSlots.endsAt, new Date()))
+        : eq(pickupSlots.weekId, weekId),
+    )
     .groupBy(pickupSlots.id)
     .orderBy(asc(pickupSlots.startsAt))
 }
 
-export async function addSlot(weekId: string, day: 'sat' | 'sun', time: string): Promise<void> {
-  if (!/^([01]\d|2[0-3]):(00|30)$/.test(time)) {
-    throw new DomainError('Slots start on the hour or half hour', 400)
+export async function addSlot(
+  weekId: string,
+  day: PickupDay,
+  from: string,
+  to: string,
+  capacity?: number,
+): Promise<void> {
+  for (const time of [from, to]) {
+    if (!/^([01]\d|2[0-3]):(00|30)$/.test(time)) {
+      throw new DomainError('Windows start and end on the hour or half hour', 400)
+    }
   }
 
   await db.transaction(async (tx) => {
@@ -122,18 +160,28 @@ export async function addSlot(weekId: string, day: 'sat' | 'sun', time: string):
     if (!week) throw new DomainError('Week not found', 404)
     if (week.status === 'closed') throw new DomainError('This week is closed')
 
-    const date = day === 'sat' ? week.pickupWeekendStart : addDays(week.pickupWeekendStart, 1)
-    const startsAt = ptToUtc(date, time)
-    if (startsAt.getTime() <= Date.now()) throw new DomainError('That time has already passed', 400)
+    const date = addDays(week.pickupWeekendStart, PICKUP_DAYS[day])
+    const startsAt = ptToUtc(date, from)
+    const endsAt = ptToUtc(date, to)
+    if (endsAt.getTime() <= startsAt.getTime()) {
+      throw new DomainError('A window has to end after it starts', 400)
+    }
+    // The window is still worth booking until it ends, so what matters is that some of it
+    // is left, not that it has yet to start.
+    if (endsAt.getTime() <= Date.now()) throw new DomainError('That window has already passed', 400)
 
     const [clash] = await tx
       .select({ id: pickupSlots.id })
       .from(pickupSlots)
       .where(and(eq(pickupSlots.weekId, weekId), eq(pickupSlots.startsAt, startsAt)))
-    if (clash) throw new DomainError('That slot already exists')
+    if (clash) throw new DomainError('A window already starts at that time')
 
-    const endsAt = new Date(startsAt.getTime() + SLOT_MINUTES * 60000)
-    await tx.insert(pickupSlots).values({ weekId, startsAt, endsAt })
+    await tx.insert(pickupSlots).values({
+      weekId,
+      startsAt,
+      endsAt,
+      capacity: capacity ?? (isEvening(day) ? DEFAULT_CAPACITY.evening : DEFAULT_CAPACITY.weekend),
+    })
   })
 }
 
@@ -150,26 +198,26 @@ export async function deleteSlot(slotId: string): Promise<void> {
   if (deleted.length > 0) return
 
   const [slot] = await db.select({ id: pickupSlots.id }).from(pickupSlots).where(eq(pickupSlots.id, slotId))
-  if (!slot) throw new DomainError('Slot not found', 404)
+  if (!slot) throw new DomainError('Window not found', 404)
 
   const [{ orderCount }] = await db
     .select({ orderCount: count() })
     .from(orders)
     .where(eq(orders.pickupSlotId, slotId))
   const noun = orderCount === 1 ? 'order' : 'orders'
-  throw new DomainError(`This slot has ${orderCount} ${noun} and can't be removed`)
+  throw new DomainError(`This window has ${orderCount} ${noun} and can't be removed`)
 }
 
-export async function findSlotAt(weekId: string, day: 'sat' | 'sun', time: string): Promise<string> {
+export async function findSlotAt(weekId: string, day: PickupDay, time: string): Promise<string> {
   const [week] = await db.select().from(weeks).where(eq(weeks.id, weekId))
   if (!week) throw new DomainError('Week not found', 404)
 
-  const date = day === 'sat' ? week.pickupWeekendStart : addDays(week.pickupWeekendStart, 1)
+  const date = addDays(week.pickupWeekendStart, PICKUP_DAYS[day])
   const [slot] = await db
     .select({ id: pickupSlots.id })
     .from(pickupSlots)
     .where(and(eq(pickupSlots.weekId, weekId), eq(pickupSlots.startsAt, ptToUtc(date, time))))
-  if (!slot) throw new DomainError('There is no slot at that time', 404)
+  if (!slot) throw new DomainError('There is no window at that time', 404)
   return slot.id
 }
 

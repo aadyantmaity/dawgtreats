@@ -1,13 +1,13 @@
 import 'server-only'
 
-import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
-import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents } from '@/lib/db/schema'
+import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeEvents, users } from '@/lib/db/schema'
 import { DomainError, reportIssue } from '@/lib/errors'
 import { priceOrder } from '@/lib/money'
 import { ORDER_CODE_ALPHABET, type CheckoutInput } from '@/lib/validation'
-import { addDays, getOrderableWeek, ptToUtc } from '@/lib/weeks'
+import { addDays, getOrderableWeek, isWeekdayPickup, ptToUtc } from '@/lib/weeks'
 
 // Matches Stripe's minimum Checkout session expiry, so stock is released only once Stripe says the session is dead.
 export const HOLD_MINUTES = 30
@@ -32,6 +32,8 @@ export type Reservation = {
   orderId: string
   orderCode: string
   totalCents: number
+  pickupFeeCents: number
+  freeCookie: boolean
   reservedUntil: Date
   pickupStartsAt: Date
   lines: { name: string; quantity: number; unitPriceCents: number }[]
@@ -72,13 +74,11 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
   const byId = new Map(priced.map((flavor) => [flavor.id, flavor]))
   // Priced here and nowhere else: the browser sends flavors and counts, never money, so
   // the deal is applied to what the menu says today rather than to anything it was told.
-  const { totalCents } = priceOrder(
-    input.items.map((item) => ({
-      name: byId.get(item.flavorId)!.name,
-      quantity: item.quantity,
-      unitPriceCents: byId.get(item.flavorId)!.priceCents,
-    })),
-  )
+  const lines = input.items.map((item) => ({
+    name: byId.get(item.flavorId)!.name,
+    quantity: item.quantity,
+    unitPriceCents: byId.get(item.flavorId)!.priceCents,
+  }))
 
   for (let attempt = 0; attempt < CODE_ATTEMPTS; attempt++) {
     try {
@@ -124,7 +124,36 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
           .returning({ startsAt: pickupSlots.startsAt })
 
         if (booked.length === 0) {
-          throw new DomainError('That pickup time just filled up. Pick another one.', 409)
+          // Either the window filled up or it has already ended. A page left open over a
+          // weekend would otherwise book a pickup that happened two days ago.
+          const [window] = await tx
+            .select({ endsAt: pickupSlots.endsAt })
+            .from(pickupSlots)
+            .where(and(eq(pickupSlots.id, input.pickupSlotId), eq(pickupSlots.weekId, week.id)))
+          throw new DomainError(
+            window && window.endsAt.getTime() <= Date.now()
+              ? 'That pickup time has passed. Pick another one.'
+              : 'That pickup time just filled up. Pick another one.',
+            409,
+          )
+        }
+
+        // Priced here and nowhere else: the browser sends flavors and counts, never money,
+        // so the deal is applied to what the menu says today rather than to anything it was
+        // told, and the fee to the window the database just booked.
+        const { totalCents, feeCents } = priceOrder(lines, isWeekdayPickup(booked[0].startsAt))
+
+        // Claimed by the same update that reads it, so two checkouts at once cannot both
+        // take the one cookie: the second finds the column already set and comes back empty.
+        // Nothing comes off the total, so a refused claim is not a pricing problem.
+        let freeCookie = false
+        if (input.freeCookie && accountId) {
+          const claimed = await tx
+            .update(users)
+            .set({ freeCookieUsedAt: new Date() })
+            .where(and(eq(users.id, accountId), isNull(users.freeCookieUsedAt)))
+            .returning({ id: users.id })
+          freeCookie = claimed.length > 0
         }
 
         const reservedUntil = new Date(Date.now() + HOLD_MINUTES * 60_000)
@@ -138,6 +167,8 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
             email: input.email,
             phone: input.phone,
             totalCents,
+            pickupFeeCents: feeCents,
+            freeCookie,
             reservedUntil,
             userId: accountId ?? null,
           })
@@ -157,13 +188,11 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
           orderId: order.id,
           orderCode: order.orderCode,
           totalCents,
+          pickupFeeCents: feeCents,
+          freeCookie,
           reservedUntil,
           pickupStartsAt: booked[0].startsAt,
-          lines: input.items.map((item) => ({
-            name: byId.get(item.flavorId)!.name,
-            quantity: item.quantity,
-            unitPriceCents: byId.get(item.flavorId)!.priceCents,
-          })),
+          lines,
         }
       })
     } catch (error) {
@@ -205,6 +234,8 @@ export type PublicOrder = {
   orderCode: string
   status: (typeof orders.$inferSelect)['status']
   totalCents: number
+  pickupFeeCents: number
+  freeCookie: boolean
   pickupStartsAt: Date
   pickupEndsAt: Date
   lines: { name: string; quantity: number; unitPriceCents: number }[]
@@ -220,6 +251,8 @@ export async function getPublicOrder(orderCode: string): Promise<PublicOrder | n
     orderCode: found.order.orderCode,
     status: found.order.status,
     totalCents: found.order.totalCents,
+    pickupFeeCents: found.order.pickupFeeCents,
+    freeCookie: found.order.freeCookie,
     pickupStartsAt: found.slot.startsAt,
     pickupEndsAt: found.slot.endsAt,
     lines: found.lines,
@@ -528,6 +561,8 @@ export type PickupOrder = {
   phone: string | null
   totalCents: number
   cookieCount: number
+  /** A cookie to put in the bag on the house, on top of what was paid for. */
+  freeCookie: boolean
   lines: { name: string; quantity: number }[]
 }
 
@@ -553,6 +588,7 @@ export async function listPickupDay(weekId: string): Promise<PickupSlotGroup[]> 
       name: orders.name,
       phone: orders.phone,
       totalCents: orders.totalCents,
+      freeCookie: orders.freeCookie,
       pickupSlotId: orders.pickupSlotId,
       flavor: flavors.name,
       quantity: orderItems.quantity,
@@ -574,6 +610,7 @@ export async function listPickupDay(weekId: string): Promise<PickupSlotGroup[]> 
         name: row.name,
         phone: row.phone,
         totalCents: row.totalCents,
+        freeCookie: row.freeCookie,
         cookieCount: 0,
         lines: [],
         pickupSlotId: row.pickupSlotId,

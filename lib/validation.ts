@@ -163,6 +163,10 @@ const contact = {
 export const checkoutSchema = z.object({
   ...contact,
   pickupSlotId: z.uuid(MESSAGES.slotRequired),
+  // Asked for rather than assumed: a free cookie nobody wanted still spends the one they
+  // had. Optional, so a caller that never offers one does not have to say so. The server
+  // checks the account actually has it to spend.
+  freeCookie: z.boolean().optional(),
   items: z
     .array(
       z.object({

@@ -55,7 +55,7 @@ function Breakdown({
     <div className={`flex flex-col text-sm ${className}`}>
       {flavors.map((flavor) => (
         <span key={flavor.name} className="flex gap-1">
-          <span className="w-4 shrink-0 text-right tabular-nums">{flavor.quantity}</span>
+          <span className="w-4 shrink-0 text-right">{flavor.quantity}</span>
           <span>× {flavor.name}</span>
         </span>
       ))}
@@ -117,11 +117,11 @@ export async function PickupPanel() {
                       )}
                     </div>
                     <p className="mt-1 text-sm text-secondary">
-                      <span className="tabular-nums">{group.orders.length}</span>{" "}
+                      {group.orders.length}{" "}
                       {group.orders.length === 1 ? "order" : "orders"} ·{" "}
-                      <span className="tabular-nums">{cookies}</span>{" "}
+                      {cookies}{" "}
                       {cookies === 1 ? "cookie" : "cookies"} ·{" "}
-                      <span className="tabular-nums">{formatCents(money)}</span>
+                      <span>{formatCents(money)}</span>
                     </p>
                   </div>
                   <IconChevronRight

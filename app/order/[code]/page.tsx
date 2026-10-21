@@ -1,3 +1,4 @@
+import { IconGift } from "@tabler/icons-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -59,28 +60,48 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
       </Card>
 
       <Card title="Your cookies" className="mt-6">
+        {/* Above the list, not beside the total: it is a cookie you are getting, not a
+            number on the bill. */}
+        {order.freeCookie && (
+          <p className="mb-3 flex items-center gap-2 font-medium text-success">
+            <IconGift className="size-4 shrink-0" aria-hidden />
+            Plus one free cookie, a surprise flavor
+          </p>
+        )}
         <ul className="flex flex-col gap-2">
           {lines.map((line) => (
             <li key={line.name} className="flex justify-between gap-4">
               <span>
                 {line.quantity} × {line.name}
               </span>
-              <span className="tabular-nums">{formatCents(line.unitPriceCents * line.quantity)}</span>
+              <span>{formatCents(line.unitPriceCents * line.quantity)}</span>
             </li>
           ))}
         </ul>
-        {saved > 0 && (
-          <div className="mt-2 flex justify-between gap-4 text-sm text-success">
-            <span>
-              {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
-              {sets > 1 ? ` × ${sets}` : ""}
-            </span>
-            <span className="tabular-nums">−{formatCents(saved)}</span>
+        {/* Charges first, then what comes off: the block reads the way the total is built.
+            Set at the size of the items, because these are lines of the same bill. */}
+        {(saved > 0 || order.pickupFeeCents > 0) && (
+          <div className="mt-2 flex flex-col gap-2">
+            {order.pickupFeeCents > 0 && (
+              <div className="flex justify-between gap-4 text-secondary">
+                <span>Weekday pickup</span>
+                <span>+{formatCents(order.pickupFeeCents)}</span>
+              </div>
+            )}
+            {saved > 0 && (
+              <div className="flex justify-between gap-4 text-success">
+                <span>
+                  {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
+                  {sets > 1 ? ` × ${sets}` : ""}
+                </span>
+                <span>−{formatCents(saved)}</span>
+              </div>
+            )}
           </div>
         )}
         <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">
           <span>Total</span>
-          <span className="tabular-nums">{formatCents(order.totalCents)}</span>
+          <span>{formatCents(order.totalCents)}</span>
         </div>
       </Card>
 

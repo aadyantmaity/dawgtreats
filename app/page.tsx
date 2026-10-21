@@ -143,7 +143,7 @@ function SoldOutCard({ flavor }: { flavor: MenuItem }) {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* An h3, so heading navigation groups these under the one that explains them. */}
           <h3 className="font-sans text-base font-semibold text-tertiary">{flavor.name}</h3>
-          <span className="text-sm text-tertiary tabular-nums">
+          <span className="text-sm text-tertiary">
             {formatCents(flavor.priceCents)}
           </span>
         </div>

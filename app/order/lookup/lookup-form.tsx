@@ -72,7 +72,7 @@ export function LookupForm() {
         placeholder="4X7K"
         error={error ?? undefined}
         attempt={attempt}
-        className="font-mono tracking-widest tabular-nums"
+        className="font-mono tracking-widest"
       />
       <Button type="submit" size="md" disabled={checking || navigating}>
         {checking || navigating ? (

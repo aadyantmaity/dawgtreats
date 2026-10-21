@@ -233,7 +233,7 @@ export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | 
       />
       {inDrawer && "Cart"}
       {count > 0 && (
-        <span ref={countRef} className="tabular-nums">
+        <span ref={countRef}>
           {count}
         </span>
       )}
@@ -245,7 +245,9 @@ export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | 
 // checkout both need one.
 export function EmptyCart({ ordersOpen }: { ordersOpen: boolean }) {
   return (
-    <div className="mt-8 flex flex-col items-center rounded-card border border-default bg-surface px-5 py-10 text-center">
+    // Arrives rather than appears: an emptied cart replaces a block that has just left,
+    // and without this the swap happens in one frame.
+    <div className="mt-8 flex animate-rise flex-col items-center rounded-card border border-default bg-surface px-5 py-10 text-center">
       <span className="flex size-12 items-center justify-center rounded-pill bg-disabled text-secondary">
         <IconShoppingBag aria-hidden className="size-6" />
       </span>
@@ -333,7 +335,7 @@ export function AddToCart({
               the price stays attached to what it is the price of. */}
           <span>
             Add <span aria-hidden className="text-on-action/50">&middot;</span>{" "}
-            <span className="tabular-nums">{formatCents(priceCents)}</span>
+            <span>{formatCents(priceCents)}</span>
           </span>
         </Button>
         {note && <p className="text-sm text-secondary">{note}</p>}

@@ -33,7 +33,7 @@ export function OrderList({ orders }: { orders: AccountOrder[] }) {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold tabular-nums">{order.orderCode}</span>
+                    <span className="font-semibold">{order.orderCode}</span>
                     <Badge tone={ORDER_STATUS_TONE[order.status]} className="gap-1 capitalize">
                       <StatusIcon className="size-3" aria-hidden />
                       {order.status.replace("_", " ")}
@@ -49,7 +49,7 @@ export function OrderList({ orders }: { orders: AccountOrder[] }) {
                     })}
                   </p>
                 </div>
-                <span className="tabular-nums">{formatCents(order.totalCents)}</span>
+                <span>{formatCents(order.totalCents)}</span>
               </Link>
             </li>
           );

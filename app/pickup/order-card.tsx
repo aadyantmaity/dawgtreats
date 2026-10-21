@@ -1,6 +1,6 @@
 "use client";
 
-import { IconArrowBackUp, IconCheck, IconPackageExport, IconShoppingBag } from "@tabler/icons-react";
+import { IconArrowBackUp, IconCheck, IconGift, IconPackageExport, IconShoppingBag } from "@tabler/icons-react";
 import { useState, useTransition } from "react";
 
 import { pickedUpAction, readyAction, undoAction } from "@/app/pickup/actions";
@@ -17,6 +17,7 @@ type Order = {
   name: string;
   phone: string | null;
   cookieCount: number;
+  freeCookie: boolean;
   lines: { name: string; quantity: number }[];
 };
 
@@ -55,12 +56,20 @@ export function OrderCard({ order }: { order: Order }) {
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="font-semibold tabular-nums">{order.orderCode}</span>
+          <span className="font-semibold">{order.orderCode}</span>
           <span className="font-medium">{order.name}</span>
           <Badge tone={tone[order.status]} className="gap-1">
             <StatusIcon className="size-3" aria-hidden />
             {label[order.status]}
           </Badge>
+          {/* Beside the status, because this is the one thing on the card that is not
+              written on the order and the only chance to act on it is while the bag is open. */}
+          {order.freeCookie && (
+            <Badge tone="success" className="gap-1">
+              <IconGift className="size-3" aria-hidden />
+              Free cookie
+            </Badge>
+          )}
         </div>
         <p className="mt-1 text-sm text-secondary">
           {order.lines.map((line) => `${line.quantity} × ${line.name}`).join(", ")}

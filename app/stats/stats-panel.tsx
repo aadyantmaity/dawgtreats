@@ -67,7 +67,7 @@ export async function StatsPanel() {
                 <li key={row.step} className="flex flex-col gap-1">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-sm">{row.step}</span>
-                    <span className="text-sm tabular-nums text-secondary">
+                    <span className="text-sm text-secondary">
                       {row.people}
                       {comparable && top > 0 && ` · ${share}%`}
                     </span>
@@ -88,7 +88,7 @@ export async function StatsPanel() {
             {byDevice.map((row) => (
               <li key={row.device} className="flex justify-between gap-4 text-sm">
                 <span className="capitalize">{DEVICE_WORDS[row.device] ?? row.device}</span>
-                <span className="tabular-nums text-secondary">{row.people}</span>
+                <span className="text-secondary">{row.people}</span>
               </li>
             ))}
           </ul>
@@ -103,7 +103,7 @@ export async function StatsPanel() {
             {byFlavor.map((row) => (
               <li key={row.flavor} className="flex justify-between gap-4 text-sm">
                 <span>{row.flavor}</span>
-                <span className="tabular-nums text-secondary">{row.adds}</span>
+                <span className="text-secondary">{row.adds}</span>
               </li>
             ))}
           </ul>
@@ -118,7 +118,7 @@ export async function StatsPanel() {
             {byWanted.map((row) => (
               <li key={row.flavor} className="flex justify-between gap-4 text-sm">
                 <span>{row.flavor}</span>
-                <span className="tabular-nums text-secondary">{row.wanted}</span>
+                <span className="text-secondary">{row.wanted}</span>
               </li>
             ))}
           </ul>
@@ -133,7 +133,7 @@ export async function StatsPanel() {
             {orders.map((row) => (
               <li key={row.status} className="flex justify-between gap-4 text-sm">
                 <span>{ORDER_WORDS[row.status] ?? row.status}</span>
-                <span className="tabular-nums text-secondary">{row.count}</span>
+                <span className="text-secondary">{row.count}</span>
               </li>
             ))}
           </ul>
@@ -147,8 +147,7 @@ export async function StatsPanel() {
           <>
             {rated.length > 0 && (
               <p className="mb-3 text-sm text-secondary">
-                <span className="tabular-nums">{average.toFixed(1)}</span> average from{" "}
-                <span className="tabular-nums">{rated.length}</span>
+                {average.toFixed(1)} average from {rated.length}
               </p>
             )}
             <ul className="flex flex-col gap-4">

@@ -164,7 +164,7 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
         </div>
       ) : (
         <p className="mt-3 text-secondary">
-          Order <span className="font-semibold text-primary tabular-nums">{orderCode}</span>
+          Order <span className="font-semibold text-primary">{orderCode}</span>
         </p>
       )}
 

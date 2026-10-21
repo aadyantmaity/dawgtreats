@@ -29,6 +29,9 @@ export const users = pgTable('users', {
   name: text('name'),
   phone: text('phone'),
   role: userRole('role').notNull().default('customer'),
+  // One free cookie per account, redeemed whenever they like. Set the moment it is claimed,
+  // in the same transaction that takes the order, so it cannot be claimed twice.
+  freeCookieUsedAt: timestamp('free_cookie_used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -133,6 +136,12 @@ export const orders = pgTable('orders', {
   phone: text('phone').notNull(),
   status: orderStatus('status').notNull().default('pending'),
   totalCents: integer('total_cents').notNull(),
+  // Charged for a same-day pickup, and nothing to do with the cookies, so it is kept off
+  // order_items: a total reconstructs as the items plus this.
+  pickupFeeCents: integer('pickup_fee_cents').notNull().default(0),
+  // A cookie to put in the bag on pickup day, on the house. Nothing comes off the total,
+  // so this is a note to whoever packs the order rather than a line of money.
+  freeCookie: boolean('free_cookie').notNull().default(false),
   stripeSessionId: text('stripe_session_id').unique(),
   reservedUntil: timestamp('reserved_until', { withTimezone: true }),
   paidAt: timestamp('paid_at', { withTimezone: true }),

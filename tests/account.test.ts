@@ -115,3 +115,63 @@ describe('what an account can see', () => {
     expect(saved.phone).toBe('2065550123')
   })
 })
+
+describe('the free cookie', () => {
+  it('is claimed once and marked on the order', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 20 })
+    const alex = await account('alex@example.com')
+
+    const first = await reserve(
+      { ...buyer, email: alex.email, pickupSlotId: week.slotIds[0], freeCookie: true,
+        items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }] },
+      alex.id,
+    )
+    expect(first.freeCookie).toBe(true)
+
+    const [after] = await db.select().from(users).where(eq(users.id, alex.id))
+    expect(after.freeCookieUsedAt).not.toBeNull()
+  })
+
+  it('cannot be claimed twice', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 20 })
+    const alex = await account('alex@example.com')
+    const order = () =>
+      reserve(
+        { ...buyer, email: alex.email, pickupSlotId: week.slotIds[0], freeCookie: true,
+          items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }] },
+        alex.id,
+      )
+
+    expect((await order()).freeCookie).toBe(true)
+    // The second order still goes through: nothing came off the total, so a spent cookie
+    // is not a reason to refuse a sale.
+    expect((await order()).freeCookie).toBe(false)
+  })
+
+  it('goes to nobody when the order has no account', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 20 })
+    const guest = await reserve({
+      ...buyer,
+      pickupSlotId: week.slotIds[0],
+      freeCookie: true,
+      items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }],
+    })
+    expect(guest.freeCookie).toBe(false)
+  })
+
+  it('takes nothing off the total', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 20 })
+    const alex = await account('alex@example.com')
+    const items = [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 2 }]
+
+    const paid = await reserve(
+      { ...buyer, email: alex.email, pickupSlotId: week.slotIds[0], freeCookie: true, items },
+      alex.id,
+    )
+    const plain = await reserve(
+      { ...buyer, email: alex.email, pickupSlotId: week.slotIds[0], freeCookie: false, items },
+      alex.id,
+    )
+    expect(paid.totalCents).toBe(plain.totalCents)
+  })
+})

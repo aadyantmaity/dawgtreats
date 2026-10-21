@@ -11,8 +11,10 @@ import { sendLastCall, sendOpenNotice } from '@/lib/email'
 import { createFlavor, listFlavors, moveFlavor, updateFlavor, type Flavor } from '@/lib/flavors'
 import { countWaiting, listWaiting, listWaitingWithoutOrder, markNotified } from '@/lib/notify'
 import {
-  SLOT_MINUTES,
   addSlot,
+  DEFAULT_CAPACITY,
+  PICKUP_DAYS,
+  type PickupDay,
   deleteSlot,
   findSlotAt,
   getMenu,
@@ -20,7 +22,7 @@ import {
   listSlots,
   setBatchQuantities,
 } from '@/lib/inventory'
-import { formatCents, parsePriceCents } from '@/lib/money'
+import { WEEKDAY_CENTS, formatCents, parsePriceCents } from '@/lib/money'
 import { LIMITS, flavorSchema, quantitySchema } from '@/lib/validation'
 import {
   closeWeek,
@@ -30,6 +32,7 @@ import {
   formatPickupWeekend,
   formatPt,
   getOrderableWeek,
+  isWeekdayPickup,
   listWeeks,
   openWeek,
   upcomingWeekend,
@@ -61,8 +64,9 @@ Flavors
 
 This week
   qty <flavor> <count>                     how many to bake
-  slots:add <sat|sun> <from> [to]          one slot, or every half hour up to "to"
-  slots:rm <sat|sun> <time>                remove a slot
+  slots:add <day> <from> <to> [--cap=]     one pickup window. Day is sat, sun, or mon to thu
+                                           for an evening collected the same day, +50c
+  slots:rm <day> <from>                    remove a window
   orders                                   every order for this week, with status and total
 
 Pickup day
@@ -172,7 +176,7 @@ function parseTime(input: string, after?: string): string {
   if (suffix === 'pm' && hour !== 12) hour += 12
   if (suffix === 'am' && hour === 12) hour = 0
   if (hour > 23 || (minute !== '00' && minute !== '30')) {
-    fail(`Slots start on the hour or half hour, so "${input}" won't work.`)
+    fail(`Windows start and end on the hour or half hour, so "${input}" won't work.`)
   }
 
   let time = `${String(hour).padStart(2, '0')}:${minute}`
@@ -182,11 +186,20 @@ function parseTime(input: string, after?: string): string {
   return time
 }
 
-function parseDay(input: string): 'sat' | 'sun' {
+const DAY_NAMES: Record<PickupDay, string> = {
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  sat: 'Saturday',
+  sun: 'Sunday',
+}
+
+function parseDay(input: string): PickupDay {
   const day = input.toLowerCase()
-  if (day.startsWith('sat')) return 'sat'
-  if (day.startsWith('sun')) return 'sun'
-  return fail('Pickup is Saturday or Sunday only')
+  const match = (Object.keys(PICKUP_DAYS) as PickupDay[]).find((name) => day.startsWith(name))
+  if (match) return match
+  return fail('Pickup is Mon, Tue, Wed or Thu in the evening, or Sat or Sun')
 }
 
 async function targetWeek(): Promise<Week> {
@@ -218,7 +231,10 @@ function slotLine(slot: { startsAt: Date; endsAt: Date; bookedCount: number; cap
   const time = (at: Date) => formatPt(at, { hour: 'numeric', minute: '2-digit' })
   const day = formatPt(slot.startsAt, { weekday: 'short' })
   const orders = slot.orderCount > 0 ? ` · ${slot.orderCount} order${slot.orderCount === 1 ? '' : 's'}` : ''
-  return `  ${day} ${time(slot.startsAt)}–${time(slot.endsAt)}   ${slot.bookedCount}/${slot.capacity} booked${orders}`
+  // A weekday window costs more to collect from, so the list says which ones do.
+  const fee = isWeekdayPickup(slot.startsAt) ? ` · weekday +${formatCents(WEEKDAY_CENTS)}` : ''
+  const past = slot.endsAt.getTime() <= Date.now() ? ' · past' : ''
+  return `  ${day} ${time(slot.startsAt)}–${time(slot.endsAt)}   ${slot.bookedCount}/${slot.capacity} booked${orders}${fee}${past}`
 }
 
 async function showWeek(week: Week) {
@@ -237,8 +253,8 @@ async function showWeek(week: Week) {
   }
 
   const pickups = slots.reduce((sum, slot) => sum + slot.capacity, 0)
-  console.log(`\nPickup slots (${slots.length} · ${pickups} pickups max)`)
-  if (slots.length === 0) console.log('  no slots yet')
+  console.log(`\nPickup windows (${slots.length} · ${pickups} pickups max)`)
+  if (slots.length === 0) console.log('  no windows yet')
   for (const slot of slots) console.log(slotLine(slot))
   console.log()
 }
@@ -467,36 +483,32 @@ const commands: Record<string, () => Promise<void>> = {
 
   async 'slots:add'() {
     const [dayInput, fromInput, toInput] = positional
-    if (!dayInput || !fromInput) fail('Usage: slots:add <sat|sun> <from> [to]')
+    if (!dayInput || !fromInput || !toInput) fail('Usage: slots:add <mon|tue|wed|thu|sat|sun> <from> <to> [--cap=]')
     const day = parseDay(dayInput)
     const week = await targetWeek()
 
     const from = parseTime(fromInput)
-    const to = toInput ? parseTime(toInput, from) : from
-    if (minutesOf(to) < minutesOf(from)) fail(`${toInput} is before ${fromInput}`)
+    const to = parseTime(toInput, from)
+    if (minutesOf(to) <= minutesOf(from)) fail(`${toInput} is not after ${fromInput}`)
 
-    const added: string[] = []
-    const last = toInput ? minutesOf(to) - SLOT_MINUTES : minutesOf(from)
-    for (let m = minutesOf(from); m <= Math.max(minutesOf(from), last); m += SLOT_MINUTES) {
-      const time = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-      try {
-        await addSlot(week.id, day, time)
-        added.push(time)
-      } catch (error) {
-        if (!(error instanceof DomainError)) throw error
-        console.log(`  skipped ${time}: ${error.message}`)
-      }
+    const capInput = flag('cap')
+    const cap = capInput === undefined ? undefined : Number(capInput)
+    if (cap !== undefined && (!Number.isInteger(cap) || cap < 1)) {
+      fail('--cap is a whole number of pickups, 1 or more')
     }
-    console.log(`Added ${added.length} slot${added.length === 1 ? '' : 's'}: ${added.join(', ') || 'none'}`)
+
+    await addSlot(week.id, day, from, to, cap)
+    const held = cap ?? (PICKUP_DAYS[day] < 0 ? DEFAULT_CAPACITY.evening : DEFAULT_CAPACITY.weekend)
+    console.log(`Added ${DAY_NAMES[day]} ${from}\u2013${to}, ${held} pickups.`)
   },
 
   async 'slots:rm'() {
     const [dayInput, timeInput] = positional
-    if (!dayInput || !timeInput) fail('Usage: slots:rm <sat|sun> <time>')
+    if (!dayInput || !timeInput) fail('Usage: slots:rm <day> <from>')
     const day = parseDay(dayInput)
     const week = await targetWeek()
     await deleteSlot(await findSlotAt(week.id, day, parseTime(timeInput)))
-    console.log(`Removed the ${day === 'sat' ? 'Saturday' : 'Sunday'} ${timeInput} slot.`)
+    console.log(`Removed the ${DAY_NAMES[day]} window starting ${timeInput}.`)
   },
 
   async seed() {
@@ -523,16 +535,16 @@ const commands: Record<string, () => Promise<void>> = {
       const flavor = await findFlavor(item.name)
       await setBatchQuantities(week.id, [{ flavorId: flavor.id, quantity: item.quantity }])
     }
-    for (const [day, times] of [
-      ['sat', ['12:00', '12:30', '13:00', '13:30']],
-      ['sun', ['14:00', '14:30']],
+    // One window a day, not a row of half hours. The evenings are left out: a seeded week
+    // is for looking at, and a same-day window you did not ask for would charge for itself.
+    for (const [day, from, to] of [
+      ['sat', '12:00', '14:00'],
+      ['sun', '14:00', '15:00'],
     ] as const) {
-      for (const time of times) {
-        try {
-          await addSlot(week.id, day, time)
-        } catch (error) {
-          if (!(error instanceof DomainError)) throw error
-        }
+      try {
+        await addSlot(week.id, day, from, to)
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error
       }
     }
     await showWeek(week)

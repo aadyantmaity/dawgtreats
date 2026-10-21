@@ -168,6 +168,8 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
   if (deal.savedCents > 0) {
     items.push(`  ${DEAL_SIZE} for ${formatCents(DEAL_CENTS)}${deal.sets > 1 ? ` x ${deal.sets}` : ''}  -${formatCents(deal.savedCents)}`)
   }
+  if (o.pickupFeeCents > 0) items.push(`  Weekday pickup  +${formatCents(o.pickupFeeCents)}`)
+  if (o.freeCookie) items.push('  Free cookie  a surprise flavor, in the bag')
 
   return [
     `Thanks ${firstName(o.name)}, your cookies are paid for.`,
@@ -191,6 +193,13 @@ function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderB
     'Reply here if something comes up.',
     TERMS,
   ].join('\n')
+}
+
+// Charged on top of the cookies, so it is a row of its own rather than folded into one of
+// them: the items have to add up to the total a reader can see.
+function feeRow(feeCents: number): string {
+  if (feeCents === 0) return ''
+  return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;font-size:15px;color:${PALETTE.taupe};">Weekday pickup +${formatCents(feeCents)}</td></tr>`
 }
 
 // The lines add up to more than the total whenever a set was priced, so the difference is
@@ -229,6 +238,8 @@ ${codeBlock('Show this at pickup', o.orderCode)}
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     ${items}
     ${dealRow(lines)}
+    ${feeRow(o.pickupFeeCents)}
+    ${o.freeCookie ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;font-size:15px;color:${PALETTE.sage700};">Free cookie &mdash; a surprise flavor, in the bag</td></tr>` : ''}
     <tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:10px 0;font-size:16px;font-weight:600;color:${PALETTE.ink};">Total ${formatCents(o.totalCents)}</td></tr>
   </table>
 </td></tr>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DEAL_CENTS, priceOrder } from '@/lib/money'
+import { DEAL_CENTS, WEEKDAY_CENTS, priceOrder } from '@/lib/money'
 
 const choc = { name: 'Chocolate Chip', quantity: 1, unitPriceCents: 150 }
 const mm = { name: 'M&M', quantity: 1, unitPriceCents: 175 }
@@ -55,5 +55,34 @@ describe('three for four', () => {
   it('counts nothing as nothing', () => {
     expect(priceOrder([]).totalCents).toBe(0)
     expect(priceOrder([]).sets).toBe(0)
+  })
+})
+
+describe('weekday pickup fee', () => {
+  it('adds nothing when the pickup is not same day', () => {
+    const priced = priceOrder([choc, mm, butter], false)
+    expect(priced.feeCents).toBe(0)
+    expect(priced.totalCents).toBe(DEAL_CENTS)
+  })
+
+  it('charges the fee once, whatever the order holds', () => {
+    const one = priceOrder([choc], true)
+    const many = priceOrder([{ ...choc, quantity: 9 }], true)
+    expect(one.feeCents).toBe(WEEKDAY_CENTS)
+    expect(many.feeCents).toBe(WEEKDAY_CENTS)
+  })
+
+  it('sits outside the deal, so a set still costs the set price', () => {
+    const priced = priceOrder([choc, mm, butter], true)
+    expect(priced.totalCents).toBe(DEAL_CENTS + WEEKDAY_CENTS)
+    expect(priced.sets).toBe(1)
+    // The fee is not a cookie, so it must not look like the deal saved less.
+    expect(priced.savedCents).toBe(75)
+  })
+
+  it('charges nothing on an empty order', () => {
+    const priced = priceOrder([], true)
+    expect(priced.feeCents).toBe(0)
+    expect(priced.totalCents).toBe(0)
   })
 })

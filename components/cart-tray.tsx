@@ -31,7 +31,7 @@ export function CartTray({ menu }: { menu: MenuItem[] }) {
           something floating over the page. */}
       <div className="mx-auto flex h-control w-fit max-w-full items-center gap-3 rounded-pill bg-action pr-1 pl-5 text-on-action shadow-lg">
         <span className="text-sm whitespace-nowrap">
-          <span className="tabular-nums">{count}</span>{" "}
+          <span>{count}</span>{" "}
           {count === 1 ? "cookie" : "cookies"} · {formatCents(total)}
         </span>
         <Link

@@ -126,6 +126,14 @@ function ordersCloseAtFor(pickupWeekendStart: string): Date {
   return ptToUtc(addDays(pickupWeekendStart, -2), '23:59')
 }
 
+// A weekday window costs more to collect from, whenever it was ordered. Read off the day
+// the window falls on in PT rather than held on the row: 8pm PT is three in the morning
+// UTC the next day, so a window's own timestamp disagrees about which day it is on.
+export function isWeekdayPickup(startsAt: Date): boolean {
+  const day = formatPt(startsAt, { weekday: 'short' })
+  return day === 'Mon' || day === 'Tue' || day === 'Wed' || day === 'Thu'
+}
+
 // The next Saturday whose Thursday 11:59pm PT cutoff is still ahead. From Friday on, that's next week.
 export function upcomingWeekend(now = new Date()): { pickupWeekendStart: string; ordersCloseAt: Date } {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: PT }).format(now)

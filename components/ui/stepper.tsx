@@ -74,7 +74,7 @@ export function Stepper({ label, value, onChange, min = 0, max, invalid = false,
           if (value === "") onChange(String(min), "type");
         }}
         onKeyDown={onKeyDown}
-        className="h-control w-16 rounded-control border border-default bg-surface px-2 text-center text-base text-primary tabular-nums focus:border-focus focus:outline-none aria-invalid:border-error"
+        className="h-control w-16 rounded-control border border-default bg-surface px-2 text-center text-base text-primary focus:border-focus focus:outline-none aria-invalid:border-error"
       />
       <button
         type="button"
