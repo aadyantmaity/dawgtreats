@@ -10,6 +10,7 @@ import {
   formatPt,
   formatSlotRange,
   getOrderableWeek,
+  isPickupBookable,
   isWeekdayPickup,
   ptZone,
 } from "@/lib/weeks";
@@ -39,6 +40,9 @@ export default async function CheckoutPage() {
     window: formatSlotRange(slot.startsAt, slot.endsAt),
     spotsLeft: slot.capacity - slot.bookedCount,
     weekday: isWeekdayPickup(slot.startsAt),
+    // Shown but not choosable once today's window is within the hour: taking it off the list
+    // would read as "we never offered that", when the truth is it closed a moment ago.
+    closing: !isPickupBookable(slot.startsAt, slot.endsAt),
   }));
 
   return (

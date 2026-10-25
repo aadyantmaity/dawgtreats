@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { db } from '@/lib/db'
 import { weeks } from '@/lib/db/schema'
-import { closeWeek, isWeekdayPickup, openWeek, ptToUtc } from '@/lib/weeks'
+import { closeWeek, isPickupBookable, isWeekdayPickup, openWeek, ptToUtc } from '@/lib/weeks'
 
 import { resetDatabase, seedWeek } from './helpers'
 
@@ -68,5 +68,34 @@ describe('weekday pickup', () => {
     const sunday = ptToUtc('2026-10-25', '20:00')
     expect(sunday.toISOString().slice(0, 10)).toBe('2026-10-26')
     expect(isWeekdayPickup(sunday)).toBe(false)
+  })
+})
+
+describe('the pickup lead time', () => {
+  // 2026-10-20 is a Tuesday. All times below are PT.
+  const start = ptToUtc('2026-10-20', '20:00')
+  const end = ptToUtc('2026-10-20', '23:00')
+
+  it('is open while more than an hour of today is left', () => {
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-20', '21:00'))).toBe(true)
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-20', '21:59'))).toBe(true)
+  })
+
+  it('closes an hour before today ends', () => {
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-20', '22:00'))).toBe(true)
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-20', '22:01'))).toBe(false)
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-20', '22:58'))).toBe(false)
+  })
+
+  it('does not apply to a window on a later day', () => {
+    // Ordering on Monday for Tuesday: the hour rule has nothing to say about it, however
+    // close to Tuesday's closing time the clock happens to read.
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-19', '22:30'))).toBe(true)
+    expect(isPickupBookable(start, end, ptToUtc('2026-10-19', '23:59'))).toBe(true)
+  })
+
+  it('leaves the weekend alone, which is never today while orders are open', () => {
+    const sat = [ptToUtc('2026-10-24', '13:00'), ptToUtc('2026-10-24', '16:00')] as const
+    expect(isPickupBookable(sat[0], sat[1], ptToUtc('2026-10-22', '23:00'))).toBe(true)
   })
 })

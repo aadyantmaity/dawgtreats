@@ -26,6 +26,8 @@ export type SlotChoice = {
   spotsLeft: number;
   /** Collected the day it is ordered, which is what the fee is for. */
   weekday: boolean;
+  /** Today's window, with less than the lead time left on it. */
+  closing: boolean;
 };
 
 const LOW_SPOTS = 2;
@@ -56,7 +58,9 @@ function SlotPicker({
           wide. Grouping by day on top of that left a lone chip under every heading. */}
       <div className="flex flex-col gap-2">
         {slots.map((slot) => {
-          const full = slot.spotsLeft <= 0;
+          // A window closed for the hour cannot be chosen either, so it wears the same
+          // unavailable state. The label below says which of the two it is.
+          const full = slot.spotsLeft <= 0 || slot.closing;
           return (
             <label
               key={slot.id}
@@ -80,7 +84,7 @@ function SlotPicker({
                   {slot.day} {slot.window}
                 </span>
                 {/* The row already names the day, so the charge does not have to. */}
-                {slot.weekday && (
+                {slot.weekday && !slot.closing && (
                   <span className="text-xs text-secondary group-has-checked:text-on-action">
                     +{formatCents(WEEKDAY_CENTS)}
                   </span>
@@ -93,7 +97,11 @@ function SlotPicker({
                   full || slot.spotsLeft > LOW_SPOTS ? "text-tertiary" : "text-urgent"
                 }`}
               >
-                {full ? "full" : `${slot.spotsLeft} ${slot.spotsLeft === 1 ? "spot" : "spots"}`}
+                {slot.closing
+                  ? "closed"
+                  : full
+                    ? "full"
+                    : `${slot.spotsLeft} ${slot.spotsLeft === 1 ? "spot" : "spots"}`}
               </span>
             </label>
           );
@@ -266,7 +274,9 @@ export function CheckoutForm({
   const touch = (field: keyof typeof fieldErrors) => () =>
     setTouched((was) => ({ ...was, [field]: true }));
 
-  const open = slots.filter((slot) => slot.spotsLeft > 0);
+  // A window closed for the hour is as unusable as a full one, so it counts the same way
+  // towards "nothing left to pick".
+  const open = slots.filter((slot) => slot.spotsLeft > 0 && !slot.closing);
   const slotRefused = attempt > 0 && !slotId;
 
   const onMenu = new Map(menu.map((item) => [item.id, item]));
@@ -379,7 +389,7 @@ export function CheckoutForm({
         {open.length === 0 ? (
           <p className="flex items-start gap-2 text-secondary">
             <IconCalendarX aria-hidden className="mt-0.5 size-4 shrink-0" />
-            <span>Every pickup time is full. Try again later.</span>
+            <span>No pickup times left. Try again later.</span>
           </p>
         ) : (
           <>

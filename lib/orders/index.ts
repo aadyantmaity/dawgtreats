@@ -7,7 +7,7 @@ import { batchItems, flavors, orderItems, orders, payments, pickupSlots, stripeE
 import { DomainError, reportIssue } from '@/lib/errors'
 import { priceOrder } from '@/lib/money'
 import { ORDER_CODE_ALPHABET, type CheckoutInput } from '@/lib/validation'
-import { addDays, getOrderableWeek, isWeekdayPickup, ptToUtc } from '@/lib/weeks'
+import { addDays, getOrderableWeek, isPickupBookable, isWeekdayPickup, ptToUtc } from '@/lib/weeks'
 
 // Matches Stripe's minimum Checkout session expiry, so stock is released only once Stripe says the session is dead.
 export const HOLD_MINUTES = 30
@@ -111,6 +111,25 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
           }
         }
 
+        // Read before booking: whether a window is still worth starting is a question about
+        // today's date in PT, which the conditional update below cannot ask. A page left open
+        // past the hour would otherwise book a pickup nobody can reach.
+        const [window] = await tx
+          .select({ startsAt: pickupSlots.startsAt, endsAt: pickupSlots.endsAt })
+          .from(pickupSlots)
+          .where(and(eq(pickupSlots.id, input.pickupSlotId), eq(pickupSlots.weekId, week.id)))
+          .for('update')
+        if (!window) throw new DomainError('That pickup time is no longer on the list', 409)
+        if (window.endsAt.getTime() <= Date.now()) {
+          throw new DomainError('That pickup time has passed. Pick another one.', 409)
+        }
+        if (!isPickupBookable(window.startsAt, window.endsAt)) {
+          throw new DomainError(
+            `Today's pickup closes to new orders an hour before it ends. Pick another time.`,
+            409,
+          )
+        }
+
         const booked = await tx
           .update(pickupSlots)
           .set({ bookedCount: sql`${pickupSlots.bookedCount} + 1` })
@@ -124,18 +143,7 @@ export async function reserve(input: CheckoutInput, accountId?: string | null): 
           .returning({ startsAt: pickupSlots.startsAt })
 
         if (booked.length === 0) {
-          // Either the window filled up or it has already ended. A page left open over a
-          // weekend would otherwise book a pickup that happened two days ago.
-          const [window] = await tx
-            .select({ endsAt: pickupSlots.endsAt })
-            .from(pickupSlots)
-            .where(and(eq(pickupSlots.id, input.pickupSlotId), eq(pickupSlots.weekId, week.id)))
-          throw new DomainError(
-            window && window.endsAt.getTime() <= Date.now()
-              ? 'That pickup time has passed. Pick another one.'
-              : 'That pickup time just filled up. Pick another one.',
-            409,
-          )
+          throw new DomainError('That pickup time just filled up. Pick another one.', 409)
         }
 
         // Priced here and nowhere else: the browser sends flavors and counts, never money,

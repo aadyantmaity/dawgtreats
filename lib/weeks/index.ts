@@ -134,6 +134,21 @@ export function isWeekdayPickup(startsAt: Date): boolean {
   return day === 'Mon' || day === 'Tue' || day === 'Wed' || day === 'Thu'
 }
 
+// How much of a window has to be left for it to still be worth starting a pickup. It only
+// applies to a window being collected today: a window on a later day is a pre-order, and the
+// week's Thursday cutoff is what closes those.
+export const PICKUP_LEAD_MINUTES = 60
+
+// Whether a window can still be chosen. Today's window closes an hour before it ends, so
+// nobody books a pickup they cannot reach and nothing arrives with no notice. A window on a
+// later date is unaffected, which is why a weekend window is never caught by this: orders
+// close on Thursday, so a Saturday window is never today while anyone can still order.
+export function isPickupBookable(startsAt: Date, endsAt: Date, now = new Date()): boolean {
+  const date = (at: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: PT }).format(at)
+  if (date(startsAt) !== date(now)) return true
+  return endsAt.getTime() - now.getTime() >= PICKUP_LEAD_MINUTES * 60_000
+}
+
 // The next Saturday whose Thursday 11:59pm PT cutoff is still ahead. From Friday on, that's next week.
 export function upcomingWeekend(now = new Date()): { pickupWeekendStart: string; ordersCloseAt: Date } {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: PT }).format(now)
