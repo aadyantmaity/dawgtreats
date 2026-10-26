@@ -29,20 +29,20 @@ describe('three for four', () => {
   it('repeats, and leaves the remainder at list price', () => {
     const priced = priceOrder([{ ...mm, quantity: 4 }, { ...choc, quantity: 3 }])
     expect(priced.sets).toBe(2)
-    // Seven cookies: two sets of the dearest, one $1.50 left over.
-    expect(priced.totalCents).toBe(DEAL_CENTS * 2 + 150)
-    expect(priced.rest).toEqual([{ name: 'Chocolate Chip', quantity: 1, unitPriceCents: 150 }])
+    // Seven cookies: two sets of the cheapest, one $1.75 left over.
+    expect(priced.totalCents).toBe(DEAL_CENTS * 2 + 175)
+    expect(priced.rest).toEqual([{ name: 'M&M', quantity: 1, unitPriceCents: 175 }])
   })
 
-  it('leaves the cheapest cookie out of the set, whichever way the basket is filled', () => {
+  it('leaves the dearest cookie out of the set, whichever way the basket is filled', () => {
     const dear = priceOrder([{ ...mm, quantity: 3 }, choc])
     const cheap = priceOrder([{ ...choc, quantity: 3 }, mm])
-    // The leftover is the $1.50 either way: the set takes the dearest three it can.
-    expect(dear.totalCents).toBe(DEAL_CENTS + 150)
-    expect(cheap.totalCents).toBe(DEAL_CENTS + 150)
+    // The leftover is the $1.75 either way: the set takes the cheapest three it can.
+    expect(dear.totalCents).toBe(DEAL_CENTS + 175)
+    expect(cheap.totalCents).toBe(DEAL_CENTS + 175)
     // The dearer basket is worth more at list price, so the deal saves more on it.
-    expect(dear.savedCents).toBe(125)
-    expect(cheap.savedCents).toBe(75)
+    expect(dear.savedCents).toBe(100)
+    expect(cheap.savedCents).toBe(50)
   })
 
   it('never charges more than the cookies are worth', () => {

@@ -31,14 +31,15 @@ export type Priced = {
   feeCents: number
 }
 
-// The dearest cookies go into the sets, because a set costs the same whatever is in it:
-// anything else would quietly charge more for the same basket. A set also never costs more
-// than the cookies it holds, so a cheaper menu can never turn the deal into a penalty.
+// The cheapest cookies go into the sets, so a dearer cookie stays outside at its own
+// price. Buyers read the deal as three cookies for four dollars plus whatever else they
+// picked, and a set that swallowed the dearest cookie made the total look wrong. A set
+// still never costs more than the cookies it holds, so the deal can never be a penalty.
 export function priceOrder(lines: PricedLine[], weekday = false): Priced {
   const cookies = lines.flatMap((line) =>
     Array.from({ length: line.quantity }, () => line),
   )
-  cookies.sort((a, b) => b.unitPriceCents - a.unitPriceCents)
+  cookies.sort((a, b) => a.unitPriceCents - b.unitPriceCents)
 
   const sets = Math.floor(cookies.length / DEAL_SIZE)
   const taken = cookies.slice(0, sets * DEAL_SIZE)
