@@ -200,7 +200,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
       )}
 
       <p className="text-sm text-tertiary">
-        {LIMITS.perOrderMax} cookies per order. Pickup only, Saturday or Sunday. No refunds or cancellations.
+        {LIMITS.perOrderMax} cookies per order. Pickup only. No refunds or cancellations.
       </p>
     </div>
   );
