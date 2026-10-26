@@ -12,7 +12,7 @@ import { getMenu, type MenuItem } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { isWaiting } from "@/lib/notify";
 import { allergenLine, mayContainLine } from "@/lib/recipe";
-import { formatClosesAt, formatPickupWeekend, getOrderableWeek } from "@/lib/weeks";
+import { formatClosesAt, getOrderableWeek } from "@/lib/weeks";
 
 // Stock changes with every checkout, so the menu is never prerendered.
 export const dynamic = "force-dynamic";
@@ -183,10 +183,7 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
         {week ? "This week's bake" : "The menu"}
       </h1>
       {week ? (
-        <div className="mt-3 flex flex-col gap-1 text-secondary">
-          <p>Orders close {formatClosesAt(week.ordersCloseAt)}</p>
-          <p>Pickup {formatPickupWeekend(week.pickupWeekendStart)}</p>
-        </div>
+        <p className="mt-3 text-secondary">Orders close {formatClosesAt(week.ordersCloseAt)}</p>
       ) : (
         <>
           <p className="mt-3 text-secondary">Orders are closed. New batch most weeks.</p>

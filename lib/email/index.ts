@@ -5,7 +5,7 @@ import type { MenuItem } from '@/lib/inventory'
 import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
 import { EMAIL_BACKDROP, PALETTE } from '@/lib/palette'
-import { PICKUP_PLACE, formatClosesAt, formatPickupWeekend, formatPt } from '@/lib/weeks'
+import { PICKUP_PLACE, formatClosesAt, formatPt } from '@/lib/weeks'
 
 const INBOX = 'orders@dawgtreats.shop'
 const FROM = `Dawg Treats <${INBOX}>`
@@ -455,7 +455,6 @@ ${note ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.w
 ${linkButton(site, 'Order')}
 ${footerLines([
   `Orders close ${formatClosesAt(week.ordersCloseAt)}.`,
-  `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
   `${PICKUP_PLACE}.`,
   TERMS,
 ])}
@@ -473,7 +472,6 @@ function openNoticeText(week: NotifiableWeek, menu: OpenNoticeItem[], stop: stri
     `Order: ${site}`,
     '',
     `Orders close ${formatClosesAt(week.ordersCloseAt)}.`,
-    `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
     `${PICKUP_PLACE}.`,
     TERMS,
     '',
@@ -551,7 +549,6 @@ ${note ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.w
 </td></tr>
 ${linkButton(site, 'Order before it closes')}
 ${footerLines([
-  `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
   `${PICKUP_PLACE}.`,
   TERMS,
 ])}
@@ -573,7 +570,6 @@ function lastCallText(week: NotifiableWeek, menu: LastCallItem[], stop: string, 
     }),
     `Order: ${site}`,
     '',
-    `Pickup ${formatPickupWeekend(week.pickupWeekendStart)}.`,
     `${PICKUP_PLACE}.`,
     TERMS,
     '',
