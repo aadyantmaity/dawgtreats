@@ -49,7 +49,7 @@ export function OrderList({ orders }: { orders: AccountOrder[] }) {
                     })}
                   </p>
                 </div>
-                <span>{formatCents(order.totalCents)}</span>
+                <span className="tabular-nums">{formatCents(order.totalCents)}</span>
               </Link>
             </li>
           );

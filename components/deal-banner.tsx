@@ -45,7 +45,7 @@ export function DealBanner({ menu }: { menu: MenuItem[] }) {
         <p className="font-sans text-lg font-semibold">
           {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
         </p>
-        <p className="mt-1 text-sm text-on-ground-quiet">Any three cookies, any combo you like!</p>
+        <p className="mt-1 text-sm text-on-ground-quiet">Any three cookies, any combo you like</p>
       </div>
       <div className="flex items-center gap-3">
         <span

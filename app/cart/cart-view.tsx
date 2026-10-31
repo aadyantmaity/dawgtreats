@@ -154,7 +154,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
                     max={limit.max}
                     onChange={(next, from) => handleQuantityChange(row, Number(next || "0"), from)}
                   />
-                  <span className="w-20 text-right">
+                  <span className="w-20 text-right tabular-nums">
                     {formatCents(row.priceCents * row.quantity)}
                   </span>
                 </div>
@@ -173,7 +173,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
             {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
             {deal.sets > 1 ? ` × ${deal.sets}` : ""}
           </span>
-          <span>−{formatCents(deal.savedCents)}</span>
+          <span className="tabular-nums">−{formatCents(deal.savedCents)}</span>
         </div>
       )}
 
@@ -182,7 +182,7 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
           <span className="font-semibold text-primary">{shownCount}</span>{" "}
           {shownCount === 1 ? "cookie" : "cookies"}
         </span>
-        <span ref={totalRef} className="text-lg font-semibold">
+        <span ref={totalRef} className="text-lg font-semibold tabular-nums">
           {formatCents(deal.totalCents)}
         </span>
       </div>

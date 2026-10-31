@@ -134,7 +134,7 @@ function OrderSummary({
             <span>
               {row.quantity} × {row.name}
             </span>
-            <span>{formatCents(row.priceCents * row.quantity)}</span>
+            <span className="tabular-nums">{formatCents(row.priceCents * row.quantity)}</span>
           </li>
         ))}
       </ul>
@@ -145,7 +145,7 @@ function OrderSummary({
           {fee > 0 && (
             <div className="flex justify-between gap-4 text-secondary">
               <span>Weekday pickup</span>
-              <span>+{formatCents(fee)}</span>
+              <span className="tabular-nums">+{formatCents(fee)}</span>
             </div>
           )}
           {saved > 0 && (
@@ -154,14 +154,14 @@ function OrderSummary({
                 {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
                 {sets > 1 ? ` × ${sets}` : ""}
               </span>
-              <span>−{formatCents(saved)}</span>
+              <span className="tabular-nums">−{formatCents(saved)}</span>
             </div>
           )}
         </div>
       )}
       <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">
         <span>Total</span>
-        <span>{formatCents(total)}</span>
+        <span className="tabular-nums">{formatCents(total)}</span>
       </div>
     </Card>
   );
