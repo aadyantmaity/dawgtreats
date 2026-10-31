@@ -81,6 +81,9 @@ export async function PickupPanel() {
   const left = all.filter((order) => order.status !== "picked_up").length;
   const waiting = all.filter((order) => order.status !== "picked_up");
   const cookies = waiting.reduce((sum, order) => sum + order.cookieCount, 0);
+  // Counted apart from the cookies to bag, because nobody paid for these and the flavor
+  // is the baker's pick: they are a number to remember, not a line in the breakdown.
+  const free = waiting.filter((order) => order.freeCookie).length;
   const toBag = summarise(waiting).flavors;
 
   return (
@@ -91,7 +94,9 @@ export async function PickupPanel() {
       <p className="mt-1 text-secondary">
         {all.length === 0
           ? "No orders yet."
-          : `${left} of ${all.length} still to hand over · ${cookies} ${cookies === 1 ? "cookie" : "cookies"} to bag`}
+          : `${left} of ${all.length} still to hand over · ${cookies} ${cookies === 1 ? "cookie" : "cookies"} to bag${
+              free > 0 ? ` · plus ${free} free` : ""
+            }`}
       </p>
       {toBag.length > 0 && <Breakdown flavors={toBag} className="mt-2 text-secondary" />}
 
