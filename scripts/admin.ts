@@ -1,10 +1,12 @@
 import { existsSync } from 'node:fs'
+import { writeFile } from 'node:fs/promises'
 
 import { asc, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 import { flavors, orders, weeks } from '@/lib/db/schema'
 import { setRole } from '@/lib/auth'
+import { getResume, listApplications } from '@/lib/applications'
 import { listFeedback } from '@/lib/feedback'
 import { DomainError } from '@/lib/errors'
 import { sendLastCall, sendOpenNotice } from '@/lib/email'
@@ -75,6 +77,10 @@ Pickup day
 
 Feedback
   feedback                                 what people said and what they want baked
+
+Hiring
+  applications                             everyone who applied, newest first
+  resume <id> [path]                       write that application's resume to a file
 
 Waiting list
   notify                                   who asked to be told when a batch opens
@@ -467,6 +473,32 @@ const commands: Record<string, () => Promise<void>> = {
       console.log(`  ${stars}  ${item.name ?? 'anonymous'}`)
       console.log(`         ${item.message}`)
     }
+  },
+
+  async applications() {
+    const all = await listApplications()
+    if (all.length === 0) return console.log('\nNothing yet.')
+
+    console.log(`\n${all.length} application${all.length === 1 ? '' : 's'}\n`)
+    for (const row of all) {
+      console.log(`  ${row.name}  <${row.email}>`)
+      console.log(`  ${row.roles.join(' and ')} · ${row.year} · ${row.major} · ${row.hoursPerWeek} hrs/week`)
+      console.log(`  ${row.link}`)
+      if (row.productAnswer) console.log(`  Proposes: ${row.productAnswer}`)
+      if (row.engineeringAnswer) console.log(`  Hardest: ${row.engineeringAnswer}`)
+      console.log(`  Resume: npm run admin -- resume ${row.id}`)
+      console.log('')
+    }
+  },
+
+  async resume() {
+    const [id, path] = positional
+    if (!id) fail('Usage: resume <id> [path]')
+    const row = await getResume(id)
+    if (!row) fail(`No application ${id}.`)
+    const target = path ?? row.resumeName
+    await writeFile(target, row.resume)
+    console.log(`Wrote ${target}.`)
   },
 
   async qty() {

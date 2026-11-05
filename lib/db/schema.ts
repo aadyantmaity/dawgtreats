@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
+  customType,
   date,
   integer,
   pgEnum,
@@ -193,3 +194,29 @@ export const feedback = pgTable(
   },
   (table) => [check('rating_range', sql`${table.rating} is null or ${table.rating} between 1 and 5`)],
 )
+
+// Resumes are small, rare and only ever read by the owner, so they ride in the row
+// instead of in a storage bucket that nothing else on the site would use.
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea'
+  },
+})
+
+export const jobApplications = pgTable('job_applications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  year: text('year').notNull(),
+  major: text('major').notNull(),
+  // Someone may apply for both roles, and each role asks its own question.
+  roles: text('roles').array().notNull(),
+  link: text('link').notNull(),
+  productAnswer: text('product_answer'),
+  engineeringAnswer: text('engineering_answer'),
+  hoursPerWeek: integer('hours_per_week').notNull(),
+  resumeName: text('resume_name').notNull(),
+  resumeType: text('resume_type').notNull(),
+  resume: bytea('resume').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})

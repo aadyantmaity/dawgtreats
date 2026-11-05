@@ -12,7 +12,19 @@ export const LIMITS = {
   perOrderMax: 24,
   messageMax: 500,
   ratingMax: 5,
+  answerMax: 2000,
+  linkMax: 300,
+  majorMax: 80,
+  hoursMin: 1,
+  hoursMax: 40,
+  resumeMaxBytes: 5 * 1024 * 1024,
 } as const
+
+export const RESUME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+] as const
 
 // Crockford's alphabet: no I, L, O or U, so a code read aloud is never mistyped. It lives
 // here because the lookup form checks a typed code and lib/orders cannot reach the browser.
@@ -36,6 +48,17 @@ export const MESSAGES = {
   ratingRequired: 'Pick a rating first',
   ratingRange: 'A rating is one to five stars',
   messageTooLong: `Keep it to ${LIMITS.messageMax} characters or fewer`,
+  roleRequired: 'Pick at least one role',
+  answerRequired: 'This one needs an answer',
+  answerTooLong: `Keep it to ${LIMITS.answerMax} characters or fewer`,
+  linkRequired: 'A link is required',
+  linkFormat: 'That link does not look right',
+  majorRequired: 'Major is required',
+  yearRequired: 'Year is required',
+  hoursRange: `Hours must be between ${LIMITS.hoursMin} and ${LIMITS.hoursMax}`,
+  resumeRequired: 'A resume is required',
+  resumeType: 'Attach a PDF or a Word document',
+  resumeTooBig: 'That resume is over 5 MB',
 } as const
 
 export const flavorSchema = z.object({
@@ -204,4 +227,50 @@ export function messageError(value: string): string | null {
 // browser and the server refusing the same thing in the same words.
 export function ratingError(value: number): string | null {
   return value >= 1 && value <= LIMITS.ratingMax ? null : MESSAGES.ratingRequired
+}
+
+export const APPLICATION_YEARS = ['freshman', 'sophomore', 'junior', 'senior', 'other'] as const
+export const APPLICATION_ROLES = ['product', 'engineering'] as const
+
+const answer = z
+  .string()
+  .trim()
+  .min(1, MESSAGES.answerRequired)
+  .max(LIMITS.answerMax, MESSAGES.answerTooLong)
+
+// The question a role asks is only required of someone who applied for that role, so the
+// pair of answers is checked against the roles rather than on its own.
+export const applicationSchema = z
+  .object({
+    name: z.string().trim().min(1, MESSAGES.nameRequired).max(LIMITS.nameMax, MESSAGES.nameTooLong),
+    email: z.email(MESSAGES.emailFormat).max(LIMITS.emailMax, MESSAGES.emailTooLong),
+    year: z.enum(APPLICATION_YEARS, MESSAGES.yearRequired),
+    major: z.string().trim().min(1, MESSAGES.majorRequired).max(LIMITS.majorMax, MESSAGES.nameTooLong),
+    roles: z.array(z.enum(APPLICATION_ROLES)).min(1, MESSAGES.roleRequired),
+    link: z.url(MESSAGES.linkFormat).max(LIMITS.linkMax, MESSAGES.linkFormat),
+    productAnswer: answer.nullable(),
+    engineeringAnswer: answer.nullable(),
+    hoursPerWeek: z
+      .number()
+      .int(MESSAGES.hoursRange)
+      .min(LIMITS.hoursMin, MESSAGES.hoursRange)
+      .max(LIMITS.hoursMax, MESSAGES.hoursRange),
+  })
+  .refine((input) => !input.roles.includes('product') || input.productAnswer !== null, {
+    message: MESSAGES.answerRequired,
+    path: ['productAnswer'],
+  })
+  .refine((input) => !input.roles.includes('engineering') || input.engineeringAnswer !== null, {
+    message: MESSAGES.answerRequired,
+    path: ['engineeringAnswer'],
+  })
+
+export type ApplicationInput = z.infer<typeof applicationSchema>
+
+// A link pasted without a scheme is the common case, and the browser's url input accepts
+// it only with one, so the form adds it before anything else looks at the value.
+export function withScheme(link: string): string {
+  const trimmed = link.trim()
+  if (!trimmed || /^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
 }

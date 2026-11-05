@@ -44,6 +44,8 @@ const limiters = {
   notify: limiter('notify', 5, '10 m'),
   // Changing a pickup time is a public write guarded only by the order code.
   slot: limiter('slot', 10, '10 m'),
+  // An unauthenticated public write that carries a file, so the tightest of them all.
+  application: limiter('application', 3, '30 m'),
 } as const
 
 export type LimitName = keyof typeof limiters
