@@ -10,12 +10,13 @@ import { addDays, ptToUtc } from '@/lib/weeks'
 
 // A pickup window runs from the time it is given to the time it is given, so the whole
 // weekend is two or three choices rather than a dozen half hours. The day names are the
-// ones a week can carry: the weekend it is baked for, and the evenings before orders close.
+// ones a week can carry: the weekend it is baked for, and the weekday evenings before it.
 export const PICKUP_DAYS = {
   mon: -5,
   tue: -4,
   wed: -3,
   thu: -2,
+  fri: -1,
   sat: 0,
   sun: 1,
 } as const

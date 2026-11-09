@@ -131,7 +131,7 @@ function ordersCloseAtFor(pickupWeekendStart: string): Date {
 // UTC the next day, so a window's own timestamp disagrees about which day it is on.
 export function isWeekdayPickup(startsAt: Date): boolean {
   const day = formatPt(startsAt, { weekday: 'short' })
-  return day === 'Mon' || day === 'Tue' || day === 'Wed' || day === 'Thu'
+  return day === 'Mon' || day === 'Tue' || day === 'Wed' || day === 'Thu' || day === 'Fri'
 }
 
 // How much of a window has to be left for it to still be worth starting a pickup. It only

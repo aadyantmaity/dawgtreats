@@ -50,11 +50,12 @@ describe('opening a week', () => {
 
 describe('weekday pickup', () => {
   it('charges on a weekday evening, whenever it was ordered', () => {
-    // 2026-10-20 is a Tuesday, 10-21 a Wednesday. Both carry the fee, and the day the
-    // order is placed on has nothing to do with it.
+    // 2026-10-20 is a Tuesday and 10-23 a Friday. Every evening from Monday to Friday
+    // carries the fee, and the day the order is placed on has nothing to do with it.
     expect(isWeekdayPickup(ptToUtc('2026-10-20', '20:00'))).toBe(true)
     expect(isWeekdayPickup(ptToUtc('2026-10-21', '20:00'))).toBe(true)
     expect(isWeekdayPickup(ptToUtc('2026-10-22', '20:00'))).toBe(true)
+    expect(isWeekdayPickup(ptToUtc('2026-10-23', '20:00'))).toBe(true)
   })
 
   it('does not charge on the pickup weekend', () => {

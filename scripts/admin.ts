@@ -66,7 +66,7 @@ Flavors
 
 This week
   qty <flavor> <count>                     how many to bake
-  slots:add <day> <from> <to> [--cap=]     one pickup window. Day is sat, sun, or mon to thu
+  slots:add <day> <from> <to> [--cap=]     one pickup window. Day is sat, sun, or mon to fri
                                            for an evening collected the same day, +50c
   slots:rm <day> <from>                    remove a window
   orders                                   every order for this week, with status and total
@@ -197,6 +197,7 @@ const DAY_NAMES: Record<PickupDay, string> = {
   tue: 'Tuesday',
   wed: 'Wednesday',
   thu: 'Thursday',
+  fri: 'Friday',
   sat: 'Saturday',
   sun: 'Sunday',
 }
@@ -515,7 +516,7 @@ const commands: Record<string, () => Promise<void>> = {
 
   async 'slots:add'() {
     const [dayInput, fromInput, toInput] = positional
-    if (!dayInput || !fromInput || !toInput) fail('Usage: slots:add <mon|tue|wed|thu|sat|sun> <from> <to> [--cap=]')
+    if (!dayInput || !fromInput || !toInput) fail('Usage: slots:add <mon|tue|wed|thu|fri|sat|sun> <from> <to> [--cap=]')
     const day = parseDay(dayInput)
     const week = await targetWeek()
 
