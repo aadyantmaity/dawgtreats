@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ADD COLUMN "free_cookie_count" integer DEFAULT 0 NOT NULL;

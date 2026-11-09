@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ChangeSlot, type SlotChoice } from "@/app/order/[code]/change-slot";
 import { OrderStatus } from "@/app/order/[code]/order-status";
 import { Card } from "@/components/ui/card";
-import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
+import { formatCents } from "@/lib/money";
 import { getPublicOrder, listSlotsForOrder } from "@/lib/orders";
 import { PICKUP_PLACE, formatPt } from "@/lib/weeks";
 import { cache } from "react";
@@ -44,9 +44,6 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
   }));
 
   const { lines } = order;
-  // Re-priced from what each line was sold at, so an order keeps its own arithmetic even
-  // after the menu changes.
-  const { savedCents: saved, sets } = priceOrder(lines);
   const pickup = `${formatPt(order.pickupStartsAt, { weekday: "long", month: "short", day: "numeric" })}, ${formatPt(order.pickupStartsAt, { hour: "numeric", minute: "2-digit" })}–${formatPt(order.pickupEndsAt, { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}`;
 
   return (
@@ -62,10 +59,12 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
       <Card title="Your cookies" className="mt-6">
         {/* Above the list, not beside the total: it is a cookie you are getting, not a
             number on the bill. */}
-        {order.freeCookie && (
+        {order.freeCookieCount > 0 && (
           <p className="mb-3 flex items-center gap-2 font-medium text-success">
             <IconGift className="size-4 shrink-0" aria-hidden />
-            Plus one free cookie, a surprise flavor
+            {order.freeCookieCount === 1
+              ? "Plus one free cookie, a surprise flavor"
+              : `Plus ${order.freeCookieCount} free cookies, surprise flavors`}
           </p>
         )}
         <ul className="flex flex-col gap-2">
@@ -78,25 +77,13 @@ export default async function OrderPage({ params }: PageProps<"/order/[code]">) 
             </li>
           ))}
         </ul>
-        {/* Charges first, then what comes off: the block reads the way the total is built.
-            Set at the size of the items, because these are lines of the same bill. */}
-        {(saved > 0 || order.pickupFeeCents > 0) && (
+        {/* A line of the same bill, so it is set at the size of the items above it. */}
+        {order.pickupFeeCents > 0 && (
           <div className="mt-2 flex flex-col gap-2">
-            {order.pickupFeeCents > 0 && (
-              <div className="flex justify-between gap-4 text-secondary">
-                <span>Weekday pickup</span>
-                <span>+{formatCents(order.pickupFeeCents)}</span>
-              </div>
-            )}
-            {saved > 0 && (
-              <div className="flex justify-between gap-4 text-success">
-                <span>
-                  {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
-                  {sets > 1 ? ` × ${sets}` : ""}
-                </span>
-                <span>−{formatCents(saved)}</span>
-              </div>
-            )}
+            <div className="flex justify-between gap-4 text-secondary">
+              <span>Weekday pickup</span>
+              <span>+{formatCents(order.pickupFeeCents)}</span>
+            </div>
           </div>
         )}
         <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">

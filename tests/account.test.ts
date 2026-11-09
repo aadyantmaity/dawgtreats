@@ -126,7 +126,7 @@ describe('the free cookie', () => {
         items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }] },
       alex.id,
     )
-    expect(first.freeCookie).toBe(true)
+    expect(first.freeCookieCount).toBe(1)
 
     const [after] = await db.select().from(users).where(eq(users.id, alex.id))
     expect(after.freeCookieUsedAt).not.toBeNull()
@@ -142,10 +142,10 @@ describe('the free cookie', () => {
         alex.id,
       )
 
-    expect((await order()).freeCookie).toBe(true)
+    expect((await order()).freeCookieCount).toBe(1)
     // The second order still goes through: nothing came off the total, so a spent cookie
     // is not a reason to refuse a sale.
-    expect((await order()).freeCookie).toBe(false)
+    expect((await order()).freeCookieCount).toBe(0)
   })
 
   it('goes to nobody when the order has no account', async () => {
@@ -156,7 +156,21 @@ describe('the free cookie', () => {
       freeCookie: true,
       items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 1 }],
     })
-    expect(guest.freeCookie).toBe(false)
+    expect(guest.freeCookieCount).toBe(0)
+  })
+
+  it('stacks on the cookies the order earned on its size', async () => {
+    const week = await seedWeek({ stock: { Snickerdoodle: 20 }, capacity: 20 })
+    const alex = await account('alex@example.com')
+
+    const order = await reserve(
+      { ...buyer, email: alex.email, pickupSlotId: week.slotIds[0], freeCookie: true,
+        items: [{ flavorId: week.flavorIds.Snickerdoodle, quantity: 3 }] },
+      alex.id,
+    )
+
+    // Three cookies earn one, and the account's own cookie is a second.
+    expect(order.freeCookieCount).toBe(2)
   })
 
   it('takes nothing off the total', async () => {

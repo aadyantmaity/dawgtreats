@@ -17,7 +17,7 @@ type Order = {
   name: string;
   phone: string | null;
   cookieCount: number;
-  freeCookie: boolean;
+  freeCookieCount: number;
   lines: { name: string; quantity: number }[];
 };
 
@@ -64,10 +64,10 @@ export function OrderCard({ order }: { order: Order }) {
           </Badge>
           {/* Beside the status, because this is the one thing on the card that is not
               written on the order and the only chance to act on it is while the bag is open. */}
-          {order.freeCookie && (
+          {order.freeCookieCount > 0 && (
             <Badge tone="success" className="gap-1">
               <IconGift className="size-3" aria-hidden />
-              Free cookie
+              {order.freeCookieCount === 1 ? "Free cookie" : `${order.freeCookieCount} free`}
             </Badge>
           )}
         </div>

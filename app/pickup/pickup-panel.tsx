@@ -83,7 +83,7 @@ export async function PickupPanel() {
   const cookies = waiting.reduce((sum, order) => sum + order.cookieCount, 0);
   // Counted apart from the cookies to bag, because nobody paid for these and the flavor
   // is the baker's pick: they are a number to remember, not a line in the breakdown.
-  const free = waiting.filter((order) => order.freeCookie).length;
+  const free = waiting.reduce((sum, order) => sum + order.freeCookieCount, 0);
   const toBag = summarise(waiting).flavors;
 
   return (

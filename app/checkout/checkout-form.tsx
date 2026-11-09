@@ -14,7 +14,7 @@ import { Spinner } from "@/components/ui/loading";
 import { Message } from "@/components/ui/message";
 import { messageFromBody } from "@/lib/errors";
 import type { MenuItem } from "@/lib/inventory";
-import { DEAL_CENTS, DEAL_SIZE, WEEKDAY_CENTS, formatCents, priceOrder } from "@/lib/money";
+import { WEEKDAY_CENTS, formatCents, priceOrder } from "@/lib/money";
 import { LIMITS, MESSAGES, emailError, formatPhoneInput, nameError, phoneError } from "@/lib/validation";
 import { IconCalendarX, IconLock } from "@tabler/icons-react";
 
@@ -114,15 +114,13 @@ function SlotPicker({
 function OrderSummary({
   rows,
   total,
-  saved,
-  sets,
+  free,
   fee,
   className,
 }: {
   rows: Row[];
   total: number;
-  saved: number;
-  sets: number;
+  free: number;
   fee: number;
   className: string;
 }) {
@@ -138,31 +136,24 @@ function OrderSummary({
           </li>
         ))}
       </ul>
-      {/* Charges first, then what comes off, in the same order the order page sets them, so
-          a total is read the same way twice. */}
-      {(saved > 0 || fee > 0) && (
-        <div className="mt-2 flex flex-col gap-2">
-          {fee > 0 && (
-            <div className="flex justify-between gap-4 text-secondary">
-              <span>Weekday pickup</span>
-              <span className="tabular-nums">+{formatCents(fee)}</span>
-            </div>
-          )}
-          {saved > 0 && (
-            <div className="flex justify-between gap-4 text-success">
-              <span>
-                {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
-                {sets > 1 ? ` × ${sets}` : ""}
-              </span>
-              <span className="tabular-nums">−{formatCents(saved)}</span>
-            </div>
-          )}
+      {fee > 0 && (
+        <div className="mt-2 flex justify-between gap-4 text-secondary">
+          <span>Weekday pickup</span>
+          <span className="tabular-nums">+{formatCents(fee)}</span>
         </div>
       )}
       <div className="mt-3 flex justify-between border-t border-default pt-3 font-semibold">
         <span>Total</span>
         <span className="tabular-nums">{formatCents(total)}</span>
       </div>
+      {/* Under the total, because a free cookie is in the bag rather than on the bill. */}
+      {free > 0 && (
+        <p className="mt-2 text-sm text-success">
+          {free === 1
+            ? "Plus one free cookie, a surprise flavor"
+            : `Plus ${free} free cookies, surprise flavors`}
+        </p>
+      )}
     </Card>
   );
 }
@@ -383,7 +374,7 @@ export function CheckoutForm({
     >
       <CartNotices className="order-1 mt-8 empty:mt-0 lg:col-span-2" />
       {/* Rendered twice: above the fields on a phone, beside them on a laptop. */}
-      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} fee={deal.feeCents} className="order-2 lg:hidden" />
+      <OrderSummary rows={rows} total={total} free={deal.freeCookies} fee={deal.feeCents} className="order-2 lg:hidden" />
 
       <Card title="Pickup time" className="order-3 lg:col-span-2">
         {open.length === 0 ? (
@@ -470,7 +461,7 @@ export function CheckoutForm({
       {/* Last on a phone, where the sticky bar already carries Pay, and beside the pickup
           card on a laptop. */}
       <div className="order-6 flex flex-col gap-6 lg:order-4">
-      <OrderSummary rows={rows} total={total} saved={deal.savedCents} sets={deal.sets} fee={deal.feeCents} className="max-lg:hidden" />
+      <OrderSummary rows={rows} total={total} free={deal.freeCookies} fee={deal.feeCents} className="max-lg:hidden" />
       {shortfalls.length > 0 && (
         <div className="flex flex-col gap-2" role="status">
           {shortfalls.map((note) => (

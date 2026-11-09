@@ -3,7 +3,6 @@ import 'server-only'
 import Stripe from 'stripe'
 
 import { DomainError } from '@/lib/errors'
-import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from '@/lib/money'
 import { HOLD_MINUTES } from '@/lib/orders'
 
 // The session outlives the hold, so a customer never pays for cookies already given back.
@@ -64,7 +63,6 @@ export async function createCheckoutSession(order: {
   // The fee comes from the order rather than from a second look at the window: these line
   // items have to add up to the total the order was reserved at, and that total was fixed
   // when the window was booked.
-  const deal = priceOrder(order.lines)
   const origin = returnOrigin(order.origin ?? null)
 
   const session = await client().checkout.sessions.create({
@@ -76,23 +74,10 @@ export async function createCheckoutSession(order: {
     expires_at: Math.floor(Date.now() / 1000) + SESSION_MINUTES * 60,
     // The webhook needs to find the order again, whichever way the session ends.
     metadata: { orderId: order.id, orderCode: order.orderCode },
-    // Stripe has no negative line, so the deal is sold as the thing it is: so many sets at
-    // their price, and whatever the sets did not take at list price. The two add up to the
-    // total the order was reserved at, which is the number that must match.
+    // Every cookie at its own price. The free ones are never sold, so they never reach
+    // Stripe: these lines add up to the total the order was reserved at.
     line_items: [
-      ...(deal.sets > 0
-        ? [
-            {
-              quantity: deal.sets,
-              price_data: {
-                currency: 'usd' as const,
-                unit_amount: Math.round(DEAL_CENTS),
-                product_data: { name: `${DEAL_SIZE} cookies for ${formatCents(DEAL_CENTS)}` },
-              },
-            },
-          ]
-        : []),
-      ...deal.rest.map((line) => ({
+      ...order.lines.map((line) => ({
         quantity: line.quantity,
         price_data: {
           currency: 'usd' as const,

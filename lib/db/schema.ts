@@ -140,9 +140,10 @@ export const orders = pgTable('orders', {
   // Charged for a same-day pickup, and nothing to do with the cookies, so it is kept off
   // order_items: a total reconstructs as the items plus this.
   pickupFeeCents: integer('pickup_fee_cents').notNull().default(0),
-  // A cookie to put in the bag on pickup day, on the house. Nothing comes off the total,
-  // so this is a note to whoever packs the order rather than a line of money.
-  freeCookie: boolean('free_cookie').notNull().default(false),
+  // Cookies to put in the bag on pickup day, on the house: the ones the order earned on
+  // its size, plus the account's own one if it was spent here. Nothing comes off the
+  // total, so this is a note to whoever packs the order rather than a line of money.
+  freeCookieCount: integer('free_cookie_count').notNull().default(0),
   stripeSessionId: text('stripe_session_id').unique(),
   reservedUntil: timestamp('reserved_until', { withTimezone: true }),
   paidAt: timestamp('paid_at', { withTimezone: true }),

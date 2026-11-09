@@ -2,7 +2,7 @@ import 'server-only'
 
 import { reportIssue } from '@/lib/errors'
 import type { MenuItem } from '@/lib/inventory'
-import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from '@/lib/money'
+import { formatCents } from '@/lib/money'
 import { getOrderByCode } from '@/lib/orders'
 import { EMAIL_BACKDROP, PALETTE } from '@/lib/palette'
 import { PICKUP_PLACE, formatClosesAt, formatPt } from '@/lib/weeks'
@@ -164,12 +164,8 @@ function orderLink(orderCode: string): string {
 function confirmationText(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
   const { order: o, lines, slot } = order
   const items = lines.map((l) => `  ${l.quantity} x ${l.name}  ${formatCents(l.unitPriceCents * l.quantity)}`)
-  const deal = priceOrder(lines)
-  if (deal.savedCents > 0) {
-    items.push(`  ${DEAL_SIZE} for ${formatCents(DEAL_CENTS)}${deal.sets > 1 ? ` x ${deal.sets}` : ''}  -${formatCents(deal.savedCents)}`)
-  }
   if (o.pickupFeeCents > 0) items.push(`  Weekday pickup  +${formatCents(o.pickupFeeCents)}`)
-  if (o.freeCookie) items.push('  Free cookie  a surprise flavor, in the bag')
+  if (o.freeCookieCount > 0) items.push(`  ${freeCookieLine(o.freeCookieCount)}`)
 
   return [
     `Thanks ${firstName(o.name)}, your cookies are paid for.`,
@@ -202,13 +198,12 @@ function feeRow(feeCents: number): string {
   return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;font-size:15px;color:${PALETTE.taupe};">Weekday pickup +${formatCents(feeCents)}</td></tr>`
 }
 
-// The lines add up to more than the total whenever a set was priced, so the difference is
-// shown rather than left for the reader to find.
-function dealRow(lines: { name: string; quantity: number; unitPriceCents: number }[]): string {
-  const deal = priceOrder(lines)
-  if (deal.savedCents === 0) return ''
-  const label = `${DEAL_SIZE} for ${formatCents(DEAL_CENTS)}${deal.sets > 1 ? ` &times; ${deal.sets}` : ''}`
-  return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;font-size:15px;color:${PALETTE.taupe};">${label} &minus;${formatCents(deal.savedCents)}</td></tr>`
+// Free cookies cost nothing, so they are never a money line: the receipt says what is in
+// the bag beyond what was paid for, and the total stays the total.
+export function freeCookieLine(count: number): string {
+  return count === 1
+    ? 'Free cookie - a surprise flavor, in the bag'
+    : `${count} free cookies - surprise flavors, in the bag`
 }
 
 function confirmationHtml(order: NonNullable<Awaited<ReturnType<typeof getOrderByCode>>>): string {
@@ -237,9 +232,8 @@ ${codeBlock('Show this at pickup', o.orderCode)}
 <tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:18px 22px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     ${items}
-    ${dealRow(lines)}
     ${feeRow(o.pickupFeeCents)}
-    ${o.freeCookie ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;font-size:15px;color:${PALETTE.sage700};">Free cookie &mdash; a surprise flavor, in the bag</td></tr>` : ''}
+    ${o.freeCookieCount > 0 ? `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:8px 0;font-size:15px;color:${PALETTE.sage700};">${escapeHtml(freeCookieLine(o.freeCookieCount))}</td></tr>` : ''}
     <tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:10px 0;font-size:16px;font-weight:600;color:${PALETTE.ink};">Total ${formatCents(o.totalCents)}</td></tr>
   </table>
 </td></tr>

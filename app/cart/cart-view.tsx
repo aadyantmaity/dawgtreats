@@ -13,7 +13,7 @@ import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { Stepper } from "@/components/ui/stepper";
 import type { MenuItem } from "@/lib/inventory";
 import { bump } from "@/lib/motion";
-import { DEAL_CENTS, DEAL_SIZE, formatCents, priceOrder } from "@/lib/money";
+import { formatCents, priceOrder } from "@/lib/money";
 import { LIMITS, cartLimit } from "@/lib/validation";
 import { IconClock } from "@tabler/icons-react";
 
@@ -167,14 +167,12 @@ export function CartView({ menu, ordersOpen }: { menu: MenuItem[]; ordersOpen: b
         </ul>
       </Card>
 
-      {deal.savedCents > 0 && (
-        <div className="flex items-center justify-between text-sm text-success">
-          <span>
-            {DEAL_SIZE} for {formatCents(DEAL_CENTS)}
-            {deal.sets > 1 ? ` × ${deal.sets}` : ""}
-          </span>
-          <span className="tabular-nums">−{formatCents(deal.savedCents)}</span>
-        </div>
+      {deal.freeCookies > 0 && (
+        <p className="text-sm text-success">
+          {deal.freeCookies === 1
+            ? "Plus one free cookie, a surprise flavor"
+            : `Plus ${deal.freeCookies} free cookies, surprise flavors`}
+        </p>
       )}
 
       <div className="flex items-center justify-between">
