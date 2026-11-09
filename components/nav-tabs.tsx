@@ -7,7 +7,6 @@ import {
   IconMessageCircle,
   IconReceipt,
   IconUser,
-  IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,7 +36,6 @@ const ICONS = {
   account: IconUser,
   pickup: IconBuildingStore,
   stats: IconChartBar,
-  team: IconUsers,
 } as const;
 
 export function NavIcon({ name }: { name: IconName }) {

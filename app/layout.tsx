@@ -35,7 +35,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     { href: "/", label: "Home", icon: "home" },
     { href: "/order/lookup", label: "Orders", icon: "orders" },
     { href: "/account", label: "Account", icon: "account" },
-    { href: "/team", label: "Team", icon: "team" },
   ];
   // The owner's two screens live inside the account page now, and feedback has its own
   // button on the page, so the bar carries the same short row for everyone.

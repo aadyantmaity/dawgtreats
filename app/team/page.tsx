@@ -1,4 +1,3 @@
-import { ApplyForm } from "@/components/apply-form";
 import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Team" };
@@ -84,10 +83,9 @@ export default function TeamPage() {
 
       <section className="mt-10">
         <h2 className="text-2xl font-semibold">Apply</h2>
-        <p className="mt-2 text-secondary">Every field is required. We read every answer.</p>
-        <div className="mt-6">
-          <ApplyForm />
-        </div>
+        <p className="mt-2 text-secondary">
+          Applications are closed. The roles stay here for whenever they open again.
+        </p>
       </section>
     </main>
   );

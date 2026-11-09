@@ -20,12 +20,6 @@ export const LIMITS = {
   resumeMaxBytes: 5 * 1024 * 1024,
 } as const
 
-export const RESUME_TYPES = [
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-] as const
-
 // Crockford's alphabet: no I, L, O or U, so a code read aloud is never mistyped. It lives
 // here because the lookup form checks a typed code and lib/orders cannot reach the browser.
 export const ORDER_CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
