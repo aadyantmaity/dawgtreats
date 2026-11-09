@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '@/lib/db'
 import { batchItems, orderItems, orders, pickupSlots } from '@/lib/db/schema'
 import { DomainError } from '@/lib/errors'
-import { DEAL_CENTS } from '@/lib/money'
+import { priceOrder } from '@/lib/money'
 import { reserve } from '@/lib/orders'
 
 import { buyer, resetDatabase, seedWeek } from './helpers'
@@ -136,11 +136,12 @@ describe('what an order records', () => {
       items: [{ flavorId: flavorIds.Snickerdoodle, quantity: 3 }],
     })
 
-    // Three cookies are a set, so the order is charged the set price rather than 3 × $3.
-    expect(reservation.totalCents).toBe(DEAL_CENTS)
+    // The price comes from the flavor row, through the same pricing the site shows.
+    const expected = priceOrder([{ name: 'Snickerdoodle', quantity: 3, unitPriceCents: 300 }]).totalCents
+    expect(reservation.totalCents).toBe(expected)
     const [order] = await db.select().from(orders)
     expect(order.status).toBe('pending')
-    expect(order.totalCents).toBe(DEAL_CENTS)
+    expect(order.totalCents).toBe(expected)
     expect(order.paidAt).toBeNull()
 
     // The price each cookie was sold at is still frozen on the line, which is what the

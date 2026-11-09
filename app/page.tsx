@@ -9,7 +9,7 @@ import { Message } from "@/components/ui/message";
 import { PhotoPlaceholder } from "@/components/ui/photo-placeholder";
 import { currentAccount } from "@/lib/auth";
 import { getMenu, type MenuItem } from "@/lib/inventory";
-import { formatCents } from "@/lib/money";
+import { DEAL_ON, formatCents } from "@/lib/money";
 import { isWaiting } from "@/lib/notify";
 import { allergenLine, mayContainLine } from "@/lib/recipe";
 import { formatClosesAt, getOrderableWeek } from "@/lib/weeks";
@@ -212,7 +212,7 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
           {/* Nothing can be bought while the week is shut, so an offer on three of them is
               not news. Shut, every flavor reports null stock rather than zero, which is why
               the count alone kept it on the page. */}
-          {week && forSale.length > 0 && <DealBanner menu={forSale} />}
+          {DEAL_ON && week && forSale.length > 0 && <DealBanner menu={forSale} />}
           {forSale.length > 0 && (
             <div className="mt-5 rounded-card bg-ground p-4 sm:p-6">
               <div className={`grid gap-4 sm:gap-6 ${columns}`}>

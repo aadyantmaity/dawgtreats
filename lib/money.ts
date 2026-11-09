@@ -13,6 +13,11 @@ export function parsePriceCents(value: string): number | null {
 export const DEAL_SIZE = 3
 export const DEAL_CENTS = 400
 
+// Whether the deal is on offer. Off, every cookie is its own price and nothing on the
+// site mentions a set: the cart, the checkout, the receipt and the order page all draw
+// the deal line from a saving, and there is none.
+export const DEAL_ON = false
+
 // Collecting on a weekday evening costs this, once, however many cookies are in the order.
 // It is a charge on the handover rather than on the cookies, so it sits outside the deal:
 // three cookies on a Tuesday are the deal price plus this, not a set at a different price.
@@ -41,7 +46,7 @@ export function priceOrder(lines: PricedLine[], weekday = false): Priced {
   )
   cookies.sort((a, b) => a.unitPriceCents - b.unitPriceCents)
 
-  const sets = Math.floor(cookies.length / DEAL_SIZE)
+  const sets = DEAL_ON ? Math.floor(cookies.length / DEAL_SIZE) : 0
   const taken = cookies.slice(0, sets * DEAL_SIZE)
   const left = cookies.slice(sets * DEAL_SIZE)
 

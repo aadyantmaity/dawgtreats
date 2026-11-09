@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { DEAL_CENTS, WEEKDAY_CENTS, priceOrder } from '@/lib/money'
+import { DEAL_CENTS, DEAL_ON, WEEKDAY_CENTS, priceOrder } from '@/lib/money'
 
 const choc = { name: 'Chocolate Chip', quantity: 1, unitPriceCents: 150 }
 const mm = { name: 'M&M', quantity: 1, unitPriceCents: 175 }
 const butter = { name: 'Butterscotch', quantity: 1, unitPriceCents: 150 }
 
-describe('three for four', () => {
+// The deal is off, so there is nothing to price as a set. The cases stay for the day it
+// comes back, and the suite below covers what a cookie costs while it is off.
+describe.runIf(DEAL_ON)('three for four', () => {
   it('charges list price below three cookies', () => {
     const priced = priceOrder([{ ...choc, quantity: 2 }])
     expect(priced.totalCents).toBe(300)
@@ -56,13 +58,20 @@ describe('three for four', () => {
     expect(priceOrder([]).totalCents).toBe(0)
     expect(priceOrder([]).sets).toBe(0)
   })
+  it('sits outside the deal, so a set still costs the set price', () => {
+    const priced = priceOrder([choc, mm, butter], true)
+    expect(priced.totalCents).toBe(DEAL_CENTS + WEEKDAY_CENTS)
+    expect(priced.sets).toBe(1)
+    // The fee is not a cookie, so it must not look like the deal saved less.
+    expect(priced.savedCents).toBe(75)
+  })
 })
 
 describe('weekday pickup fee', () => {
   it('adds nothing when the pickup is not same day', () => {
     const priced = priceOrder([choc, mm, butter], false)
     expect(priced.feeCents).toBe(0)
-    expect(priced.totalCents).toBe(DEAL_CENTS)
+    expect(priced.totalCents).toBe(priced.listCents - priced.savedCents)
   })
 
   it('charges the fee once, whatever the order holds', () => {
@@ -72,17 +81,18 @@ describe('weekday pickup fee', () => {
     expect(many.feeCents).toBe(WEEKDAY_CENTS)
   })
 
-  it('sits outside the deal, so a set still costs the set price', () => {
-    const priced = priceOrder([choc, mm, butter], true)
-    expect(priced.totalCents).toBe(DEAL_CENTS + WEEKDAY_CENTS)
-    expect(priced.sets).toBe(1)
-    // The fee is not a cookie, so it must not look like the deal saved less.
-    expect(priced.savedCents).toBe(75)
-  })
-
   it('charges nothing on an empty order', () => {
     const priced = priceOrder([], true)
     expect(priced.feeCents).toBe(0)
     expect(priced.totalCents).toBe(0)
+  })
+})
+
+describe.skipIf(DEAL_ON)('with the deal off', () => {
+  it('charges every cookie its own price', () => {
+    const priced = priceOrder([choc, mm, butter])
+    expect(priced.totalCents).toBe(475)
+    expect(priced.sets).toBe(0)
+    expect(priced.savedCents).toBe(0)
   })
 })

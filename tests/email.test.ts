@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@/lib/db'
 import { flavors } from '@/lib/db/schema'
 import { sendConfirmation, sendReminder } from '@/lib/email'
-import { DEAL_CENTS, formatCents } from '@/lib/money'
+import { formatCents, priceOrder } from '@/lib/money'
 import { markPaid, reserve } from '@/lib/orders'
 
 import { buyer, resetDatabase, seedWeek } from './helpers'
@@ -85,8 +85,8 @@ describe('sending the order confirmation', () => {
     await sendConfirmation(order.orderCode)
 
     const body = sentBody(fetchMock)
-    // Five cookies at $3: one set of three, two left at the price frozen on the order.
-    const expectedTotal = DEAL_CENTS + 2 * 300
+    // Five cookies at the price frozen on the order, never the repriced flavor row.
+    const expectedTotal = priceOrder([{ name: 'cookies', quantity: 5, unitPriceCents: 300 }]).totalCents
     expect(order.totalCents).toBe(expectedTotal)
     expect(body.text).toContain(`Total: ${formatCents(expectedTotal)}`)
     expect(body.text).not.toContain(formatCents(50_000 * 5))
