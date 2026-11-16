@@ -16,9 +16,12 @@ const OWNER = process.env.OWNER_EMAIL ?? INBOX
 // thing, so a change in the policy is a change in one place.
 const TERMS = 'Pickup only. No refunds or cancellations.'
 
-// A cookie photo is a cut-out with nothing behind it. On the card's off-white it looks
-// washed out, and a dark-mode client puts it on near-black. Plain white holds either way.
-const PHOTO_TILE = '#ffffff'
+// A cookie photo on the site is a see-through cut-out, and a mail client that cannot read
+// the alpha lays it on black. These copies have the white behind them already.
+function emailPhoto(imageUrl: string): string {
+  const match = /^\/flavors\/([^/]+)\.webp$/.exec(imageUrl)
+  return match ? `/flavors/email/${match[1]}.png` : imageUrl
+}
 
 type Sent = { id: string }
 
@@ -427,7 +430,7 @@ function absolute(path: string): string {
 // are squeezed together on a phone, where most of these are read.
 function menuRow(item: OpenNoticeItem, last: boolean, note = ''): string {
   const photo = item.imageUrl
-    ? `<img src="${escapeHtml(absolute(item.imageUrl))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;object-fit:cover;background-color:${PHOTO_TILE};">`
+    ? `<img src="${escapeHtml(absolute(emailPhoto(item.imageUrl)))}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:12px;border:0;object-fit:cover;">`
     : ''
   return `<tr><td bgcolor="${PALETTE.white}" style="background-color:${PALETTE.white};padding:12px 0;${last ? '' : `border-bottom:1px solid ${PALETTE.linen};`}">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
