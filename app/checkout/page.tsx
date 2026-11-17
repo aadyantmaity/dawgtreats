@@ -6,7 +6,6 @@ import { getMenu, listSlots } from "@/lib/inventory";
 import {
   PICKUP_PLACE,
   formatClosesAt,
-  formatPickupWeekend,
   formatPt,
   formatSlotRange,
   getOrderableWeek,
@@ -49,12 +48,6 @@ export default async function CheckoutPage() {
     <main className="mx-auto animate-fade w-full max-w-2xl flex-1 py-12 lg:max-w-none">
       <h1 className="text-4xl font-semibold">Checkout</h1>
       <div className="mt-3 flex flex-col gap-1 text-secondary">
-        {/* A weekday window is a pickup before the weekend, so naming the weekend alone
-            would contradict the times listed below it. */}
-        <p>
-          Pickup {formatPickupWeekend(week.pickupWeekendStart)}
-          {choices.some((choice) => choice.weekday) && ", or a weekday evening"}
-        </p>
         <p>{PICKUP_PLACE}</p>
         <p>Orders close {formatClosesAt(week.ordersCloseAt)}</p>
       </div>
