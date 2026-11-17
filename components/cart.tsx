@@ -203,7 +203,8 @@ export function CartLink({ variant = "filled" }: { variant?: "filled" | "tab" | 
   const prevCount = useRef(count);
   useEffect(() => {
     // Only a rise is worth marking: a cookie removed is not news the badge has to announce.
-    if (count > prevCount.current) bump(countRef.current, 1.5);
+    // Adding is the most repeated act on the site, so the mark is the smallest of them all.
+    if (count > prevCount.current) bump(countRef.current, 1.15);
     prevCount.current = count;
   }, [count]);
 

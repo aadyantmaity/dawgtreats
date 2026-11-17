@@ -180,7 +180,7 @@ export function Select<T extends string>({
           role="listbox"
           aria-labelledby={labelId}
           hidden={!open}
-          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-card border border-default bg-surface py-1 shadow-lg animate-rise"
+          className="absolute top-full left-0 z-20 mt-1.5 max-h-menu w-full min-w-max overflow-y-auto rounded-card border border-default bg-surface p-1 shadow-lg animate-rise"
         >
           {options.map((option, index) => {
             const selected = index === selectedIndex;
@@ -193,7 +193,7 @@ export function Select<T extends string>({
                 onPointerEnter={() => setActiveIndex(index)}
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={() => choose(index)}
-                className={`flex cursor-pointer items-center justify-between gap-6 px-4 py-2 text-base ${index === activeIndex ? "bg-hover" : ""} ${selected ? "font-medium text-primary" : "text-primary/80"}`}
+                className={`flex cursor-pointer items-center justify-between gap-6 rounded-control-sm px-3 py-2 text-base ${index === activeIndex ? "bg-hover" : ""} ${selected ? "font-medium text-primary" : "text-secondary"}`}
               >
                 {option.label}
                 {selected && <IconCheck aria-hidden className="size-4" />}

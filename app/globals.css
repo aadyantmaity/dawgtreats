@@ -5,7 +5,6 @@
   --palette-ivory: #f3f1ec;
   --palette-white: #fcfbf8;
   --palette-ink: #281c12;
-  --palette-linen: #ded8cb;
   --palette-taupe: #5d564a;
   /* The deeper palette's own grey failed contrast on this ground.
      This darker grey keeps tertiary text above 4.5:1. */
@@ -72,7 +71,9 @@
      bar's own, in the same colour, so the fill marks it instead. */
   --background-color-quiet: color-mix(in srgb, var(--palette-ink) 6%, transparent);
 
-  --border-color-default: var(--palette-linen);
+  /* Let down to nothing rather than mixed against the page, so one border reads the
+     same on the page, on a card and over a cookie photo. */
+  --border-color-default: color-mix(in srgb, var(--palette-ink) 12%, transparent);
   --border-color-focus: var(--palette-ink);
   --border-color-error: var(--palette-rust);
 
@@ -247,6 +248,12 @@
     font-family: var(--font-display);
   }
 
+  /* Tabler draws at stroke 2, which outweighs the 400 and 500 text an icon sits beside.
+     CSS beats the presentation attribute the library writes on every icon. */
+  .tabler-icon {
+    stroke-width: 1.5;
+  }
+
   /* Tailwind v4 gives buttons the arrow cursor. A button should look pressable. */
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {
@@ -271,7 +278,7 @@
   /* A placeholder block. Reads as loading rather than as a disabled control. */
   .shimmer {
     background-image: linear-gradient(
-      90deg,
+      90deg in oklch,
       var(--palette-sand) 0%,
       var(--palette-white) 42%,
       var(--palette-sand) 84%
