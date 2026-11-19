@@ -40,7 +40,9 @@ function Stars({ rating }: { rating: number }) {
 // account, beside the pickup day.
 export async function StatsPanel() {
   const { steps, byFlavor, byWanted, byDevice, orders } = await funnel();
-  const said = await listFeedback();
+  // The 1-star rows are tests left during the build. They stay in the table, and
+  // `npm run admin -- feedback` still prints them, so nothing is lost.
+  const said = (await listFeedback()).filter((note) => note.rating !== 1);
   const rated = said.filter((note) => note.rating !== null);
   const average = rated.reduce((sum, note) => sum + (note.rating ?? 0), 0) / (rated.length || 1);
   const top = steps[0].people;
