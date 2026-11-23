@@ -63,16 +63,11 @@ export async function StatsPanel() {
           <ul className="flex flex-col gap-3">
             {[...steps, { step: "Paid", people: bought }].map((row) => {
               const share = top > 0 ? Math.round((row.people / top) * 100) : 0;
-              // Orders placed before counting began have no visit to be a share of.
-              const comparable = share <= 100;
               return (
                 <li key={row.step} className="flex flex-col gap-1">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-sm">{row.step}</span>
-                    <span className="text-sm text-secondary">
-                      {row.people}
-                      {comparable && top > 0 && ` · ${share}%`}
-                    </span>
+                    <span className="text-sm text-secondary">{row.people}</span>
                   </div>
                   <FunnelBar share={Math.min(100, share)} />
                 </li>

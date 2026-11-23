@@ -229,7 +229,7 @@ export default async function MenuPage({ searchParams }: PageProps<"/">) {
           )}
           {soldOut.length > 0 && (
             <>
-              <h2 className="mt-10 flex items-center gap-3 text-xs uppercase tracking-widest text-tertiary">
+              <h2 className="mt-10 flex items-center gap-3 text-sm text-tertiary">
                 <span aria-hidden className="flex-1 border-t border-default" />
                 Sold out this week
                 <span aria-hidden className="flex-1 border-t border-default" />

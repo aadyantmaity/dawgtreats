@@ -154,7 +154,7 @@ export function OrderStatus({ orderCode, initial }: { orderCode: string; initial
         <div
           className={`mt-6 rounded-card border border-default bg-surface p-5 text-center ${landed ? "animate-rise" : ""}`}
         >
-          <p className="text-xs uppercase tracking-widest text-tertiary">Show this at pickup</p>
+          <p className="text-sm text-tertiary">Show this at pickup</p>
           <p className="mt-1 font-display text-5xl font-bold tracking-wider tabular-nums">
             {orderCode}
           </p>
